@@ -1,0 +1,11 @@
+#!/bin/bash
+AUDIOFORMAT='audio/x-raw-int, endianness=(int)1234, signed=(boolean)true, width=(int)16, depth=(int)16, rate=(int)44100, channels=(int)2'
+RTPFORMAT='application/x-rtp, media=(string)audio, clock-rate=(int)90000, encoding-name=(string)MPA, payload=(int)96'
+
+gst-launch -v udpsrc port=5080 caps="$RTPFORMAT" !\
+	queue		!\
+	rtpmpadepay	!\
+	mad		!\
+	audioconvert	!\
+	$AUDIOFORMAT	!\
+	tcpclientsink host=127.0.0.1 port=9200

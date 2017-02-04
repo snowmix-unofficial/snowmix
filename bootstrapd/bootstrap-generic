@@ -1,0 +1,21 @@
+#!/bin/bash
+
+# Copyright 2013-2015 - Peter Maersk-Moller
+
+if [ "X$BASH" != X ] ; then 
+  echo="echo -e"
+else
+  echo=echo
+fi
+
+tools="aclocal awk autoconf libtoolize automake bc head pkg-config"
+
+echo "This is the generic bootstrap script"
+echo "To generate the configure script and subsequently to make the Makefiles"
+echo "you need the following tools: $tools"
+echo "You also need a C++ compiler environment, Tcl/Tk and bwidget"
+echo
+$echo "Press return to continue \c"
+read reply
+exit 0
+

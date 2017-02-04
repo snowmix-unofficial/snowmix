@@ -1,0 +1,133 @@
+# SyncTest Settings
+# Copyright by Peter Maersk-Moller 2014 - All rights reserved
+# verbose
+#require version 0.4.4
+require version 0.5.1
+
+# Functions in synctest.tcl
+#
+# SyncTestInit { } : Initializes the library. Done by the library itself.
+
+#
+command create synctest.tcl
+
+  proc SyncTestInit {} {
+    global synctest system
+    set synctest(state) 0
+    set synctest(framecount) 0
+    set synctest(font_id) 4
+    set synctest(delay1) [expr int(10 * $system(framerate))]
+    set x [expr $system(width) / 2]
+    set y [expr $system(height) / 2]
+    set synctest(string_id) [ReserveNextAvail string "SyncTest String Reserved"]
+    if {![string is integer -strict $synctest(string_id)] || $synctest(string_id) < 0} {
+      snowmix message "WARNING: No available string in SyncTestInit"
+    }
+    set synctest(text_id) [ReserveNextAvail placedtext $synctest(string_id) $synctest(font_id)]
+    if {![string is integer -strict $synctest(text_id)] || $synctest(text_id) < 0} {
+      snowmix message "WARNING: No available text place in SyncTestInit"
+    }
+    set synctest(shape_id) [ReserveNextAvail shape]
+    if {![string is integer -strict $synctest(shape_id)] || $synctest(shape_id) < 0} {
+      snowmix message "WARNING: No available shape in SyncTestInit"
+    }
+    snowmix parse "shape add $synctest(shape_id) SyncTest Shape\nshape paint $synctest(shape_id)"
+    set synctest(placedshape_id) [GetNextAvail placedshape]
+    if {![string is integer -strict $synctest(placedshape_id)] || $synctest(placedshape_id) < 0} {
+      snowmix message "WARNING: No available placed shape in SyncTestInit"
+    }
+    snowmix parse "shape place $synctest(placedshape_id) $synctest(shape_id) $x $y $system(width) $system(height) 0 0 0 0 1"
+    set synctest(state) 1
+    snowmix message "synctest.slib : Library initialized $synctest(placedshape_id) $synctest(shape_id)"
+  }
+
+  proc SyncTestStart {args} {
+    global synctest
+    if {![llength $args]} {
+      snowmix message "Error. SyncTestStart needs feed ids as arguments"
+      return
+    }
+    set synctest(feeds) $args
+    if {$synctest(state) != 1} {
+      snowmix message "can not start sync test. State is $synctest(state)"
+      return
+    }
+    set overlay_finish [GetFromKey "system overlay" overlay_finish]
+    if {[string length $overlay_finish] > 0} {
+      snowmix parse "command pop $overlay_finish"
+      snowmix parse "command push $overlay_finish shape overlay $synctest(placedshape_id)"
+      snowmix parse "command push $overlay_finish tcl eval SyncTestUpdate"
+      snowmix parse "command push $overlay_finish loop"
+#      puts "command pop $overlay_finish"
+##      puts "command push $overlay_finish shape overlay $synctest(placedshape_id)"
+#      puts "command push $overlay_finish tcl eval SyncTestUpdate"
+#      puts "command push $overlay_finish loop"
+      set synctest(state) 2
+      set synctest(framecount) 0
+    } else {
+      snowmix message "synctest.slib : WARNING. No overlay_finish command defined. Can not start sync test."
+      return
+    }
+    set geometries [snowmix info feed geometry $synctest(feeds)]
+    foreach parameters $geometries {
+      set feed_id [lindex $parameters 0]
+      set geometry [lindex $parameters 2]
+      set synctest(feed,$feed_id,width) [lindex $geometry 0]
+      set synctest(feed,$feed_id,height) [lindex $geometry 1]
+      set synctest(feed,$feed_id,xy) "[expr $synctest(feed,$feed_id,width) / 2] [expr $synctest(feed,$feed_id,height) / 2]"
+    }
+    snowmix message "SyncTest Started for feeds : $synctest(feeds)"
+  }
+
+  proc SyncTestStop {} {
+    global synctest
+    if {$synctest(state) < 2} {
+      snowmix message "can not stop sync test. State is $synctest(state)"
+      return
+    }
+    set overlay_finish [GetFromKey "system overlay" overlay_finish]
+    if {[string length $overlay_finish] > 0} {
+      snowmix parse "command pop $overlay_finish 3\ncommand push Show loop"
+      set synctest(state) 1
+    } else {
+      snowmix message "synctest.slib : WARNING. No overlay_finish command defined. Can not start sync test."
+      return
+    }
+  }
+
+  proc SyncTestUpdate {} {
+    global synctest
+    incr synctest(framecount)
+    if {$synctest(delay1) > $synctest(framecount)} return
+if {$synctest(framecount) == $synctest(delay1)} { puts "SyncTestDelay1 reached" }
+    foreach feed_id $synctest(feeds) {
+      set pixelval [snowmix info feed pixel $synctest(feed,$feed_id,xy) $feed_id]
+    }
+    if {$synctest(state) == 2} {
+puts C
+      set allblack 0
+      foreach feed_id $synctest(feeds) {
+        set red [lindex $pixelval 0]
+        set green [lindex $pixelval 0]
+        set blue [lindex $pixelval 0]
+        if {$red > 20 || $green > 20 || $blue > 20} {
+          puts "SyncTest : Error. Feed $feed_id had pixel value being not black $red,$green,$blue"
+          SyncTestStop
+        }
+      }
+      puts "SyncTest. All feeds had black value. Continuing to state 3"
+      set synctest(state) 3
+      set synctest(framecount,black1) $synctest(framecount)
+      snowmix parse "shape place rgb $synctest(placedshape_id) 1 1 1 1"
+      return
+    }
+    if {$synctest(state) == 2} {
+puts D
+}
+  }
+  # Initialize SyncTest
+  SyncTestInit
+
+command end
+
+tcl exec synctest.tcl

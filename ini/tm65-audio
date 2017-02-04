@@ -1,0 +1,328 @@
+# audio Settings
+# Copyright by Peter Maersk-Moller 2012-2013 - All rights reserved
+# audio require at least version 0.4.0
+require version 0.4.2
+
+command create FadeDown_1
+  audio feed volume 1 128
+  next
+  audio feed volume 1 116
+  next
+  audio feed volume 1 104
+  next
+  audio feed volume 1 96
+  next
+  audio feed volume 1 80
+  next
+  audio feed volume 1 70
+  next
+  audio feed volume 1 64
+  next 2
+  audio feed volume 1 48
+  next 2
+  audio feed volume 1 32
+  next 3
+  audio feed volume 1 24
+  next 3
+  audio feed volume 1 16
+  next 3
+  audio feed volume 1 12
+  next 3
+  audio feed volume 1 8
+  next 3
+  audio feed volume 1 4
+  next 3
+  audio feed volume 1 2
+  next 3
+  audio feed volume 1 1
+  next 3
+  audio feed volume 1 0
+command end
+command create FadeUp_1
+  audio feed volume 1 1
+  next 3
+  audio feed volume 1 2
+  next 3
+  audio feed volume 1 4
+  next 3
+  audio feed volume 1 8
+  next 3
+  audio feed volume 1 12
+  next 3
+  audio feed volume 1 16
+  next 3
+  audio feed volume 1 24
+  next 3
+  audio feed volume 1 32
+  next 3
+  audio feed volume 1 48
+  next 3
+  audio feed volume 1 64
+  next 3
+  audio feed volume 1 96
+  next 3
+  audio feed volume 1 128
+command end
+command afterend FadeDown_1
+command afterend FadeUp_1
+command create FadeDown1
+  command restart FadeDown_1
+  loop
+command end
+command create FadeUp1
+  command restart FadeUp_1
+  loop
+command end
+command pop Show
+command push Show FadeDown_1
+command push Show FadeUp_1
+command push Show loop
+
+command create audio_1
+  audio feed volume 4 128
+  next
+  audio feed volume 4 64
+  next
+  audio feed volume 4 32
+  next
+  audio feed volume 4 16
+  next
+  audio feed volume 4 8
+  next
+  audio feed volume 4 4
+  next
+  audio feed volume 4 2
+  next
+  audio feed volume 4 0
+  next
+  audio sink source feed 1 1
+  audio feed volume 1 0
+  next
+  audio feed volume 1 1
+  next
+  audio feed volume 1 2
+  next
+  audio feed volume 1 4
+  next
+  audio feed volume 1 8
+  next
+  audio feed volume 1 16
+  next
+  audio feed volume 1 32
+  next
+  audio feed volume 1 64
+  next
+  audio feed volume 1 128
+command end
+command create audio_4
+  audio feed volume 1 64
+  next
+  audio feed volume 1 16
+  next
+  audio feed volume 1 4
+  next
+  audio sink source feed 1 4
+  audio feed volume 4 0
+  next
+  audio feed volume 4 4
+  next
+  audio feed volume 4 16
+  next
+  audio feed volume 4 64
+  next
+  audio feed volume 4 128
+command end
+command create audio1
+  command restart audio_1
+  loop
+command end
+command create audio4
+  command restart audio_4
+  loop
+command end
+command afterend audio_1
+command afterend audio_4
+command pop Show
+command push Show audio_1
+command push Show audio_4
+command push Show loop
+
+audio feed verbose 0
+audio mixer verbose 0
+audio sink verbose 0
+
+audio feed add 1 Steen
+audio feed channels 1 1
+audio feed rate 1 48000
+audio feed format 1 16 signed
+audio feed mute off 1
+#audio feed volume 1 128
+#audio feed monitor on 1
+audio feed delay 1 0
+
+audio feed add 2 Commentator #2
+audio feed channels 2 1
+audio feed rate 2 48000
+audio feed format 2 16 signed
+audio feed mute off 2
+#audio feed volume 2 128
+audio feed delay 2 0
+
+audio feed add 3 Mobile Camera
+audio feed channels 3 1
+audio feed rate 3 48000
+audio feed format 3 16 signed
+audio feed mute off 3
+#audio feed volume 3 128
+audio feed delay 3 900
+
+audio feed add 4 Bonecam HD
+audio feed channels 4 2
+audio feed rate 4 48000
+audio feed format 4 16 signed
+audio feed mute off 4
+#audio feed volume 4 128
+audio feed delay 4 50
+
+audio feed add 5 CS Main Radio
+audio feed channels 5 1
+audio feed rate 5 48000
+audio feed format 5 16 signed
+audio feed mute off 5
+#audio feed volume 5 128
+audio feed delay 5 0
+
+audio feed add 6 StreamTeam Radio
+audio feed channels 6 1
+audio feed rate 6 48000
+audio feed format 6 16 signed
+audio feed mute off 6
+#audio feed volume 6 128
+audio feed delay 6 0
+
+audio mixer add 1 LiveStream Mixer
+audio mixer channels 1 2
+audio mixer rate 1 48000
+audio mixer mute off 1
+#audio mixer volume 1 128
+# audio mixer source (feed | mixer) <mixer id> <source id>
+audio mixer source feed 1 1
+audio mixer source feed 1 2
+audio mixer source feed 1 3
+audio mixer source feed 1 4
+audio mixer source feed 1 5
+#audio mixer source feed 1 6
+audio mixer source map 1 1 0,0
+audio mixer source map 1 2 0,1
+#audio mixer source map 1 3 0,0 0,1
+#audio mixer source map 1 4 0,0 1,1
+#audio mixer source map 1 5 0,0 0,1
+#audio mixer source volume 1 1 1.0
+#audio mixer source volume 1 2 1.0
+#audio mixer source volume 1 3 1.0
+#audio mixer source volume 1 4 1.0
+#audio mixer source volume 1 5 1.0
+#audio mixer source volume 1 6 1.0
+audio mixer source mute off 1 1
+audio mixer source mute off 1 2
+audio mixer source mute off 1 3
+audio mixer source mute off 1 4
+audio mixer source mute off 1 5
+#audio mixer source mute off 1 6
+#audio mixer start 1
+
+audio mixer add 2 Steen's Mixer
+audio mixer channels 2 2
+audio mixer rate 2 48000
+audio mixer mute off 2
+audio mixer volume 2 1 1
+audio mixer source feed 2 1
+audio mixer source feed 2 2
+audio mixer source feed 2 3
+audio mixer source feed 2 4
+audio mixer source feed 2 5
+audio mixer source feed 2 6
+audio mixer source mute on 2 1
+audio mixer source mute on 2 2
+audio mixer source mute off 2 3
+audio mixer source mute off 2 4
+audio mixer source mute off 2 5
+audio mixer source mute off 2 6
+#audio mixer start 2
+
+audio mixer add 3 Peter's Mixer
+audio mixer channels 3 2
+audio mixer rate 3 48000
+audio mixer mute off 3
+audio mixer volume 3 1 1
+audio mixer source feed 3 1
+#audio mixer source feed 3 2
+audio mixer source feed 3 3
+audio mixer source feed 3 4
+audio mixer source feed 3 5
+audio mixer source feed 3 6
+#audio mixer source volume 3 1 1
+#audio mixer source volume 3 2 1
+#audio mixer source volume 3 3 1
+#audio mixer source volume 3 4 1
+#audio mixer source volume 3 5 1
+#audio mixer source volume 3 6 1
+audio mixer source mute on 3 1
+audio mixer source mute on 3 2
+audio mixer source mute off 3 3
+audio mixer source mute off 3 4
+audio mixer source mute off 3 5
+#audio mixer source mute off 3 6
+#audio mixer start 3
+
+# Dummy sink
+audio sink add 0 Dummy Audio
+audio sink channels 0 1
+audio sink rate 0 48000
+audio sink format 0 16 signed
+audio sink mute on 0
+audio sink source mixer 0 1
+audio sink start 0
+
+# Sink for 'ctr isaudio'
+audio sink add 1 LiveStream Sink
+audio sink channels 1 2
+audio sink rate 1 48000
+audio sink format 1 16 signed
+audio sink mute off 1
+#audio sink source feed 1 4
+audio sink source mixer 1 1
+#audio sink queue
+#audio sink queue maxdelay <sink id> <max delay in ms>
+#audio sink queue dropbuffer <sink id> <buffers>
+#audio sink queue maxdelay 1 120
+#audio sink file 1 pmm.pipe
+#audio sink start 1
+
+audio sink add 2 Steen's Audio
+audio sink channels 2 2
+audio sink rate 2 48000
+audio sink format 2 16 signed
+audio sink mute off 2
+audio sink source mixer 2 2
+
+audio sink add 3 Peter's Audio
+audio sink channels 3 2
+audio sink rate 3 48000
+audio sink format 3 16 signed
+audio sink mute off 3
+audio sink source mixer 3 3
+
+audio sink add 4 Unused
+audio sink channels 4 2
+audio sink rate 4 48000
+audio sink format 4 16 signed
+audio sink mute off 4
+audio sink source mixer 4 1
+
+#audio feed verbose 2
+#audio mixer verbose 2
+#audio sink verbose 2
+audio mixer start 1
+audio mixer start 2
+audio mixer start 3

@@ -1,0 +1,17 @@
+#!/bin/bash
+
+cd sources
+make
+cd ..
+scp -r index.html default.css img Intro Documentation Examples Advanced pmaersk@web.sourceforge.net:/home/project-web/snowmix/htdocs/
+
+exit 0
+for dir in img Intro Documentation Examples Advanced ; do
+  pushd $dir
+  files=`ls *`
+  files=`echo $files`
+  echo "Copying files : $files"
+  scp $files pmaersk@web.sourceforge.net:/home/project-web/snowmix/htdocs/$dir/
+  popd
+done
+

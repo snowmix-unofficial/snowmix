@@ -1,0 +1,124 @@
+#!/bin/bash
+date=`date`
+
+if [ $# != 1 ] ; then
+  echo "Parameter error"
+  echo "Usage : $0 you | you1 | you2 | ustream | live"
+  exit
+fi
+
+pid_dir=/var/run/stream
+if [ ! -d $pid_dir -o ! -w $pid_dir ] ; then
+  echo 'Missing directory or not writable : '$pid_dir
+  exit
+fi
+basename=`basename $0`
+pid_file=$pid_dir/$basename.$$
+ppid=`ps --pid $$ fj | tail -n +2 | awk '{printf("%s", $3)}'`
+echo $$ >$pid_file
+echo $date >>$pid_file
+echo "command : $0 $*" >>$pid_file
+echo "ppid    : $ppid" >>$pid_file
+echo "kill : kill -- -$ppid" >>$pid_file
+
+gstlaunch=`which gst-launch-1.0`
+if [ X$gstlaunch != X ] ; then
+  VIDEOCONVERT=videoconvert
+  VIDEO=video/x-raw
+  AUDIO=audio/x-raw
+  vfid=string
+  afid="format=(string)S16LE, "
+  aac_encoder=avenc_aac
+else
+  gstlaunch=`which gst-launch-0.10`
+  if [ X$gstlaunch != X ] ; then
+    VIDEOCONVERT=ffmpegcolorspace
+    VIDEO=video/x-raw-rgb
+    AUDIO=audio/x-raw-int
+    vfid=fourcc
+    afid=""
+    aac_encoder=faac
+  else
+    echo "Could not find gst-launch-1.0 or gst-launch-0.10. Stopping"
+    exit
+  fi
+fi
+
+# Generic settings for YouTube
+flashver='FME/3.0%20(compatible;%20FMSc%201.0)'
+
+# Special generic settings for YouTube only
+case $1 in
+  you|you1|youtube|youtube1|you2|youtube2)
+
+	# First Camera
+	auth='copsub.mjpe-pg68-91ua-2w2v'
+	# Second Camera
+	auth2=''
+
+	GST_DEBUG="--gst-debug=rtmpsink:4"
+	app=
+	app='live2'
+	serverurl='rtmp://a.rtmp.youtube.com/'$app
+	backup=rtmp://b.rtmp.youtube.com/live2?backup=1
+	datarate=`cat $SM/CS-scripts/datarate_youtube`
+	if [ X$datarate = X ] ; then
+	  datarate=4128
+	  echo "WARNING <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<"
+	  echo "Datarate not set in $SM/CS-scripts/datarate_youtube. Maybe no stream is generated?"
+	  echo "Using $datarate as datarate for FLV stream"
+	fi
+	flvsrcport=5011
+	;;
+  *)
+	;;
+esac
+
+case $1 in
+  you|you1|youtube|youtube1)
+	if [ X$auth = X ] ; then
+		echo "No authorization key for youtube 1"
+		exit 1
+	fi
+	location=$serverurl'/x/'$auth'?videoKeyframeFrequency=1&totalDatarate=4128 app='$app' flashVer='$flashver' swfUrl='$serverurl
+	;;
+  you2|youtube2)
+	if [ X$auth2 = X ] ; then
+		echo "No authorization key for youtube 2"
+		exit 1
+	fi
+	location=$serverurl'/x/'$auth2'?videoKeyframeFrequency=1&totalDatarate=4128 app='$app' flashVer='$flashver' swfUrl='$serverurl
+	;;
+  ustream)
+	GST_DEBUG="--gst-debug=rtmpsink:4"
+	flvsrcport=5012
+	location="rtmp://1.11788764.fme.ustream.tv/ustreamVideo/11788764/HyYgjUqdwAeY4vFJVrMC4wyAQPxJ6f4t live=1 flashver=FME/3.0\20(compatible;\20FMSc\201.0)"
+	;;
+  live|livestream)
+	echo "LiveStream is not supported yet"
+	exit 1
+	;;
+  *)	echo 'Use youtube or ustream as argument'
+	exit
+esac
+
+#flvsrcport=5011
+i=1
+SRC="tcpclientsrc host=localhost port=$flvsrcport do-timestamp=true "
+#SRC="tcpclientsrc host=localhost port=$flvsrcport "
+echo "Location <$location>"
+while true ; do
+  portavail=`netstat -na | grep ":$flvsrcport " |grep LISTEN |cut -c1-3`
+  if [ X$portavail = Xtcp ] ; then
+    echo "Connection available $portavail ITERATION $i"
+    $gstlaunch -v -e $GST_DEBUG  $SRC	!\
+	queue				!\
+	rtmpsink location="$location"
+
+    echo -e "\nLost connection"
+    i=`expr $i + 1`
+  else
+    echo "Connection unavailable $portavail"
+  fi
+  sleep 2
+done

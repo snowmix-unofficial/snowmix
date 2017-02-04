@@ -1,0 +1,141 @@
+# Basic Sapphire Settings
+# Copyright by Peter Maersk-Moller 2012-2013 - All rights reserved
+# verbose
+require version 0.4.1
+
+maxplaces images 32
+maxplaces shapes 90
+maxplaces shapeplaces 64
+maxplaces audio feeds 20
+
+# Define allowed remote host IP addresses. If omitted then only 127.0.0.1 will be accepted.
+system host allow 127.0.0.1 192.168.1.0/24 193.88.237.0/24 192.168.10.0/24
+
+# Listen on port 9999 for command control connections
+system control port 9999
+
+# Set system Geometry to WIDTH HEIGHT
+system geometry 1280 720 ARGB
+#tcl eval set system(width) 1280 ; set system(height) 720
+
+# Set system frame rate to N or NN.NN
+system frame rate 30
+#tcl eval set system(framerate) 30
+
+# Set output parameter (mode=1 direct, mode=2 simple threaded, mode=2 timed threaded)
+system output mode 1
+system output delay 1
+system output buffers 40
+
+# Set output control socket
+system socket /tmp/mixer1
+
+image load 1 ../images/CS/CS_TV_720p_3screen-up_background.png
+image name 1 CS Background Logo Right
+image load 2 ../images/CS/CS_TV_720p_2screen-up_background.png
+image name 2 CS Background Logo Left
+image load 3 ../images/CS/esd-139.png
+image name 3 ES-D139
+image load 4 ../images/CS/heat1600_TDSII_conceptArt_900.png
+image name 4 HEAT1600
+image load 5 ../images/CS/sapphire_sputnik_wallpaper.png
+image name 5 Sapphire Poster
+command create libimages.tcl
+  set image(images) ""
+  lappend image(images) 1
+  set image(name,1) "CS Background Logo Right"
+  set image(width,1) 1280
+  set image(height,1) 720
+  lappend image(images) 2
+  set image(name,2) "CS Background Logo Left"
+  set image(width,2) 1280
+  set image(height,2) 720
+  lappend image(images) 3
+  set image(name,3) "ES-D139"
+  set image(width,3) 1024
+  set image(height,3) 576
+  lappend image(images) 4
+  set image(name,4) "HEAT1600"
+  set image(width,4) 900
+  set image(height,4) 454
+  lappend image(images) 5
+  set image(name,5) "Sapphire Poster"
+  set image(width,5) 1280
+  set image(height,5) 720
+command end
+  
+tcl exec libimages.tcl
+
+command create BySnowmix
+  text string 1 Copenhagen Suborbitals
+  text grow 1 1 1
+  #next 7200
+  next 240
+  text grow 2 1 2
+  #next 7200
+  next 240
+  text string 1 Powered by Snowmix
+  text grow 1 1 1
+  next 240
+  loop
+command end 
+
+# Commands to be executed at every me interval
+command create PreShow
+  loop
+command end
+overlay pre PreShow
+
+# Commands to be executed at every me interval, but only if we have a consumer
+command create Show
+  tcl eval UpdateScenes
+  BySnowmix
+  shape overlay 50
+  loop
+command end
+overlay finish Show
+
+
+include ../ini/sapphire-texts
+message Sapphire Texts Loaded
+
+# Load libraries
+include ../slib/system.slib
+include ../slib/feeds.slib
+include ../slib/basic-shapes.slib
+include ../slib/clocks.slib
+include ../slib/graphs.slib
+include ../slib/radar.slib
+message Snowmix Library radar.slib loaded
+include ../slib/scenes.slib
+message Snowmix Library scenes.slib loaded
+
+include ../ini/sapphire-feeds
+message Sapphire Feeds loaded
+
+include ../ini/sapphire-clocks
+message Sapphire Clocks Loaded
+
+tcl eval set scene(setactivesilent) 1
+# Scene 0
+tcl eval SceneCreate "Fullscreen" 0 0 0 - - 0
+# AddBackground2Scene { scene_id image_id shape_id place_id image_width image_height }
+tcl eval AddBackground2Scene 0 1 55 26 1280 720
+tcl eval AddTextClock2Scene 0 2 1
+tcl eval AddOverlayText2Scene 0 2 3 1
+tcl eval SetTextClock4Scene 0 2 1180 650
+
+message PMM1
+# Scene 1
+tcl eval SceneCreate "Fullscreen" 1 0 0 - - 0
+message PMM2
+tcl eval AddFrame2Scene 1 1 0 0 1280 720 31 32 1 2
+message PMM3
+tcl eval SetSource4Frame 1 1 feed 1 1 1
+message PMM4
+#tcl eval SetSource4Frame 1 1 radar 1 1 1
+message PMM5
+tcl eval SetSource4Frame 1 1 feed 2 0 1
+#tcl eval AddTextClock2Scene 1 2 1
+#tcl eval AddOverlayText2Scene 1 2 3 1
+#tcl eval SetTextClock4Scene 1 2 1180 650

@@ -1,0 +1,49 @@
+#!/bin/bash
+
+# Copyright 2013-2015 - Peter Maersk-Moller
+
+if [ "X$BASH" != X ] ; then
+  echo="echo -e"
+else
+  echo=echo
+fi
+
+
+BUILD_PACKAGES='gcc gcc-c++ autoconf automake libtool SDL-devel libpng-devel pango-devel tcl tcl-devel tk bwidget mesa-libOSMesa mesa-libOSMesa-devel freeglut-devel'
+
+GST_PACKAGES='gstreamer gstreamer-devel gstreamer-ffmpeg gstreamer-plugins-bad gstreamer-plugins-bad-free gstreamer-plugins-bad-free-extras gstreamer-plugins-bad-nonfree gstreamer-plugins-base gstreamer-plugins-espeak gstreamer-plugins-fc gstreamer-plugins-good gstreamer-plugins-good-extras gstreamer-plugins-ugly gstreamer-tools'
+
+while true ; do
+  echo
+  echo "It is recommended that you update your Fedora installation first."
+  echo "You may have to provide your password for sudo. Do you want to"
+  $echo "update your Fedora installation (Y/N) ?\c"
+  read reply
+  if [ "X$reply" != X ] ; then break ; fi
+done
+if [ X$reply = Xy -o X$reply = XY ] ; then
+  echo yum update
+  sudo yum update
+fi
+
+while true ; do
+  echo
+  echo "To build Snowmix, you will need some essential build tools and libraries."
+  echo "The following packages are needed : $BUILD_PACKAGES"
+  echo "Do you want to install these packages if they are not already installed?"
+  $echo "Update and install (y=yes, n=no, q=quit) ? \c"
+  read reply
+  if [ X$reply = Xy -o X$reply = XY ] ; then break ; fi
+  if [ X$reply = Xn -o X$reply = XN ] ; then BUILD_PACKAGES="" ; break ; fi
+  if [ X$reply = Xq -o X$reply = XQ ] ; then exit ; fi
+done
+if [ "X$BUILD_PACKAGES" != X ] ; then
+  echo update and install
+  sudo yum install $BUILD_PACKAGES
+fi
+exit 0
+
+su -c 'yum localinstall --nogpgcheck http://download1.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm http://download1.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm'
+sudo yum install gstreamer-plugins-bad-nonfree
+
+sudo yum install $GST_PACKAGES

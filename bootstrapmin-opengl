@@ -1,0 +1,22 @@
+#!/bin/sh
+
+os=`uname`
+if [ "X$os" = "XDarwin" ] ; then
+  LIBTOOLIZE=glibtoolize
+  prefix=/opt/local
+else
+  LIBTOOLIZE=libtoolize
+  prefix=/usr/local
+fi
+
+aclocal
+autoconf
+$LIBTOOLIZE --force
+automake --add-missing
+
+#./configure --prefix=$prefix --enable-snowmixosmesa --enable-snowmixglu --enable-snowmixglew --enable-snowmixx11
+# ./configure --prefix=$prefix --enable-snowmixosmesa --enable-snowmixglew --enable-snowmixx11
+./configure --prefix=$prefix --libdir=$prefix/lib --enable-snowmixosmesa --enable-snowmixx11 --enable-snowmixglu --enable-snowmixglut
+#./configure --prefix=$prefix --enable-snowmixosmesa  --enable-snowmixx11
+#./configure --prefix=$prefix  --enable-snowmixx11
+#./configure --prefix=$prefix --enable-snowmixosmesa 

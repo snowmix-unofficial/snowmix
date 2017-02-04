@@ -1,0 +1,94 @@
+<div class="content">
+
+	<div class="item">
+
+		<h1>About Snowmix</h1>
+		<div class="descr">Updated for Snowmix 0.5.1</div>
+
+
+		<h3>What is Snowmix?</h3>
+		<br/>
+		<p>Snowmix is a leading Free and Open Source Video Mixer. Snowmix is a
+		very fast and flexible command line tool with a small ressource footprint
+		for dynamically mixing live audio and video feeds.</p>
+
+		<p>Snowmix supports overlaying and mixing video, images, texts and graphic
+		elements as well as suporting mixing audio sources. Snowmix offers animation,
+		simple and advanced scripting, clipping and pattern gradient blending.</p>
+
+		<p>From version 0.5.0, Snowmix offers in addition to native support for 2D
+		graphics also native support for 3D graphics through OpenGL support. Both
+		off-screen (CPU based) and hardware accelerated (GPU) OpenGL rendering are
+		supported.</p>
+
+		<p>Snowmix is well suited to run headerless and to be controlled remotely over
+		low bandwidth TCP connections. More information on features, specs and many
+		other details are to be found in the <a href="faq.html">FAQ</a>.</p>
+
+		<p>From version 0.5.1, a number of GUI tools suitable for using Snowmix in
+		a Live production environment are included.</p>
+
+		<p>Most information on Snowmix is found on this
+		<a href="http://snowmix.sourceforge.net">website</a> you are now. However additional
+		information can also be found on the
+		<a href="https://sourceforge.net/projects/snowmix">Snowmix SourceForge project website</a>.</p>
+
+		<div align="right"><a href="">Top</a></div>
+	</div>
+
+	<div class="item">
+
+		<h3>What is Snowmix not?</h3>
+		<br/>
+		<p><Strong>Snowmix is NOT an application</strong>, but rather a highly advanced and
+		specialized tool. As it is with many tools, its full potential depends on the
+		abilities, knowledge, skills and talent of the user.</p>
+
+		<p>Are you looking for an easy point-and-click solution, Snowmix is
+		<strong>not</strong> your solution.</p>
+
+		<p>Are you on the other side looking for a Swiss Army Knife of Open Source
+		Live Video Mixing for building your own video mixer application or
+		system and prepared to read the necessary doucmentation to acquire information,
+ 		chances are that you have come to the right place.</p>
+
+		<div align="right"><a href="">Top</a></div>
+	</div>
+
+	<div class="item">
+		<h3>Why is Snowmix designed the way it is?</h3>
+		<br/>
+		<p>Snowmix was originally developed (and still is) by the author for producing
+		Live streaming television from the rocket launches in the Baltic Sea by
+		<a href="http://www.copsub.com">Copenhagen Suborbitals.</a></p>.
+		<p>You can see many of the
+		<a href="https://www.youtube.com/channel/UCPzFMJIsp2fOQ_ic5a_zXTA">videos from Copenhagen Suborbitals on YouTube</a>.</p>
+
+		<p>Due to the nature of the task, Snowmix is designed to run headerless and to
+		be controlled remotely over low bandwidth TCP connections.</p>
+
+		<img src="[HOME]img/stream-ob1.jpg" width="720" alt="Snowmix in action for Copenhagen Suborbitals">
+		<p>Snowmix in action by the <a href="[HOME]Intro/about.html#who">author</a> for <a href="http://www.copsub.com/">Copenhagen Suboritals</a> in OB-1.</p>
+
+		<div align="right"><a href="">Top</a></div>
+	</div>
+
+	<div class="item">
+		<a name="who"><h3>Who is developing Snowmix?</h3></a>
+		<br/>
+		<p>Snowmix is being developed by Peter Maersk-Moller. Peter Maersk-Moller has a past as
+		Network Manager for Space Applications Institute, Joint Research Centre, Ispra Italy,
+		IP Backbone Architect and IP Evangelist for Ebone and Ebone IP Future Lab, Copenhagen,
+		Brussels and London, CEO and CTO for Optimal Stream and StreamTV, Copenhagen,
+		Director for Live Streaming Development for The Venice Project aka Joost, Leiden/London
+		and Senior Consultant for a number of companies and governments.</p>
+
+		<p>Over time Peter has been contributing to Open Source Projects within video coding,
+		streaming, set top boxes, network management, network monitoring and network traffic analysis.</p>
+		<p>Currently Peter works as a private consultant within telecommunication network design, encoding and streaming as
+		well as media projects. Peter can be contacted as in the <a href="https://sourceforge.net/p/snowmix/discussion/Snowmix_Support_Forum/">Support Forum</a> or through the message system at SourceForge <a href="https://sourceforge.net/u/pmaersk/">privately to Peter Maersk-Moller</a>.</p>
+
+		<div align="right"><a href="">Top</a></div>
+	</div>
+</div>
+

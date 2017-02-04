@@ -1,0 +1,227 @@
+<div class="content">
+
+	<div class="item">
+
+		<h1>Input Video to Snowmix</h1>
+		<div class="descr">Updated for Snowmix 0.5.0</div>
+		<br/>
+
+		<p>Snowmix takes video as input from video feeds through shared memory. Snowmix
+		video feeds has implemented the <a href="http://gstreamer.freedesktop.org/">GStreamer</a> module <i>shmsrc</i> and can as such
+		receive video from the <a href="http://gstreamer.freedesktop.org/">GStreamer</a> module <i>shmsink</i>.</p>
+
+		<p>For audio input to Snowmix, please see the detailed Snowmix Audio Guide listed
+		on the <a href="[HOME]Documentation/guides.html">Snowmix Guides</a> page.</p>
+
+		<p>The <a href="http://gstreamer.freedesktop.org/">GStreamer</a> module shmsink is responsible for allocating a shared memory area,
+		communicating the filename representing the shared memory area to Snowmix through
+		a communication pipe, feeding video frames into the shared memory and signalling
+		the receiver that frames are ready to be read. Snowmix will then use the frames
+		and signal back to the <i>shmsink</i> when a frame has been used enabling the
+		module to reuse the shared memory area for new frames.</p>
+
+		<p>The format of the frames the <i>shmsink</i> sends into Snowmix must be in the
+		ARGB format or rather the <strong>BGRA format</strong> on little endian CPU systems
+		such as the x86 CPU architecture. This means that each pixel is sent to Snowmix in
+		the order Blue, Green, Red and Alpha.</p>
+
+		<p>The image below shows 3 different types of video input.</p>
+
+		<div align="center"><img src="https://sourceforge.net/p/snowmix/wiki/Gstreamer/attachment/Snowmix-input.png"/></div>
+		<br/>
+		<br/>
+		<p>The name of the modules on the drawing above is from GStreamer 0.10. In GStreamer 1.x
+		the module <i>ffmpegcolorspace</i> is names <i>videoconvert</i> and the <i>decodebin2</i>
+		module is named <i>decodebin</i>. Finally, the RGBA, which is actually BGRA, is not a module
+		at all. Yeahh, we need a new more updated and correct image.</p>
+
+		<p>The <a href="http://gstreamer.freedesktop.org/">GStreamer</a> module needs a control channel to communicate with Snowmix. This control
+		channel is a named pipe (a fifo file) and both <a href="http://gstreamer.freedesktop.org/">GStreamer</a> and Snowmix needs to know the
+		name of this pipe for this to work. This page will show and example of <a href="http://gstreamer.freedesktop.org/">GStreamer</a> feeding
+		a video stream to snowmix.</p>
+
+		<p>In the file $SNOWMIX/scripts/input2feed, you can find a full example of a <a href="http://gstreamer.freedesktop.org/">GStreamer</a> pipeline
+		that can feed either just video or both audio and video to Snowmix. The pipeline is also
+		automatically configured reading its data configuration from a running Snowmix session.</p>
+
+		<div align="right"><a href="">Top</a></div>
+	</div>
+
+	<div class="item">
+
+		<h3>GStreamer pipeline example: Input from File</h3>
+		<br/>
+
+		<p>Below is shown an example for inputting video to Snowmix using GStreamer
+		version 1.0 tested with GStreamer version 1.0.0 through 1.5.2 as well as 0.10.
+		However GStreamer version 0.10 is no longer officially supported.</p>
+
+<code>
+        #!/bin/bash
+        # These settings are the settings defined for video feed 1 in Snowmix
+        CONTROL_PIPE=/tmp/feed1-control-pipe
+        width=768
+        height=576
+        framerate='24/1'
+        which gst-launch-1.0 2>/dev/null 1>&2
+        if [ $? -eq 0 ] ; then
+          gstlaunch=gst-launch-1.0
+          DECODEBIN=decodebin
+          SHMSIZE='shm-size='`echo "$width * $height * 4 * 22"|bc`
+          MIXERFORMAT='video/x-raw, format=BGRA, pixel-aspect-ratio=1/1, interlace-mode=progressive'
+          SCALENRATE='videoconvert ! videorate ! videoscale ! videoconvert'
+        else
+          gstlaunch=gst-launch-0.10
+          DECODEBIN=decodebin2
+          SHMSIZE='shm-size='`echo "$width * $height * 4 * 8"|bc`
+          MIXERFORMAT='video/x-raw-rgb,bpp=32,depth=32,endianness=4321,red_mask=65280,green_mask=16711680,"
+          MIXERFORMAT=$MIXERFORMAT'blue_mask=-16777216,pixel-aspect-ratio=1/1,interlaced=false'
+          SCALENRATE='ffmpegcolorspace ! videorate ! videoscale ! ffmpegcolorspace'
+        fi
+        SRC="filesrc location=$SNOWMIX/test/LES_TDS_launch.mp4 ! $DECODEBIN "
+        SHMOPTION="wait-for-connection=0 sync=true"
+        SHMSINK1="shmsink socket-path=$CONTROL_PIPE $SHMSIZE $SHMOPTION"
+        while true ; do
+            # Remove the named pipe if it exist
+            rm -f $CONTROL_PIPE
+            $gstlaunch -v   \
+                $SRC            !\
+                $SCALENRATE     !\                
+                $MIXERFORMAT"framerate=$framerate, width=$width, height=$height"    !\
+                $SHMSINK1
+            sleep 2
+        done
+        exit</code>
+
+		<p>In this example 'filesrc' reads from the file $SNOWMIX/test/LES_TDS.mp4, decodes it,
+		scale it to 704x576 and converts it to 32 bit BGRA before writing it to shared memory
+		and signaling to Snowmix via the named pipe '/tmp/feed1-control-pipe'. The example will
+		read, decode and send it to Snowmix repeatedly with a 2 second pause between until
+		interrupted. The frame rate is set to 24fps. The videorate element is not strictly
+		necessary as Snowmix will insert extra or drop frames automatically upon need.</p>
+		<div align="right"><a href="">Top</a></div>
+	</div>
+
+	<div class="item">
+
+		<h3>Snowmix Configuration</h3>
+		<br/>
+
+
+		<p>For Snowmix to receive the video feed from <a href="http://gstreamer.freedesktop.org/">GStreamer</a> configured as shown above,
+		the following entries need to be added to snowmix either interactively or to the
+		ini file Snowmix reads upon starting. The entries are:</p>
+
+	<code>
+        system control port 9999
+        system geometry 1024 576 BGRA
+        system frame rate 24
+        system socket /tmp/mixer1
+
+        feed add 1 Camera 1
+        feed geometry 1 704 576
+        feed live 1
+        feed idle 1 100 frames/dead-704x576.bgra
+        feed socket 1 /tmp/feed1-control-pipe</code>
+
+		<p>These entries first add feed number 1 and name it 'Camera 1'. Then the geometry
+		of the feed is defined. Then the feed is defined as live. Last but not least,
+		Snowmix is informed that the name of the named pipe used as control channel is
+		/tmp/feed1-control-pipe. The 'feed idle' command optionally tells Snowmix to use a
+		frame image (found in the $SNOWMIX/frames/dead-704x576.bgra) as replacement for the live
+		feed, should the feed be missing frames for 100 frame periods. You can generate
+		your own frame files (raw BGRA data) and place it typically in $HOME/.snowmix/frames for
+		Linux and $HOME/Snowmix/frames for Mac OS X.</p>
+
+		<div align="right"><a href="">Top</a></div>
+	</div>
+
+	<div class="item">
+
+		<h3>GStreamer Input From a Web Camera</h3>
+		<br/>
+
+		<p>In this example we take live input from a web camera using V4L2 (Video for Linux).</p>
+
+		<code>        #!/bin/bash
+        CONTROL_PIPE=/tmp/feed1-control-pipe
+        width=704
+        height=576
+        framerate='25/1'
+        which gst-launch-1.0 2>/dev/null 1>&2
+        if [ $? -eq 0 ] ; then
+          gstlaunch=gst-launch-1.0
+          SHMSIZE='shm-size='`echo "$width * $height * 4 * 22"|bc`
+          MIXERFORMAT='video/x-raw, format=BGRA, pixel-aspect-ratio=1/1, interlace-mode=progressive'
+          SCALE='videoconvert ! videoscale ! videoconvert'
+        else
+          gstlaunch=gst-launch-0.10
+          SHMSIZE='shm-size='`echo "$width * $height * 4 * 8"|bc`
+          MIXERFORMAT='video/x-raw-rgb,bpp=32,depth=32,endianness=4321,red_mask=65280,green_mask=16711680,"
+          MIXERFORMAT=$MIXERFORMAT'blue_mask=-16777216,pixel-aspect-ratio=1/1,interlaced=false'
+          SCALE='ffmpegcolorspace ! videoscale ! ffmpegcolorspace'
+        fi
+        SRC='v4l2src device=/dev/video0 '
+        SHMOPTION="wait-for-connection=0 sync=true"
+        SHMSINK1="shmsink socket-path=$CONTROL_PIPE $SHMSIZE $SHMOPTION"
+        while true ; do
+            # Remove the named pipe if it exist
+            rm -f $CONTROL_PIPE
+            $gstlaunch -v          \
+                $SRC              !\
+                $SCALE            !\
+                $MIXERFORMAT"width=$width, height=$height, framerate=$framerate" !\
+                $SHMSINK1
+            sleep 2
+        done
+        exit</code>
+		<div align="right"><a href="">Top</a></div>
+	</div>
+
+	<div class="item">
+
+		<h3>GStreamer Input From a MPEG-4 UDP Stream</h3>
+		<br/>
+
+		<p>The example below uses a MPEG-4 stream sent to a UDP port on the computer
+		from an external IP based web camera.</p>
+
+		<code>        #!/bin/bash
+        # These settings are from the Snowmix ini file for the feed.
+        CONTROL_PIPE=/tmp/feed1-control-pipe
+        width=704
+        height=576
+        framerate='25/1'
+        which gst-launch-1.0 2>/dev/null 1>&2
+        if [ $? -eq 0 ] ; then
+          gstlaunch=gst-launch-1.0
+          SHMSIZE='shm-size='`echo "$width * $height * 4 * 22"|bc`
+          MIXERFORMAT='video/x-raw, format=BGRA, pixel-aspect-ratio=1/1, interlace-mode=progressive'
+          SCALENRATE='videoconvert ! videorate ! videoscale ! videoconvert'
+        else
+          gstlaunch=gst-launch-0.10
+          SHMSIZE='shm-size='`echo "$width * $height * 4 * 8"|bc`
+          MIXERFORMAT='video/x-raw-rgb,bpp=32,depth=32,endianness=4321,red_mask=65280,green_mask=16711680,"
+          MIXERFORMAT=$MIXERFORMAT'blue_mask=-16777216,pixel-aspect-ratio=1/1,interlaced=false'
+          SCALENRATE='ffmpegcolorspace ! videorate ! videoscale ! ffmpegcolorspace'
+        fi
+        CAPS="application/x-rtp,media=video,payload=96,clock-rate=90000,encoding-name=MP4V-ES"
+        SRC=" udpsrc port=4444 caps=$CAPS ! rtpmp4vdepay ! mpeg4videoparse ! ffdec_mpeg4"
+        SHMOPTION="wait-for-connection=0 sync=true "
+        SHMSINK1="shmsink socket-path=$CONTROL_PIPE $SHMSIZE $SHMOPTION"
+        while true ; do
+            # Remove the named pipe if it exist
+            rm -f $CONTROL_PIPE
+            $gstlaunch -v           \
+                $SRC               !\
+                $SCALENRATE        !\
+                "$MIXERFORMAT,framerate=$framerate,width=$width,height=$height" !\
+                $SHMSINK1
+            sleep 2
+        done
+        exit</code>
+
+		<div align="right"><a href="">Top</a></div>
+	</div>
+
+</div>

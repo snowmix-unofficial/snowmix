@@ -1,0 +1,233 @@
+#!/bin/bash
+date=`date`
+
+if [ $# != 1 ] ; then
+  echo "Parameter error"
+  echo "Usage : $0 you | ustream"
+  exit
+fi
+
+pid_dir=/var/run/stream
+if [ ! -d $pid_dir -o ! -w $pid_dir ] ; then
+  echo 'Missing directory or not writable : '$pid_dir
+  exit
+fi
+
+basename=`basename $0`
+pid_file=$pid_dir/$basename.$$
+echo $$ >$pid_file
+echo $date >>$pid_file
+echo "command : $0 $*" >>$pid_file
+
+gstlaunch=`which gst-launch-1.0`
+if [ X$gstlaunch != X ] ; then
+  VIDEOCONVERT=videoconvert
+  VIDEO=video/x-raw
+  AUDIO=audio/x-raw
+  vfid=string
+  afid="format=(string)S16LE, "
+  audioencoder="avenc_aac bitrate=128000"
+else
+  gstlaunch=`which gst-launch-0.10`
+  if [ X$gstlaunch != X ] ; then
+    VIDEOCONVERT=ffmpegcolorspace
+    VIDEO=video/x-raw-rgb
+    AUDIO=audio/x-raw-int
+    vfid=fourcc
+    afid=""
+    audioencoder="faac bitrate=128000 profile=LC"
+  else
+    echo "Could not find gst-launch-1.0 or gst-launch-0.10. Stopping"
+    exit
+  fi
+fi
+
+frameratefraction()
+{
+  echo $1 | awk '{ rate=$1 ;
+         factor=1;
+         intrate=int(rate);
+         while (factor*rate > intrate) {
+           factor = factor * 10;
+           intrate = int(rate*factor);
+         }
+         printf("%d/%d\n",intrate,factor);
+       }'
+}
+
+# Settings for Snowmix
+ip=127.0.0.1
+port=9999
+# Audio feed
+audio_sink_id=1
+
+rate=`echo audio sink rate | nc $ip $port | grep 'STAT: audio sink '$audio_sink_id' ' | cut -f6 -d' '`
+channels=`echo audio sink channels | nc $ip $port | grep 'STAT: audio sink '$audio_sink_id' ' | cut -f6 -d' '`
+
+tmpfile=/tmp/output2screen.tmp.$$
+echo 'system info' | nc 127.0.0.1 9999 >$tmpfile
+geometry=`grep 'STAT:  System geometry' $tmpfile |cut -f3 -d: |cut -f2 -d' '|tr 'x' ' '`
+framerate=`grep 'STAT:  Frame rate' $tmpfile |cut -f3 -d: |cut -f2 -d' '`
+ctrsocket=`grep 'STAT:  Output ctr sock name' $tmpfile |cut -f3 -d: |cut -f2 -d' '`
+#echo "Framerate $framerate"
+width=`echo $geometry |cut -f1 -d' '`
+height=`echo $geometry |cut -f2 -d' '`
+ratefraction=`frameratefraction $framerate`
+rm $tmpfile
+
+export AUDIOFORMAT=$AUDIO', '$afid' endianness=(int)1234, signed=(boolean)true, width=(int)16, depth=(int)16, rate=(int)'$rate', channels=(int)'$channels
+
+export MIXERFORMAT=$VIDEO', bpp=(int)32, depth=(int)32, endianness=(int)4321, format=('$vfid')BGRA, red_mask=(int)65280, green_mask=(int)16711680, blue_mask=(int)-16777216, width=(int)'$width', height=(int)'$height', framerate=(fraction)'$ratefraction', pixel-aspect-ratio=(fraction)1/1, interlaced=(boolean)false'
+
+export SRC='shmsrc socket-path='$ctrsocket' do-timestamp=true is-live=true'
+export X264SETTINGS='bitrate=4000 tune=zerolatency speed-preset=5'
+
+DATE=`date '+%y%m%d'`
+RECORD=/var/www/recordings/$DATE
+DATETIME=$DATE-`date '+%H:%M:%S.%N' | cut -c1-12`
+if [ ! -d $RECORD ] ; then
+  mkdir $RECORD
+  if [ ! -d $RECORD ] ; then
+    echo "$$ : Failed to create record directory $RECORD"
+    exit 1
+  fi
+fi
+RECORDFILE=$RECORD/video-out-$DATETIME
+
+#	queue 			! \
+#	tee name=t4		!\
+#	queue 		! \
+#	rtpmp2tpay		!\
+#	udpsink host=81.7.134.69 port=5050 t4. ! \
+#
+case $1 in
+  you|youtube)
+	# First Camera
+	auth='copsub.5zuw-3vx2-gs8a-ekt5'
+	# Second Camera
+	auth2='copsub.ps50-ssk8-5egv-aem5'
+	app='live2'
+	serverurl='rtmp://a.rtmp.youtube.com/'$app
+	flashver='FME/3.0%20(compatible;%20FMSc%201.0)'
+	backup=rtmp://b.rtmp.youtube.com/live2?backup=1
+	GST_DEBUG="--gst-debug=flvmux:1,rtmpsink:1"
+	framerate='24/1'
+	vbitrate=4000
+	abitrate=128000
+	ENCAUDIOFORMAT='audio/mpeg,mpegversion=4, stream-format=raw'
+	videoencoder="x264enc bitrate=$vbitrate bframes=0 byte-stream=false aud=true tune=zerolatency"
+	videomode='video/x-h264, level=(string)4.1, profile=high'
+	location=$serverurl'/x/'$auth'?videoKeyframeFrequency=1&totalDatarate=4128 app='$app' flashVer='$flashver' swfUrl='$serverurl
+
+	;;
+  ustream)
+	GST_DEBUG=""
+	width=1024
+	height=576
+	framerate='25/1'
+	videoencoder="x264enc bitrate=500 bframes=0"
+	videomode='queue'
+	ENCAUDIOFORMAT='audio/mpeg'
+	audioencoder="lame mode=3 bitrate=64"
+	audioencoder="lamemp3enc bitrate=64"
+	location="rtmp://1.11788764.fme.ustream.tv/ustreamVideo/11788764/HyYgjUqdwAeY4vFJVrMC4wyAQPxJ6f4t live=1 flashver=FME/3.0\20(compatible;\20FMSc\201.0)"
+	;;
+  *)	echo 'Use youtube or ustream'
+	exit
+esac
+gstreamer_pipelines()
+{
+  ( echo 'audio sink ctr isaudio 1' ; sleep 100000000 ) | \
+    /bin/nc 127.0.0.1 9999	| \
+     (head -1
+      $gstlaunch -v -e \
+	mpegtsmux name=muxer	! \
+	mpegtsparse		! \
+	tee name=t1		! \
+	queue 			! \
+	tcpserversink port=5010 sync-method=2 t1. !\
+	queue leaky=2			! \
+	filesink location=$RECORDFILE.ts  \
+	$SRC			! \
+	$MIXERFORMAT		! \
+	queue leaky=2		! \
+	$VIDEOCONVERT		! \
+	queue			! \
+	x264enc $X264SETTINGS	! \
+	'video/x-h264, framerate=(fraction)'$ratefraction ! \
+	h264parse		! \
+	tee name=t2		! \
+	queue			! \
+	mpegtsmux 		! \
+	mpegtsparse		! \
+	queue 			! \
+	tcpserversink port=5020 t2. ! \
+	queue			! \
+	muxer. fdsrc fd=0	! \
+	queue leaky=2		! \
+	$AUDIOFORMAT		! \
+	lamemp3enc		! \
+	tee name=t3		! \
+	queue leaky=2		! \
+	mpegtsmux 		! \
+	mpegtsparse		! \
+	tee name=t5		! \
+	queue			! \
+	tcpserversink port=5030 t5. ! \
+	queue			! \
+	rtpmp2tpay		! \
+	queue			! \
+	udpsink host=81.7.134.69 port=5070 t3. ! \
+	queue			! \
+	muxer.
+      )
+}
+gstreamer_pipelines2()
+{
+  ( echo 'audio sink ctr isaudio 1' ; sleep 100000000 ) | \
+    /bin/nc 127.0.0.1 9999	| \
+     (head -1
+      $gstlaunch -v -e 			 	 \
+	$SRC					!\
+	$MIXERFORMAT				!\
+	queue max-size-buffers=5 leaky=2	!\
+	$VIDEOCONVERT				!\
+	$videoencoder				!\
+	tee name=vid				!\
+	"$videomode"				!\
+	queue					!\
+	mux. fdsrc fd=0				!\
+	$AUDIOFORMAT				!\
+	queue max-size-buffers=5 leaky=2	!\
+	$audioencoder				!\
+	$ENCAUDIOFORMAT				!\
+	tee name=aud				!\
+	queue					!\
+	flvmux streamable=true name=mux		!\
+	queue					!\
+	rtmpsink location="$location" aud.	!\
+	queue					!\
+	tsmuxer. vid.				!\
+	queue					!\
+	h264parse				!\
+	mpegtsmux name=tsmuxer			!\
+	mpegtsparse				!\
+	queue 					!\
+	tcpserversink port=5010 sync-method=2
+      )
+}
+
+while true ; do
+  snowmix=`netstat -na |grep ':9999 ' |grep LISTEN |cut -c1-3`
+ # snowmix=`ps a |cut -c28-37 | grep snowmix | head -1`
+  if [ X$snowmix = X ] ; then
+    echo "$$ : Snowmix is not running. Sleeping"
+    sleep 2
+    continue
+  fi
+  break
+done
+
+gstreamer_pipelines2
+
+exit

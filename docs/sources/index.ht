@@ -1,0 +1,105 @@
+		<div class="content">
+	
+			<div class="item">
+
+				<h1>Snowmix - The Open Source Live Video Mixer</h1>
+				<br/>
+
+				<h3>What is Snowmix</h3>
+				<br/>
+				<p>Snowmix is a leading Free and Open Source Video Mixer. Snowmix is a
+				very fast and flexible command line tool with a small ressource footprint
+				for dynamically mixing live audio and video feeds. Snowmix supports overlaying
+				and mixing video, images, texts and graphic elements in 2D and 3D as well as
+				suporting mixing audio sources. Snowmix offers animation, simple and advanced
+				scripting, clipping and pattern gradient blending ...
+				<a href="[HOME]Intro/about.html">more</a></p>
+				<br/>
+				<div align="center"><iframe width="640" height="360" src="https://www.youtube.com/embed/RsF6NXi_tyE?feature=player_detailpage" frameborder="0" allowfullscreen></iframe></div>
+
+				<div align="right"><a href="">Top</a></div>
+			</div>
+
+			<div class="item">
+				<h3>Which features does Snowmix offers?</h3>
+				<br/>
+
+				<p>Some of the features offered by Snowmix are:</p>
+				<ul>
+					<li>Unlimited number of regular video feeds (input of video feeds).</li>
+					<li>Unlimited geometries and frame rate (only limited by the computer CPU and RAM).</li>
+					<li>Unlimited number of virtual video feeds (copies of regular feeds)
+					... <a href="[HOME]Intro/faq.html#features">more</a></li>
+				</ul>
+
+				<div align="right"><a href="">Top</a></div>
+			</div>
+
+			<div class="item">
+
+				<h3>Supported Platforms.</h3>
+				<br/>
+
+				<p>Snowmix is supported on a wide range of Linux distributions and versions of
+				Mac OS X. Snowmix version 0.5.0 release was tested on the ...
+				<a href="[HOME]Intro/requirements.html#platforms">more</a></p>
+
+				<div align="right"><a href="">Top</a></div>
+			</div>
+
+			<div class="item">
+
+				<h3>Download.</h3>
+				<br/>
+
+				<p>Latest version of the Snowmix source code is as always
+				<a href="https://sourceforge.net/projects/snowmix/files/latest/download">available for download here</a>.</p>
+
+				<div align="right"><a href="">Top</a></div>
+			</div>
+
+			<div class="item">
+				<h3>News</h3>
+				<br/>
+	
+				<div class="descr">July 31st 2015</div>
+				<p>New Snowmix version 0.5.0 is
+				<a href="https://sourceforge.net/projects/snowmix/files/latest/download">available for download</a>.
+				This version makes Snowmix installable and add for the first time for Snowmix
+				support for industry standard OpenGL hardware accelerated 2D and 3D graphic ...
+				<a href="[HOME]Intro/news.html">more</a></p>
+
+				<img src="[HOME]img/stream-ob1.jpg" width="720" alt="Snowmix in action for Copenhagen Suborbitals">
+				<p>Snowmix in action by the <a href="[HOME]Intro/about.html#who">author</a> for <a href="http://www.copsub.com/">Copenhagen Suboritals</a> in OB-1.</p>
+
+				<div align="right"><a href="">Top</a></div>
+			</div>
+
+			<div class="item">
+				<h3>Reviews</h3>
+				<br/>
+
+				<p>Reviews and ratings of Snowmix, good or bad, are always welcome. Please
+				consider <a href="https://sourceforge.net/projects/snowmix/reviews">rate and/or review</a>
+				Snowmix. Below are extract from some reviews.</p>
+				
+				<p>Quote from from the user
+				<a href="https://sourceforge.net/u/dfantoma/profile/">Diego Fantoma</a>:</p>
+
+				<cite>The greatest open source live video project I've ever seen.
+				It works fine, it's very easy to install and to understand, offering
+				a lot of possible scenario of use and - not less important - it takes
+				a very small footprint in terms of resources. The author is very quick
+				and detailed in answering to questions. Great, great, great! </cite>
+				
+				<p>Quote from from the user
+				<a href="https://sourceforge.net/u/jwmjohnson/">Jordan Johnson</a>:</p>
+
+				<cite>Fantastic video mixer. Does all I could ever need it to do with less
+				overhead than I could ask for. Configuration is a breeze and the app itself
+				is light and efficient.</cite>
+
+				<div align="right"><a href="">Top</a></div>
+			</div>
+		</div>
+

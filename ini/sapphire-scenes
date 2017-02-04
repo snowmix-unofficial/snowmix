@@ -1,0 +1,124 @@
+# Sapphire Scene Settings
+# Copyright by Peter Maersk-Moller 2012 - All rights reserved
+# verbose
+require version 0.4.1
+
+tcl eval set scene(setactivesilent) 1
+# Scene 0
+# tcl eval SceneCreate "Fullscreen" 0
+# SceneSetBackground { scene_id image_id }
+tcl eval SceneSetBackground 0 1
+#tcl eval SceneAddTextClock 0 2 1
+tcl eval SceneAddOverlayText 0 2 3 1
+#tcl eval SceneSetTextClock 0 2 1180 650
+
+# Scene 1
+# tcl eval SceneCreate "Fullscreen" 1
+# tcl eval SceneAddFrame 1 1 0 0 1280 720
+tcl eval SceneSetFrameSource 1 1 feed 1 1 1
+#tcl eval SceneSetFrameSource 1 1 radar 1 1 1
+tcl eval SceneSetFrameSource 1 1 feed 2 0 1
+#tcl eval SceneAddTextClock 1 2 1
+tcl eval SceneAddOverlayText 1 2 3 1
+#tcl eval SceneSetTextClock 1 2 1180 650
+
+# Scene 2
+tcl eval SceneCreate "Full PiP R" 2
+tcl eval SceneAddFrame 2 1 0 0 1280 720
+tcl eval SceneAddFrame 2 2 940 20 320 180
+tcl eval SceneAddOverlayText 2 2
+tcl eval SceneAddFrame 2 3 1034 627 246 47
+tcl eval SceneSetFrameSource 2 1 feed 1 1 1
+tcl eval SceneSetFrameSource 2 1 feed 2 0 1
+tcl eval SceneSetFrameSource 2 2 feed 2 1 1
+tcl eval SceneSetFrameSource 2 2 feed 1 0 1
+tcl eval SceneSetFrameSource 2 3 clock2 2 1 1
+tcl eval SceneAddOverlayText 2 3 1
+#tcl eval SceneAddTextClock 2 2 1
+#tcl eval SceneSetTextClock 2 2 1180 650
+
+# Scene 3
+tcl eval SceneCreate "Main R 2L" 3
+tcl eval SceneSetBackground 3 1
+tcl eval SceneAddFrame 3 1 408 40 832 468
+tcl eval SceneAddFrame 3 2 40 98 346 194
+tcl eval SceneAddFrame 3 3 40 314 346 194
+tcl eval SceneAddOverlayText 3 2
+tcl eval SceneAddFrame 3 4 408 530 342 75
+# tcl eval SceneSetFrameSource { scene_id frame_id type feed_id front active } {
+tcl eval SceneSetFrameSource 3 1 feed 1 1 1
+#tcl eval SceneSetFrameSource 3 1 graph 1 1 1
+#tcl eval SceneSetFrameSource 3 1 radar 1 1 1
+#tcl eval SceneSetFrameSource 3 1 image 4 1 1
+tcl eval SceneSetFrameSource 3 1 feed 2 0 1
+tcl eval SceneSetFrameSource 3 2 feed 4 1 1
+#tcl eval SceneSetFrameSource 3 2 radar 1 1 1
+tcl eval SceneSetFrameSource 3 2 feed 1 0 1
+tcl eval SceneSetFrameSource 3 3 feed 3 1 1
+tcl eval SceneSetFrameSource 3 3 graph 1 1 1
+tcl eval SceneSetFrameSource 3 3 feed 4 0 1
+tcl eval SceneSetFrameSource 3 4 clock2 1 1 1
+tcl eval SceneAddOverlayText 3 3 1
+#tcl eval SceneAddTextClock 3 1 1
+#tcl eval SceneSetTextClock 3 1 615 566
+
+# Scene 4
+tcl eval SceneCreate "Main L 2R" 4
+tcl eval SceneSetBackground 4 2
+tcl eval SceneAddFrame 4 1 40 40 832 468
+tcl eval SceneAddFrame 4 2 896 98 340 192
+tcl eval SceneAddFrame 4 3 896 317 340 192
+tcl eval SceneAddOverlayText 4 2
+tcl eval SceneAddFrame 4 4 530 530 342 75
+tcl eval SceneSetFrameSource 4 1 feed 1 1 1
+tcl eval SceneSetFrameSource 4 2 feed 2 1 1
+tcl eval SceneSetFrameSource 4 3 feed 3 1 1
+tcl eval SceneSetFrameSource 4 4 clock2 1 1 1
+tcl eval SceneAddOverlayText 4 3 1
+#tcl eval SceneAddTextClock 4 1 1
+#tcl eval SceneSetTextClock 4 1 724 568
+
+# Scene 5
+tcl eval SceneCreate "Main L 1R" 5
+tcl eval SceneSetBackground 5 2
+tcl eval SceneAddFrame 5 1 40 40 832 468
+tcl eval SceneAddFrame 5 2 914 317 320 192
+tcl eval SceneAddFrame 5 3 914 232 342 75
+tcl eval SceneAddOverlayText 5 2
+tcl eval SceneAddFrame 5 4 1034 627 246 47
+tcl eval SceneSetFrameSource 5 1 feed 1 1 1
+tcl eval SceneSetFrameSource 5 2 feed 3 1 1
+tcl eval SceneSetFrameSource 5 3 clock2 2 1 1
+tcl eval SceneSetFrameSource 5 4 clock2 2 1 0
+tcl eval SceneAddOverlayText 5 3 1
+#tcl eval SceneAddTextClock 5 2 1
+#tcl eval SceneSetTextClock 5 2 1067 254
+
+# Scene 6
+tcl eval SceneCreate "Mosaic" 6
+tcl eval SceneAddFrame 6 1 80 25 320 180
+tcl eval SceneAddFrame 6 2 480 25 320 180
+tcl eval SceneAddFrame 6 3 880 25 320 180
+tcl eval SceneAddFrame 6 4 80 230 320 180
+tcl eval SceneAddFrame 6 5 480 230 320 180
+tcl eval SceneAddFrame 6 6 880 230 320 180
+tcl eval SceneAddFrame 6 7 80 440 320 180
+tcl eval SceneAddFrame 6 8 480 440 320 180
+tcl eval SceneAddFrame 6 9 880 440 320 180
+tcl eval SceneSetFrameSource 6 1 feed 1 1 1
+tcl eval SceneSetFrameSource 6 2 feed 2 1 1
+tcl eval SceneSetFrameSource 6 3 feed 3 1 1
+tcl eval SceneSetFrameSource 6 4 feed 4 1 1
+tcl eval SceneSetFrameSource 6 5 feed 5 1 1
+tcl eval SceneSetFrameSource 6 6 feed 6 1 1
+tcl eval SceneSetFrameSource 6 7 feed 7 1 1
+tcl eval SceneSetFrameSource 6 8 feed 8 1 1
+tcl eval SceneSetFrameSource 6 9 feed 9 1 1
+tcl eval SceneAddOverlayText 6 2 3 1
+#tcl eval SceneAddTextClock 6 2 1
+#tcl eval SceneSetTextClock 6 2 1180 650
+
+tcl eval SceneSetState 3 1
+tcl eval SceneSetState 5 1
+#tcl eval SceneSetState 2 1
+#tcl eval set scene(setactivesilent) 0

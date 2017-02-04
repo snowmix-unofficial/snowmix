@@ -1,0 +1,64 @@
+<div class="content">
+
+	<div class="item">
+
+		<h1>Snowmix Guides</h1>
+		<div class="descr">Updated for Snowmix 0.5.1</div>
+	</div>
+
+	<div class="item">
+
+		<h3>Introduction</h3>
+		<br/>
+
+		<p>This page list the Snowmix Guides. The Snowmix Guides are manuals each
+		centered on a specific topic with detailed examples on how to use a
+		specific group of features within Snowmix.</p>
+
+		<p>For now the following Snowmix Guides has been written:</p>
+
+		<ul>
+			<li><a href="https://sourceforge.net/p/snowmix/wiki/Audio/">Snowmix Audio Guide</a>.
+			<li><a href="https://sourceforge.net/p/snowmix/wiki/AV%20Sync/">Snowmix AV Sync Guide</a>.
+			<li><a href="[HOME]Examples/scripting.html">Snowmix Basic Scripting Guide</a>.
+			<li><a href="https://sourceforge.net/p/snowmix/wiki/Snowmix%20Libraries/">Snowmix Libraries Guide</a>.
+			<li><a href="[HOME]Documentation/guide-glshapes.html">Snowmix Glshapes Guide</a>. Snowmix OpenGL Support.
+			<li><a href="https://sourceforge.net/p/snowmix/wiki/Snowmix%20Tutorials%20-%20Scenes/">Snowmix Scenes Tutorial</a>.
+			<li><a href="https://sourceforge.net/p/snowmix/wiki/Shapes/">Snowmix Shapes Guide</a>.
+			<li><a href="https://sourceforge.net/p/snowmix/wiki/Tcl%20Interpreter/">Snowmix Tcl Interpreter Guide</a>.
+			<li><a href="https://sourceforge.net/p/snowmix/wiki/Video%20Text">Snowmix Text Guide</a>.
+			<li><a href="https://sourceforge.net/p/snowmix/wiki/Snowmix%20and%20CDNs/">Feeding Live Video to CDNs</a>.
+		</ul>
+
+		<p>There will be written more manuals and the existing ones are expected to be updated and improved over time.</p>
+
+		<div align="right"><a href="">Top</a></div>
+	</div>
+	<div class="item">
+
+		<h3>Video Tutorials</h3>
+		<br/>
+
+		<p>So far a number of video tutorials are available. You can run them your self executing the following commands:</p>
+
+		<code>snowmix ini/text_tutorials.ini</code>
+
+		<p>and then in second window</p>
+
+		<code>output2screen</code>
+
+		<p>and then in third window (although not strictly needed)</p>
+
+		<code>input2feed 4 4</code>
+
+		<p>Alternatively you can watch them with sound here below:</p>
+
+		<div align="center"><iframe width="640" height="360" src="https://www.youtube.com/embed/S4g2hCKSClw?feature=player_detailpage" frameborder="0" allowfullscreen></iframe></div>
+		<br/>
+		<div align="center"><iframe width="640" height="360" src="https://www.youtube.com/embed/tCqFqsZ5rjE?feature=player_detailpage" frameborder="0" allowfullscreen></iframe></div>
+		<br/>
+		<div align="center"><iframe width="640" height="360" src="https://www.youtube.com/embed/V_i6P6P2G6w?feature=player_detailpage" frameborder="0" allowfullscreen></iframe></div>
+		<br/>
+		<div align="center"><iframe width="640" height="360" src="https://www.youtube.com/embed/AonjRPmOR-Y?feature=player_detailpage" frameborder="0" allowfullscreen></iframe></div>
+	</div>
+</div>

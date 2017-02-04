@@ -1,0 +1,243 @@
+# Basic Feeds Settings
+# Copyright by Peter Maersk-Moller 2013 - All rights reserved
+# verbose
+#require version 0.4.4
+require version 0.5.1
+
+# Functions provided in this Snowmix Library
+# FeedInit {} : Intializes this library and is run automatically
+# FeedList {} : Prints a single line with numbers of defined feeds
+# FeedCreate { name id width height socket } : Creates a feed with the parameters specified.
+# FeedPAR { id x y } : Set the Pixel Aspect Ratio for a feed
+# FeedDeadImage { id timeout framefile } : Set the dead image for a feed
+
+command create libfeeds.tcl
+
+  # commands : overlay_proc | exist id | geometry id | list | shape
+  proc FeedInfo { command args } {
+    global feed
+    # exist <feed no>
+    if {[string match overlay_proc $command]} {
+      return
+    } elseif {[string match par $command]} {
+      set id [lindex $args 0]
+      if {![string is integer -strict $id] || $id < 0} { return }
+      set par [lindex [lindex [snowmix info feed geometry $id] 0] 5]
+      if {[llength $par] < 1} { return }
+      return $par
+    } elseif {[string match exist $command] && [llength $args] > 0} {
+      set id [lindex $args 0]
+      if {![string is integer -strict $id] || $id < 0} { return 0 }
+      set ids [snowmix info feed geometry ids]
+      if {[lsearch $ids $id] < 0} { return 0 }
+      return 1
+    # exist <feed no>
+    } elseif {[string match geometry $command] && [llength $args] > 0} {
+      set id [lindex $args 0]
+      if {![string is integer -strict $id] || $id < 0} { return }
+      set geometry [lindex [lindex [snowmix info feed geometry $id] 0] 2]
+      if {[llength $geometry] < 1} { return }
+      return $geometry
+    } elseif {[string match list $command]} {
+      return [snowmix info feed geometry ids]
+    } elseif {[string match shape $command]} {
+      return -1
+    } elseif {[string match buttons $command]} {
+      return $feed(buttons)
+      return
+    }
+    return 0
+  }
+
+  proc FeedDisplayName {args} {
+#    puts "FeedDisplayName $args"
+    return 1
+  }
+  proc FeedDisplayTime {args} {
+#    puts "FeedDisplayTime $args"
+    return 1
+  }
+
+  # Add a command for a feed that is being watch/monitored for state change
+  proc FeedWatchCommand { id state command } {
+    global feed
+    if {![string is integer $id] || $id < 0 ||
+        ![info exist feed(name,$id)] || [lsearch -exact $feed(watchlist) $id] < 0 } return
+    set feed(watch,command,$id,$state) $command
+  }
+
+  # Remove a feed id to watch
+  proc FeedUnWatch { id } {
+    global feed
+    if {![string is integer $id] || $id < 0 ||
+        [lsearch -exact $feed(watchlist) $id] < 0 }  return
+    set list ""
+    foreach list_id $feed(watchlist) {
+      if { $id != $list_id } { lappend list $list_id }
+    }
+    set feed(watchlist) $list
+  }
+
+  # Add a feed id to watch for state change
+  proc FeedWatch { id } {
+    global feed
+    if {![string is integer $id] || $id < 0 ||
+        ![info exist feed(name,$id)] || [lsearch -exact $feed(watchlist) $id] > -1 }  return
+    if {[llength $feed(watchlist)] == 0} { Add2Update pre FeedWatchCheck }
+    lappend feed(watchlist) $id
+    set stat [lindex [snowmix info feed status $id] 0]
+    set feed(watch,state,$id) [lindex $stat 1]
+    set feed(watch,good,$id) [lindex $stat 3]
+    set feed(watch,dropped,$id) [lindex $stat 4]
+    set feed(watch,missed,$id) [lindex $stat 5]
+#puts "Feed $id $stat : $feed(watch,state,$id) $feed(watch,good,$id) $feed(watch,dropped,$id) $feed(watch,missed,$id)"
+  }
+
+  # This is called by pre overlay at frame rate
+  proc FeedWatchCheck {} {
+    global feed
+    foreach id $feed(watchlist) {
+      set stat [lindex [snowmix info feed status $id] 0]
+      set state [lindex $stat 1]
+      set good [lindex $stat 3]
+      set missed [lindex $stat 4]
+      set dropped [lindex $stat 5]
+      if { $state != $feed(watch,state,$id)} {
+        #puts "Feed $id State Change from <$feed(watch,state,$id)> to <$state>"
+        #puts " - old good $feed(watch,good,$id) good $good"
+        if { $state != "RUNNING" || $state == "RUNNING" && $good != $feed(watch,good,$id) } {
+          #puts "TAKING state change"
+          if {[info exist feed(watch,command,$id,$state)]} {
+            #puts "Command executing"
+            eval $feed(watch,command,$id,$state)
+          }
+          set feed(watch,state,$id) $state
+          set feed(watch,good,$id) $good
+          set feed(watch,dropped,$id) $missed
+          set feed(watch,missed,$id) $dropped
+        } else {
+          #puts " - Not taking"
+        }
+      }
+      #set feed(watch,state,$id) $state
+      set feed(watch,good,$id) $good
+      set feed(watch,dropped,$id) $missed
+      set feed(watch,missed,$id) $dropped
+    }
+  }
+
+  proc PMM { args } {
+    set feed [lindex $args 0]
+    set scene_id [lindex $args 1]
+    set frame_id [lindex $args 2]
+    puts stderr "Feed PMM <$args>"
+    SceneFrameToogleTitleBar $scene_id $frame_id
+    puts stderr "Feed PMM done"
+  }
+
+  proc FeedInit {} {
+    global feed system
+
+    # List of feeds created
+    set feed(feeds) ""
+
+    # maximum number of feeds
+    set feed(maxfeeds) $system(maxplaces,video_feeds)
+
+    # maximum feed geometry
+    set feed(maxwidth) $system(width)
+    set feed(maxheight) $system(height)
+    #set feed(maxwidth) [expr round($system(width))]
+    #set feed(maxheight) [expr round($system(height))]
+    # Create the base feed (feed 0)
+    FeedCreate Base 0 $feed(maxwidth) $feed(maxheight)  ""
+    set feed(buttons) {{FeedDisplayName binary {Show Name} {Hide Name}}}
+    lappend feed(buttons) {FeedDisplayTime binary {Show Time} {Hide Time}}
+    lappend feed(buttons) {PMM frame_button {Title Bar}}
+    if {[llength [info proc SceneAddFrameType]]} {
+      SceneAddFrameType feed  FeedInfo
+    } else {
+      snowmix message "feeds.slib : WARNING. Could not add feed type to scene frame types"
+    }
+    # Feeds watchlist
+    set feed(watchlist) ""
+
+    snowmix message "feeds.slib\ \ : Feeds initialized."
+    return
+  }
+
+  proc FeedList {} {
+    global feed
+    snowmix parse "message Feeds $feed(feeds)\n"
+    #return "\nmessage Feeds $feed(feeds)\n"
+    return
+  }
+
+  proc FeedCreate { name id width height socket } {
+    global feed
+    #set s "\n"
+    set s ""
+    if {$id < 0 || $id >= $feed(maxfeeds) || [info exist feed(name,$id)]} {
+      snowmix message FeedCreate failed
+      return "\nFeedCreate failed\n"
+    }
+    set width [expr round($width)]
+    set height [expr round($height)]
+    if {$width < 1 || $height < 1 || $width > $feed(maxwidth) || $height > $feed(maxheight)} {
+      snowmix message FeedCreate failed
+      return "\nFeedCreate failed\n"
+    }
+    set feed(name,$id) "$name"
+    set feed(width,$id) $width
+    set feed(height,$id) $height
+    set feed(socket,$id) "$socket"
+    set feed(parx,$id) 1
+    set feed(pary,$id) 1
+    if {$id > 0} {
+      append s "feed add $id $name\n"
+      append s "feed geometry $id $width $height\n"
+      append s "feed scale $id 1 1\n"
+      append s "feed live $id\n"
+      append s "feed socket $id $socket\n"
+      #append s "message feed $id to be created\n"
+      snowmix parse "$s"
+    } else {
+      #append s "message feed $id to be defined\n"
+      # Feed 0 defined by default
+    }
+    lappend feed(feeds) $id
+    return
+  }
+
+  proc FeedPAR { id x y } {
+    global feed
+    set s "\n"
+    if {$id < 0 || $id >= $feed(maxfeeds) || $x < 1 || $y < 1 || ![info exist feed(name,$id)]} {
+      snowmix message FeedPAR failed
+      return "\nFeedPAR failed\n"
+    }
+    snowmix parse "feed par $id $x $y"
+    set feed(parx,$id) $x
+    set feed(pary,$id) $y
+    return
+  }
+
+  proc FeedDeadImage { id timeout framefile } {
+    global feed
+    set s "\n"
+    if {$id < 0 || $id >= $feed(maxfeeds) || $timeout < 0 || ![info exist feed(name,$id)]} {
+      return "\nFeedDeadImage failed\n"
+    }
+    set feed(timeout,$id) $timeout
+    set feed(framefile,$id) $framefile
+    append s "feed idle $id $timeout $framefile"
+
+    snowmix parse "$s"
+    # return "$s\n"
+    return
+  }
+  FeedInit
+  snowmix message "feeds.slib\ \ : Library loaded."
+command end
+
+tcl exec libfeeds.tcl

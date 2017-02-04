@@ -1,0 +1,56 @@
+# Snowmixni file example with 3 vfeeds, one image and one text placemen 
+#
+# Copyright Peter Maersk-Moller (C) 2015. All rights reserved.
+#
+#
+require version 0.4.4
+# Base settings for 1024x576@25 fps
+# Output control socket is /tmp/mixer1
+system control port 9999
+system geometry 1024 576 BGRA
+system frame rate 25
+system socket /tmp/mixer1
+feed idle 0 1
+
+# Base settings for a single feed of 704x576
+feed add 1 Camera 1
+feed geometry 1 704 576
+feed live 1
+feed idle 1 100 frames/dead-704x576.bgra
+feed socket 1 /tmp/feed-control-pipe
+
+# The command 'stack 0' applies default and as such is not needed
+# stack  0
+
+# Set a text center of top of Camera 1
+text string 0 Example
+text font 0 Sans Bold 12
+text place 0 0 0 352 0 0.2 0.2 0.2 nw
+text align 0 center top
+
+# Load image and place it at 4,6
+image load 0 images/CS_logo-black-64x64.png
+image place 0 0 4 6
+
+# Creating 3 vfeeds sourced by feed 1
+vfeed add 1 Camera 1
+vfeed source feed 1 1
+vfeed add 2 Camera 1 scaled 1/2
+vfeed source feed 2 1
+vfeed add 3 Camera 1 scaled 1/2
+vfeed source feed 3 1
+
+# Place 3 vfeeds
+# vfeed place rect <vir id> <x> <y> <width> <height> <src_x> <src_y> <rotation> <scale_x> <scale_y> <alpha>
+vfeed place rect 1 0 0 704 576 0 0 0.0 1.0 1.0 1.0
+vfeed place rect 2 704 0 320 288 704 16 0 0.0 0.5 0.5 1.0
+vfeed place rect 3 704 288 320 288 704 16 0 0.0 0.5 0.5 1.0
+
+# Define a new command (macro)
+command create Show
+  vfeed overlay all
+  image overlay all
+  text overlay all
+  loop
+command end Show
+overlay finish Show

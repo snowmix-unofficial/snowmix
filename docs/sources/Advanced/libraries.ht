@@ -1,0 +1,86 @@
+<div class="content">
+
+	<div class="item">
+
+		<h1>Snowmix Libraries</h1>
+		<div class="descr">Updated for Snowmix 0.5.1</div>
+
+		<p>Snowmix Libraries is a collection of software libraries offering added
+		functionality to Snowmix. They are located in the $SNOWMIX/slib directory
+		installed during the installation of Snowmix. They are intended
+		to be included in the ini file using the <i>include</i> command. The libraries are
+		mostly written in Tcl to be executed by the embedded Tcl interpreter of Snowmix.
+		Snowmix Libraries support started from SNowmix version 0.4.4</p>
+	</div>
+
+	<div class="item">
+
+		<h3>Standard Libraries</h3>
+		<br/>
+
+		<p>Documentation for the following Snowmix Standard Libraries are available:</p>
+		<ul>
+			<li><a href="https://sourceforge.net/p/snowmix/wiki/Snowmix%20Libraries%20-%20System">system.slib</a> : Basic system routines and setup</li>
+			<li><a href="https://sourceforge.net/p/snowmix/wiki/Snowmix%20Libraries%20-%20Texts">texts.slib</a> : Basic setup for texts.</li>
+			<li><a href="https://sourceforge.net/p/snowmix/wiki/Snowmix%20Libraries%20-%20Images">images.slib</a> : Basic setup for images.</li>
+			<li><a href="https://sourceforge.net/p/snowmix/wiki/Snowmix%20Libraries%20-%20Feeds">feeds.slib</a> : Basic setup for feeds.</li>
+			<li><a href="https://sourceforge.net/p/snowmix/wiki/Snowmix%20Libraries%20-%20Basic%20Shapes">basic-shapes.slib</a> : Basic shape definitions.</li>
+		</ul>
+	</div>
+
+	<div class="item">
+
+		<h3>Special Libraries</h3>
+		<br/>
+
+		<p>Documentation for the following Snowmix Special Libraries are available:</p>
+		<ul>
+			<li><a href="https://sourceforge.net/p/snowmix/wiki/Snowmix%20Libraries%20-%20Scenes">scenes.slib</a> : Advanced Scene Library <a href="https://sourceforge.net/p/snowmix/wiki/Snowmix%20Libraries%20-%20Scenes">part 1</a>.</li>
+			<li><a href="https://sourceforge.net/p/snowmix/wiki/Snowmix%20Libraries%20-%20Scenes">scenes.slib</a> : Advanced Scene Library <a href="https://sourceforge.net/p/snowmix/wiki/Snowmix%20Libraries%20-%20Scenes%202">part 2</a>.</li>
+			<li><a href="">clocks2.slib</a> : Basic and advanced clocks and counters Library.</li>
+		</ul>
+
+		<p>There is a tutorial on how to use
+		<a href="https://sourceforge.net/p/snowmix/wiki/Snowmix%20Tutorials%20-%20Scenes/">Snowmix Libraries for Scenes</a> available.</p>
+	</div>
+
+	<div class="item">
+
+		<h3>Undocumented Libraries</h3>
+		<br/>
+
+		<p>The following are special libraries currently under development.</p>
+
+		<ul>
+			<li>graphs.slib : Special purpose library for graphs applications.</li>
+			<li>radar.slib : Special purpose library for radar application.</li>
+			<li>synctest.slib : Special purpose library for measuring delays and sync.</li>
+		</ul>
+	</div>
+
+	<div class="item">
+
+		<h3>Library Usage</h3>
+		<br/>
+
+		<p>You can use the libraries by including in your ini file using the <i>include</i> command like this:</p>
+
+		<code>include slib/system.slib</code>
+
+		<p>The search path functionality of Snowmix will search for the file slib/system.slib
+		to include using the following order:</p>
+
+		<ul>
+			<li>Current Working Directory</li>
+			<li>$HOME/$SNOWMIX_PREFIX</li>
+			<li>$SNOWMIX</li>
+		</ul>
+
+		<p>If SNOWMIX_PREFIX is not defined, SNowmix will on Linux use '.snowmix' and on Mac OS X
+		'Snowmix' as default.</p>
+
+		<p>Most libraries, the system.slib excluded, depends one or more other libraries to be
+		included first. Any library MUST be included one time only.</p>
+
+	</div>
+</div>

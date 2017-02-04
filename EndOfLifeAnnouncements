@@ -1,0 +1,179 @@
+	End of Life Announcements for Snowmix Release Version 0.5.1
+		Copyright 2016 - Peter Maersk-Moller
+
+		No additional ELA for Snowmix 0.5.1.
+
+			---------------------	
+
+	End of Life Announcements for Snowmix Release Version 0.5.0
+		Copyright 2015 - Peter Maersk-Moller
+
+- As announced earlier Snowmix no longer supports the following commands
+listed below together with their replacements:
+
+	Obsolete command		Replacement
+	----------------------------------------------------
+	cairooverlay feed		-- no replacement --
+	image place align		image align
+	image place alpha		image alpha
+	image place anchor		image anchor
+	image place clip		image clip
+	image place coor		image coor
+	image place filter		image filter
+	image place image		image image
+	image place matrix		image matrix
+	image place move alpha		image move alpha
+	image place move clip		image move clip
+	image place move coor		image move coor
+	image place move offset		image move offset
+	image place move rotation	image move rotation
+	image place move scale		image move scale
+	image place offset		image offset
+	image place rotation		image rotation
+	image place scale		image scale
+	overlay feed			feed overlay
+	overlay image			image overlay
+	overlay virtual feed		vfeed overlay
+	overlay text			text overlay
+	text place align                text align
+	text place alpha                text alpha
+	text place anchor               text anchor
+	text place backgr alpha         text backgr alpha
+	text place backgr clip          text backgr clip
+	text place backgr linpat        text backgr linpat
+	text place backgr round         text backgr round
+	text place backgr alpha         text backgr alpha
+	text place backgr move alpha    text backgr move alpha
+	text place backgr move clip     text backgr move clip
+	text place backgr rgb           text backgr rgb
+	text place backgr               text backgr
+	text place clip                 text clip
+	text place clipabs              text clipabs
+	text place coor                 text coor
+	text place grow                 text grow
+	text place move alpha           text move alpha
+	text place move clip            text move clip
+	text place move coor            text move coor
+	text place move rotation        text move rotation
+	text place move scale           text move scale
+	text place offset               text offset
+	text place repeat move          text repeat move
+	text place rgb                  text rgb
+	text place rotation             text rotation
+	text place scale                text scale
+
+
+- Snowmix no longer supports executing strings returned by the Tcl Interpreter
+as Snowmix commands. The functionality has been replaced by the embedded tcl
+command "snowmix parse".
+
+
+--------------------------------------------------------------------------------
+
+	End of Life Announcements for Snowmix Release Version 0.4.5
+		Copyright 2014 - Peter Maersk-Moller
+
+Snowmix will from version 0.5 no longer support execution of the following
+commands listed below as obsolete commands. The replacement command for each
+is listed in the same line:
+
+	Obsolete command		Replacement command
+	image place align		image align
+	image place alpha		image alpha
+	image place anchor		image anchor
+	image place clip		image clip
+	image place coor		image coor
+	image place filter		image filter
+	image place image		image image
+	image place matrix		image matrix
+	image place move alpha		image move alpha
+	image place move clip		image move clip
+	image place move coor		image move coor
+	image place move offset		image move offset
+	image place move rotation	image move rotation
+	image place move scale		image move scale
+	image place offset		image offset
+	image place rotation		image rotation
+	image place scale		image scale
+
+	text place align                text align
+	text place alpha                text alpha
+	text place anchor               text anchor
+	text place backgr alpha         text backgr alpha
+	text place backgr clip          text backgr clip
+	text place backgr linpat        text backgr linpat
+	text place backgr round         text backgr round
+	text place backgr alpha         text backgr alpha
+	text place backgr move alpha    text backgr move alpha
+	text place backgr move clip     text backgr move clip
+	text place backgr rgb           text backgr rgb
+	text place backgr               text backgr
+	text place clip                 text clip
+	text place clipabs              text clipabs
+	text place coor                 text coor
+	text place grow                 text grow
+	text place move alpha           text move alpha
+	text place move clip            text move clip
+	text place move coor            text move coor
+	text place move rotation        text move rotation
+	text place move scale           text move scale
+	text place offset               text offset
+	text place repeat move          text repeat move
+	text place rgb                  text rgb
+	text place rotation             text rotation
+	text place scale                text scale
+
+
+--------------------------------------------------------------------------------
+	
+	End of Life Announcements for Snowmix Release Version 0.4.4
+		Copyright 2014 - Peter Maersk-Moller
+
+Snowmix will from version 0.5 no longer support execution of the following
+commands:
+
+	overlay feed ...
+	overlay image ...
+	overlay virtual feed ...
+
+The commands are still available in Snowmix 0.4.x. The commands has been
+replaced in Snowmix-0.4.4 by the following commands:
+
+	feed overlay ...
+	image overlay ...
+	virtual feed ...
+
+The command *feed overlay* is an addition to to the *stack* command providing
+control for when a feed is overlayed/mixed.
+
+The command *shape overlay* has been added the identical command
+*shape place overlay*. The latter form is recommended from version 0.4.4 and
+onwards as the form *shape overlay* will be removed from version 0.5.x
+	
+Snowmix will from version 0.5 no longer support execution of snowmix commands through returned string from the Tcl Interpreter. Until then the follwoing is still supported
+
+	command create example.tcl
+	  proc my_example {} {
+	    set s "\ntext string 1 This is an example\n"
+	    return $s
+	  }
+	command end
+	tcl exec example.tcl
+	tcl eval my_example
+
+The above example is setting the text string from within the Tcl Interpreter. From version
+0.5.x this has to be implemented as shown below
+
+
+	command create example.tcl
+	  proc my_example {} {
+	    set s "text string 1 This is an example"
+	    snowmix parse $s
+	  }
+	command end
+	tcl exec example.tcl
+	tcl eval my_example
+
+The Tcl interpreter command **snowmix parse** was introduced for Snowmix version 0.4.4
+
+

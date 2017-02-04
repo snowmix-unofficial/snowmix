@@ -1,0 +1,56 @@
+#!/bin/bash
+
+echo='echo -e'
+
+title='Snowmix - The Swiss Army Knife of Open Source Live Video Mixing'
+footer_file=footer
+header_file=head
+sidenav_file=sidenav
+dirs='. Intro Documentation Examples Advanced'
+
+make_page_top()
+{
+  #$echo '\t\t<a name="top" href="[HOME]"><div class="header">\n'
+  $echo '\t\t<div class="header">\n'
+  $echo '\t\t\t<div class="title">\n'
+  $echo '\t\t\t\t<a name="top" href="[HOME]">'
+  $echo '\t\t\t\t<h1>Snowmix - Live Video Mixer</h1>'
+  $echo '\t\t\t\t<h3>The Swiss Army Knife of Open Source Live Video Mixing.</h3>'
+#  cat search
+  $echo '\t\t\t</a></div>\n'
+  $echo '\t\t\t\n'
+  $echo '\t\t</div>\n'
+}
+
+# make_html_file head
+make_html_file()
+{
+  file=$1
+  content=$2
+  topdir="$3"
+  #cat $header_file >$file
+  sedtopdir=`echo "$topdir" | sed 's/\//\\\\\//g'`
+  sed 's/\[HOME]/'$sedtopdir'/g' <$header_file >$file
+  $echo '<body>\n' >>$file
+  $echo '<div class="container">' >>$file
+  $echo '\n\t<div class="main">\n' >>$file
+  make_page_top | sed 's/\[HOME]/'$sedtopdir'/g' >>$file
+  sed 's/\[HOME]/'$sedtopdir'/g' <$content >>$file
+  sed 's/\[HOME]/'$sedtopdir'/g' <$sidenav_file >>$file
+  $echo '\t\t<div class="clearer"><span></span></div>\n' >>$file
+  $echo '\t</div>' >>$file
+  cat $footer_file >>$file
+  $echo '</div>' >>$file		# container
+  $echo '</body>' >>$file
+  $echo '</html>' >>$file
+}
+
+for dir in $dirs ; do
+  if [ ! -d ../$dir ] ; then mkdir ../$dir ; fi
+  for file in $dir/*.ht ; do
+    if [ "$dir" = "." ] ; then TOPDIR="" ; else TOPDIR="../" ; fi
+    if [ ! -f $file ] ; then continue ; fi
+    echo make_html_file ../$file"ml" $file "$TOPDIR"
+    make_html_file ../$file"ml" $file "$TOPDIR"
+  done
+done

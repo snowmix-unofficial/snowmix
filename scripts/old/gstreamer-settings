@@ -1,0 +1,60 @@
+#!/bin/bash
+if [ X$SM = X -o ! -f $SM/scripts/gstreamer-settings ] ; then
+  echo "You need to set the environment variable SM to the full path to the Snowmix directory"
+  echo "Example : SM="$HOME"/Projects/Snowmix-0.4.3"
+  exit
+fi
+
+# AAC Encoders to search for
+aac_encoders="faac avenc_aac"
+aac_encoder=''
+
+get_aac_encoder()
+{
+  for encoder in $aac_encoders ; do
+    $gstinspect $encoder >/dev/null 2>&1
+    if [ $? -eq 0 ] ; then
+      echo $encoder
+      return
+    fi
+  done
+}
+
+gstlaunch=`which gst-launch-1.0`
+gstinspect=`which gst-inspect-1.0`
+if [ X$gstlaunch != X ] ; then
+  VIDEOCONVERT=videoconvert
+  VIDEO=video/x-raw
+  AUDIO=audio/x-raw
+  vfid=string
+  afid="format=(string)S16LE, "
+  aac_encoder=`get_aac_encoder`
+  tsmuxer=mpegtsmux
+  tsparser=tsparse
+  decodebin=decodebin
+else
+  gstlaunch=`which gst-launch-0.10`
+  gstinspect=`which gst-inspect-0.10`
+  if [ X$gstlaunch != X ] ; then
+    aac_encoder=`get_aac_encoder`
+    VIDEOCONVERT=ffmpegcolorspace
+    VIDEO=video/x-raw-rgb
+    AUDIO=audio/x-raw-int
+    vfid=fourcc
+    afid=""
+    tsmuxer=mpegtsmux
+    tsparser=mpegtsparse
+    decodebin=decodebin2
+  else
+    echo "Could not find gst-launch-1.0 or gst-launch-0.10. Stopping"
+    exit
+  fi
+fi
+if [ "X$aac_encoder" = X ] ; then
+  echo "Warning : no aac encoder found"
+fi
+if [ "X$gstlaunch" = X ] ; then
+  echo "Error : no gst-launch found"
+  exit 1
+fi
+GSTREAMER_SETTINGS_SET=yes

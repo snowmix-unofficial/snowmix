@@ -1,0 +1,216 @@
+#!/bin/bash
+
+# Copyright 2013-2015 - Peter Maersk-Moller
+
+if [ "X$BASH" != X ] ; then 
+  echo="echo -e"
+else
+  echo=echo
+fi
+
+INSTALLER_TARGET=/
+PACKAGE1='autoconf automake libtool pkgconfig'
+PACKAGE2='pango cairo'
+PACKAGE3='mesa libsdl libpng freeglut'
+RELEASE=`uname -r |cut -f1 -d.`
+PORTVERSION="MacPorts-2.3.4"
+case $RELEASE in
+  10) OSNAME=SnowLeopard  ; VERSION=10.6 ; CLITOOLS=com.apple.pkg.DeveloperToolsCLI ;;
+  11) OSNAME=Lion         ; VERSION=10.7 ; CLITOOLS=com.apple.pkg.DeveloperToolsCLI ;;
+  12) OSNAME=MountainLion ; VERSION=10.8 ; CLITOOLS=com.apple.pkg.DeveloperToolsCLI ;;
+  13) OSNAME=Mavericks    ; VERSION=10.9 ; CLITOOLS=com.apple.pkg.CLTools_Executables ;;
+  14) OSNAME=Yosemite     ; VERSION=10.10 ; CLITOOLS=com.apple.pkg.CLTools_Executables ;;
+  15) OSNAME=ElCapitan    ; VERSION=10.11 ; CLITOOLS=com.apple.pkg.CLTools_Executables ;;
+  15) OSNAME=Unknown      ; VERSION=10.12 ; CLITOOLS=com.apple.pkg.CLTools_Executables ;;
+  *) echo "Version not supported. Press return" ; read reply ; exit ;;
+esac
+# GStreamer 1.5.0-1.5.2 has issues with matroskamux and tsmux/tsdemux
+# GSTMAJOR=5
+# GSTMINOR=2
+# So we pick GStreamer-1.4.5
+GSTMAJOR=4
+GSTMINOR=5
+# But now 1.6.3 is available
+GSTMAJOR=6
+GSTMINOR=3
+# Until 1.5.0 the package type was universal, after that x86_64
+if [ $GSTMAJOR -lt 5 ] ; then
+  PKGTYPE=universal
+else
+  PKGTYPE=x86_64
+fi
+GSTVERSION=1.$GSTMAJOR.$GSTMINOR
+GSTPKG=gstreamer-1.0-$GSTVERSION-$PKGTYPE.pkg
+GSTURL=http://gstreamer.freedesktop.org/data/pkg/osx/1.$GSTMAJOR.$GSTMINOR/$GSTPKG
+PORTPKG=$PORTVERSION-$VERSION-$OSNAME.pkg
+PORTURL="https://distfiles.macports.org/MacPorts/$PORTPKG"
+# Port installs it into /opt/local
+#export PATH=/opt/local/bin:$PATH
+
+GetInstallLibPng12()
+{
+  curl -L -O http://download.sourceforge.net/libpng/libpng-1.2.51.tar.gz
+  if [ X$? != X0 -o ! -f libpng-1.2.51.tar.gz ] ; then
+    echo Failed to get libpng. Stopping.
+    exit 1
+  fi
+  tar -xzvf libpng-1.2.51.tar.gz
+  cd libpng-1.2.51
+  ./configure --prefix=/opt/local
+  make
+  echo Installing linpng into /opt/local
+  sudo make install
+}
+
+echo "This is the Snowmix bootstrap for Mac OS X"
+echo "This script requires Xcode and the Xcode command line utilities to run."
+echo "If they are not installed, this script is likely to fail"
+echo "Checking for Xcode Command Line Utilities. Please stand by."
+pkgutil --pkg-info=$CLITOOLS
+if [ $? -eq 0 ] ; then
+  echo "Xcode Command Line Utilities was found. Good"
+else
+  echo "Xcode Command Line Utilities was not found. This script is likely to fail without it."
+  $echo "Do you wish to install Xcode Command Utilities (Y/N) ?\c"
+  read reply
+  if [ X$reply = XY -o X$reply = Xy ] ; then
+    $echo "A window will appear to guide you through installation. Please follow instructions and rerun this script. Remember to press the Install button in the window, not the 'Get Xcode' button unless you are also missing the Xcode. Press return to continue \c"
+    read reply
+    xcode-select --install
+    echo "Please rerun the bootstrap script after installation of the command line tools has finished."
+    exit 1
+  else
+    $echo "Bootstraping for Snowmix is likely to fail without Command Line utilities. Do you wish to continue anyway (Y/N)? \c"
+    read reply
+    if [ X$reply != XY -a X$reply != Xy ] ; then exit 1 ; fi
+  fi
+fi
+echo
+$echo "Checking for port : \c"
+which port
+if [ $? != 0 ] ; then
+  echo "not found"
+  echo "The program port was not found. If it is installed, you need to add"
+  echo "it's path to the PATH environment variable. If it is not installed,"
+  echo "this script can offer to do it for you."
+  $echo "Press return to continue or ctrl-C to exit \c"
+  read reply
+  MISSINGPORT="port "
+else
+  MISSINGPORT=" "
+fi
+echo "You will need the following packages:$MISSINGPORT $PACKAGE1 $PACKAGE2 $PACKAGE3"
+echo "If they are missing you can either exit the script and install them"
+echo "yourself and run this script again or you can let this script do it."
+echo "The latter require you to provide your password to run sudo."
+$echo "Do you want this script to check and install the packages if they are missing (Y/N) ?\c"
+read reply
+if [ X$reply = XY -o X$reply = Xy ] ; then
+  port=`which port`
+  if [ X$? != X0 ] ; then
+    $echo "The program port is not installed. Please press return to fetch and install port \c"
+    read reply
+    echo "Getting $PORTURL"
+    curl -L -O $PORTURL
+    if [ X$? != X0 -o ! -f $PORTPKG ] ; then
+      $echo "Failed to get $PORTURL. Can not continue. Press return to exit \c"
+      read reply
+      exit 1
+    fi
+    $echo "Installing port at /. Press return to continue. \c"
+    read reply
+    echo "Installing port for Mac. Please wait. This may take a while"
+    sudo installer -pkg ./$PORTPKG -target $INSTALLER_TARGET -verbose
+    if [ X$? != X0 ] ; then
+      $echo "Failed to install port. Can not continue. Press return to exit. \c"
+      echo 1
+    fi
+  fi
+  for pkg in $PACKAGE1 ; do
+    echo Cheking and possibly installing port package for $pkg
+    sudo port -v install $pkg
+  done
+  for pkg in $PACKAGE2 ; do
+    echo Cheking and possibly installing port package for $pkg
+    sudo port -v install $pkg +no_x11+quartz
+  done
+  for pkg in $PACKAGE3 ; do
+    echo Cheking and possibly installing port package for $pkg
+    sudo port -v install $pkg
+  done
+fi
+
+# Check for libpng12
+# Libpng12 is no longer as libpng16 is offered by port and Snowmix-0.4.5
+# supports libpng16
+#if [ ! -f /opt/local/lib/libpng12.la ] ; then
+#  echo "The librabry libpng12 does not seem to be installed into /opt/local"
+#  echo "Do you want the script to download, compile and install it (Y/N)? \c"
+#  read reply
+#  if [ X$reply = XY -o X$reply = Xy ] ; then
+#    GetInstallLibPng12
+#  fi
+#fi
+
+
+installgst=y
+# Check for GStreamer
+which gst-launch-1.0 1>/dev/null 2>&1
+if [ $? != 0 ] ; then
+  if [ ! -d /Library/Frameworks/GStreamer.framework/Commands ] ; then
+    echo "GStreamer does not seem to be installed on your system."
+  else
+    echo "gst-launch-1.0 was not found but the directory"
+    echo "/Library/Frameworks/GStreamer.framework/Commands exists"
+  fi
+  echo
+  $echo "Do you want to possible download and install $GSTPKG (Y/N)? \c"
+  read reply
+  if [ X$reply = XY -o X$reply = Xy ] ; then installgst=y ; fi
+else
+  version=`gst-launch-1.0 --version | head -1 | awk '{ print $3 }'`
+  major=`echo $version | tr '.' ' ' | cut -f2 -d' '`
+  minor=`echo $version | tr '.' ' ' | cut -f3 -d' '`
+  #echo "version <$version> if [ $GSTMAJOR -lt $major -o $GSTMINOR -lt $minor ] ; then"
+  if [ $GSTMAJOR -gt $major -o $GSTMINOR -gt $minor ] ; then
+    echo "You have GStreamer version $version."
+    $echo "Do you want to download and install version $GSTVERSION (Y/N)? \c"
+    read reply
+    if [ X$reply = XY -o X$reply = Xy ] ; then installgst=y ; else installgst=n ; fi
+  else
+    echo "You have GStreamer version $version installed. Good"
+    installgst=n
+  fi
+fi
+if [ $installgst = y ] ; then
+  if [ ! -f $GSTPKG ] ; then
+    echo "Downloading $GSTPKG"
+    curl -L -O $GSTURL
+    if [ X$? != X0 -o ! -f $GSTPKG ] ; then
+      $echo "Failed to get $GSTURL. Can not continue. Press return \c"
+      read reply
+      if [ -f $GSTPKG ] ; then rm $GSTPKG ; fi
+      exit 1
+    fi
+  else
+    echo "Have $GSTPKG"
+  fi
+  echo "Installing $GSTPKG to $INSTALLER_TARGET"
+  echo sudo installer -pkg ./$GSTPKG -target $INSTALLER_TARGET -verbose
+  sudo installer -pkg ./$GSTPKG -target $INSTALLER_TARGET -verbose
+else
+  echo "Skipping installing GStreamer $GSTVERSION"
+fi
+
+which gst-launch-1.0 2>/dev/null 1>&2
+if [ X$? != X0 ] ; then
+  echo "WARNING. The path to gst-launch-1.0 does not seem to be in the PATH environment variable"
+  echo "Try executing : export PATH=\$PATH:/Library/Frameworks/GStreamer.framework/Commands"
+  echo "Also remember to add this command to your ~/.bash_profile file. Not to your .profile or your .bashrc file."
+  echo "The scripts in the scripts directory will not work if you do not setup your PATH correctly"
+  $echo "Press return to continue \c"
+  read reply
+else
+  echo "You have included a path to gst-launch-1.0 in your PATH environment variable. Excellent"
+fi
+

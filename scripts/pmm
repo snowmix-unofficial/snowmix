@@ -1,0 +1,3 @@
+#!/bin/bash
+( echo 'audio feed ctr isaudio 4' ;gst-launch-1.0 audiotestsrc is-live=true !  'audio/x-raw,format=S16LE,layout=interleaved, rate=48000, channels=2' ! queue ! fdsink fd=3 3>&1 1>&2) | nc 127.0.0.1  9999
+

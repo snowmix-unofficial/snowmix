@@ -1,0 +1,467 @@
+system frame rate 20
+maxplaces shapes 32
+include ../ini/basis.ini
+
+image load 1 images/CS/cs_logo_new_transparent-676x722.png
+image load 2 images/CS/cs_logo_new_white-800x800.png
+image load 3 images/GL/worldmap-1280x720-no-water.png
+image load 4 images/GL/worldmap-1280x720.png
+
+command create Show
+  loop
+command end
+command create PreShow
+  loop
+command end
+overlay finish Show
+overlay pre PreShow
+
+include ../slib/system.slib
+command pop Show
+
+text font 1 Sans Bold 12
+
+command create CS_Logo.tcl
+  proc deg2rad { deg } {
+    return [expr $deg * atan(1.) / 45.0]
+  }
+  proc rad2deg { rad } {
+    return [expr 45.0 * $rad / atan(1.)]
+  }
+
+  proc LineCoors { x0 y0 t rx ry } {
+    return "[expr $x0 + $t * $rx] [expr $y0 + $t * $ry]"
+  }
+
+  proc Curve { x1 y1 x3 y3 delta } {
+    set x2 [expr ($x1 + $x3)/2.0]
+    set y2 [expr ($y1 + $y3)/2.0]
+#puts "Curve x1,y1=$x1,$y1 x2,y2 = $x2,$y2 x3,y3=$x3,$y3"
+    set vx [expr $x1 - $x3]
+    set vy [expr $y1 - $y3]
+    set len [expr sqrt($vx*$vx + $vy*$vy)]
+    set vx [expr $vx * $delta / $len]
+    set vy [expr $vy * $delta / $len]
+    set x2 [expr $x2 + $vy]
+    set y2 [expr $y2 - $vx]
+    return "$x1 $y1 $x2 $y2 $x3 $y3"
+  }
+
+  proc Curve2 { x0 y0 x1 y1 x3 y3 delta } {
+    set x2 [expr ($x0 + $x3)/2.0]
+    set y2 [expr ($y0 + $y3)/2.0]
+#puts "Curve 2 x1,y1=$x1,$y1 x2,y2 = $x2,$y2 x3,y3=$x3,$y3"
+    set vx [expr $x0 - $x3]
+    set vy [expr $y0 - $y3]
+    set len [expr sqrt($vx*$vx + $vy*$vy)]
+    set vx [expr $vx * $delta / $len]
+    set vy [expr $vy * $delta / $len]
+#puts "VECTOR vx,vy = $vx,$vy len=$len"
+    set x2 [expr $x2 + $vy]
+    set y2 [expr $y2 - $vx]
+    return "$x1 $y1 $x2 $y2 $x3 $y3"
+  }
+
+  proc MakeCoors { x0 y0 r alpha} {
+    set pi [deg2rad 180.0]
+    set tanalpha [expr tan($alpha)]
+
+    set a [expr 1.0 + $tanalpha * $tanalpha ]
+    set b [expr 2 * ($x0 + $y0 *$tanalpha)]
+    set c [expr $x0 * $x0 + $y0 * $y0 - $r * $r]
+    #puts "a=$a b=$b c=$c"
+
+    set t1 [expr (-$b + sqrt($b*$b-4*$a*$c)) / (2*$a)]
+    set t2 [expr (-$b - sqrt($b*$b-4*$a*$c)) / (2*$a)]
+
+    set coor1 [LineCoors $x0 $y0 $t1 1.0 $tanalpha]
+    set coor2 [LineCoors $x0 $y0 $t2 1.0 $tanalpha]
+
+    set x1 [lindex $coor1 0]
+    set y1 [lindex $coor1 1]
+    set x2 [lindex $coor2 0]
+    set y2 [lindex $coor2 1]
+
+    set angle1 [expr -atan($y1/$x1)]
+    set angle2 [expr -atan($y2/$x2) + $pi]
+
+    return "$x1 [expr -$y1] $x2 [expr -$y2] $angle1 $angle2"
+  }
+  proc SetColor { red green blue alpha } {
+    return "[expr $red/255.0] [expr $green/255.0] [expr $blue/255.0] [expr $alpha/255.0]"
+  }
+
+  proc MakeLogo { shape_id x0 y0 r deg delta1 delta2} {
+    global logo
+    set pi [deg2rad 180.0]
+    set color1 [SetColor 2 11 68 255]
+    set color2 [SetColor 169 170 180 255]
+    set white "1 1 1 1"
+    set black "0 0 0 1"
+    set orange [SetColor 255 79 0 255]
+    set alpha1 [deg2rad [expr $deg + $delta2]]
+    set alpha2 [deg2rad [expr $deg + $delta1]]
+    set alpha3 [deg2rad [expr $deg - $delta1]]
+    set alpha4 [deg2rad [expr $deg - $delta2]]
+#puts "Alpha $alpha1 $alpha2 $alpha3 $alpha4"
+    set coors1 [MakeCoors $x0 $y0 $r $alpha1]
+    set coors2 [MakeCoors $x0 $y0 $r $alpha2]
+    set coors3 [MakeCoors $x0 $y0 $r $alpha3]
+    set coors4 [MakeCoors $x0 $y0 $r $alpha4]
+    set r2 [expr $r * 0.87]
+    set coors1a [MakeCoors $x0 $y0 $r2 $alpha1]
+    set coors2a [MakeCoors $x0 $y0 $r2 $alpha2]
+    set coors3a [MakeCoors $x0 $y0 $r2 $alpha3]
+    set coors4a [MakeCoors $x0 $y0 $r2 $alpha4]
+
+    # Coordinates for rocket bottom, a,b,c,d from lower right to upper left
+    set xa [lindex $coors2a 0]
+    set ya [lindex $coors2a 1]
+    set xd [lindex $coors3a 0]
+    set yd [lindex $coors3a 1]
+    set vx [expr $xd - $xa]
+    set vy [expr $yd - $ya]
+    set xb [expr $xa + $vx / 5.0]
+    set yb [expr $ya + $vy / 5.0]
+    set xc [expr $xd - $vx / 5.0]
+    set yc [expr $yd - $vy / 5.0]
+
+    snowmix parses "shape add $shape_id"
+    snowmix parse "shape add $shape_id CS Logo"
+
+    # Rocket tip
+    snowmix parse "shape newpath $shape_id"
+    snowmix parse "shape moveto $shape_id $x0 [expr -$y0]"
+    snowmix parse "shape lineto $shape_id $xa $ya"
+    snowmix parse "shape lineto $shape_id $xd $yd"
+    snowmix parse "shape closepath $shape_id"
+    snowmix parse "shape source rgb $shape_id $orange"
+    snowmix parse "shape fill $shape_id"
+
+    # Upper half circle
+    set dis1 [expr 1.065 * $r]
+    snowmix parse "shape newpath $shape_id"
+    snowmix parse "shape moveto $shape_id [lindex $coors3 0] [lindex $coors3 1]"
+    snowmix parse "shape arc_ccw $shape_id 0 0 $r [lindex $coors4 4] [lindex $coors4 5]"
+    snowmix parse "shape curveto $shape_id [Curve2 $x0 $y0 [lindex $coors4 2] [lindex $coors4 3] $xd $yd -$dis1]"
+    snowmix parse "shape closepath $shape_id"
+    snowmix parse "shape source rgb $shape_id $color1"
+    snowmix parse "shape fill $shape_id"
+
+    # Upper outer flame
+    set dis2 0.015
+    snowmix parse "shape newpath $shape_id"
+    snowmix parse "shape curveto $shape_id [Curve2 $x0 $y0 [lindex $coors4 2] [lindex $coors4 3] $xd $yd -$dis1]"
+    snowmix parse "shape lineto $shape_id $xc $yc"
+    snowmix parse "shape curveto $shape_id [Curve $xc $yc [lindex $coors3 2] [lindex $coors3 3] -$dis2]"
+    #snowmix parse "shape closepath $shape_id"
+    snowmix parse "shape source rgb $shape_id $color2"
+    snowmix parse "shape fill $shape_id"
+
+    # Inner flame
+    set dis2 0.015
+    snowmix parse "shape newpath $shape_id"
+    snowmix parse "shape curveto $shape_id [Curve $xc $yc [lindex $coors3 2] [lindex $coors3 3] -$dis2]"
+    snowmix parse "shape arc_ccw $shape_id 0 0 $r [lindex $coors3 5] [lindex $coors2 5]"
+    snowmix parse "shape curveto $shape_id [Curve [lindex $coors2 2] [lindex $coors2 3] $xb $yb $dis2]"
+    #snowmix parse "shape closepath $shape_id"
+    snowmix parse "shape source rgb $shape_id $white"
+    snowmix parse "shape fill $shape_id"
+
+    # lower half cicle
+    set dis1 [expr 0.815 * $r]
+    snowmix parse "shape newpath $shape_id"
+    snowmix parse "shape moveto $shape_id [lindex $coors2 0] [lindex $coors2 1]"
+    snowmix parse "shape arc_cw $shape_id 0 0 $r [lindex $coors1 4] [lindex $coors1 5]"
+    snowmix parse "shape curveto $shape_id [Curve2 $x0 $y0 [lindex $coors1 2] [lindex $coors1 3] $xa $ya -$dis1]"
+    snowmix parse "shape closepath $shape_id"
+    snowmix parse "shape source rgb $shape_id $color1"
+    #snowmix parse "shape source rgb $shape_id $white"
+    snowmix parse "shape fill $shape_id"
+
+    # Lower outer flame
+    set dis2 0.015
+    snowmix parse "shape newpath $shape_id"
+    snowmix parse "shape curveto $shape_id [Curve2 $x0 $y0 [lindex $coors1 2] [lindex $coors1 3] $xa $ya -$dis1]"
+    snowmix parse "shape lineto $shape_id $xb $yb"
+    snowmix parse "shape curveto $shape_id [Curve $xb $yb [lindex $coors2 2] [lindex $coors2 3] $dis2]"
+    snowmix parse "shape arc_ccw $shape_id 0 0 $r [lindex $coors2 5] [lindex $coors1 5]"
+    #snowmix parse "shape closepath $shape_id"
+    snowmix parse "shape source rgb $shape_id $color2"
+    snowmix parse "shape fill $shape_id"
+
+
+
+puts "radius $r [expr 0.039 / $r]"
+
+
+    # Copenhagen dot
+    snowmix parse "shape newpath $shape_id"
+    snowmix parse "shape moveto $shape_id [expr -$r / 4.10] [expr -$r / 2.429]"
+    snowmix parse "shape arc_cw $shape_id [expr -$r / 4.10] [expr -$r / 2.429] [expr $r / 19.5] 0 [expr 2 * $pi]"
+    snowmix parse "shape closepath $shape_id"
+    snowmix parse "shape source rgb $shape_id $white"
+    snowmix parse "shape fill $shape_id"
+    set logo(shape_id) $shape_id
+    return
+  }
+
+  proc TitleBarMake { titlebar_id height text_width } {
+    global titlebar logo system
+    if {![info exist titlebar(shape_id,$titlebar_id)]} {
+      set titlebar(shape_id,$titlebar_id) [ReserveNextAvail shape]
+      if {![string is integer $titlebar(shape_id,$titlebar_id)]} {
+        puts stderr, "Failed to get requested shape id"
+        return
+      }
+    }
+    if {![info exist titlebar(placed_shape_id,$titlebar_id)]} {
+      set titlebar(placed_shape_id,$titlebar_id) [ReserveNextAvail placedshape $titlebar(shape_id,$titlebar_id)]
+      if {![string is integer $titlebar(placed_shape_id,$titlebar_id)]} {
+        puts stderr, "Failed to get requested placed shape id"
+        return
+      }
+    }
+    if {![info exist titlebar(string_id1,$titlebar_id)]} {
+      set titlebar(string_id1,$titlebar_id) [ReserveNextAvail string Title Bar $titlebar_id]
+      if {![string is integer $titlebar(string_id1,$titlebar_id)]} {
+        puts stderr, "Failed to get requested string id"
+        return
+      }
+    }
+    if {![info exist titlebar(string_id2,$titlebar_id)]} {
+      set titlebar(string_id2,$titlebar_id) [ReserveNextAvail string Title Bar $titlebar_id]
+      if {![string is integer $titlebar(string_id2,$titlebar_id)]} {
+        puts stderr, "Failed to get requested string id"
+        return
+      }
+    }
+    if {![info exist titlebar(placed_text1,$titlebar_id)]} {
+      set titlebar(placed_text1,$titlebar_id) [ReserveNextAvail placedtext $titlebar(string_id1,$titlebar_id) $titlebar(font_id)]
+      if {![string is integer $titlebar(placed_text1,$titlebar_id)]} {
+        puts stderr, "Failed to get requested placed text id"
+        return
+      }
+      snowmix parse "text align $titlebar(placed_text1,$titlebar_id) left bottom"
+      snowmix parse "text rgb $titlebar(placed_text1,$titlebar_id) 1 1 1"
+    }
+    if {![info exist titlebar(placed_text2,$titlebar_id)]} {
+      set titlebar(placed_text2,$titlebar_id) [ReserveNextAvail placedtext $titlebar(string_id2,$titlebar_id) $titlebar(font_id)]
+      if {![string is integer $titlebar(placed_text2,$titlebar_id)]} {
+        puts stderr, "Failed to get requested placed text id"
+        return
+      }
+      snowmix parse "text align $titlebar(placed_text2,$titlebar_id) left top"
+      snowmix parse "text rgb $titlebar(placed_text2,$titlebar_id) 1 1 1"
+    }
+    if {![info exist logo(shape_id)]} {
+      puts stderr, "No logo shape"
+      return
+    }
+    if { $height <= 0 } {
+      puts stderr "illegal height for title bar"
+      return
+    }
+
+    set titlebar(height,$titlebar_id) $height
+    set titlebar(text_width,$titlebar_id) $text_width
+    set shape_id $titlebar(shape_id,$titlebar_id)
+    set place_id $titlebar(placed_shape_id,$titlebar_id)
+    set scale_x [expr double($text_width) / $height]
+    set tscale1 [expr $height / 48.0]
+    set tscale2 [expr $height / 64.0]
+    snowmix parse "text scale $titlebar(placed_text1,$titlebar_id) $tscale1 $tscale1"
+    snowmix parse "text scale $titlebar(placed_text2,$titlebar_id) $tscale2 $tscale2"
+
+    snowmix parse "shape place rgb $place_id 0.45 0.45 0.45"
+
+    # Shape is scale to height x height
+    # right section starts at 0.5+text_with/height to the right
+    set right_x [expr 0.5 + $scale_x]
+    snowmix parse "shape add $shape_id Title Bar # $titlebar_id"
+    snowmix parse "shape place scale $place_id $height $height"
+    set orange [SetColor 255 79 0 255]
+  
+    # Draw the left side, to the right side, right side and back
+    snowmix parse "shape newpath $shape_id"
+    snowmix parse "shape arc_ccw $shape_id 0 0 0.5 1PI/2 -1PI/2"
+    snowmix parse "shape lineto $shape_id $right_x -0.5"
+    snowmix parse "shape arc_cw $shape_id $right_x 0 0.5 -1PI/2 1PI/2"
+    #snowmix parse "shape lineto $shape_id 0.5 0.5"
+    snowmix parse "shape closepath $shape_id"
+    snowmix parse "shape fill $shape_id"
+    # Draw logo
+    snowmix parse "shape inshape $shape_id $logo(shape_id)"
+    # Draw line
+    snowmix parse "shape newpath $shape_id"
+    snowmix parse "shape line cap $shape_id butt"
+    snowmix parse "shape line width $shape_id 0.06"
+    snowmix parse "shape moveto $shape_id 0.65 0.10"
+    snowmix parse "shape lineto $shape_id $right_x 0.10"
+    snowmix parse "shape source rgb $shape_id $orange"
+    snowmix parse "shape stroke $shape_id"
+    puts stderr "Create Title Bar # $titlebar_id as placed shape $place_id"
+    if {[info exist titlebar(x,$titlebar_id)]} {
+      TitleBarPlace $titlebar_id $titlebar(x,$titlebar_id) $titlebar(y,$titlebar_id)
+    }
+  }
+
+  proc MakeTitleBar2 { logo_shape_id left_shape_id middle_shape_id right_shape_id } {
+    global titlebar
+    set titlebar(logo_shape_id) $logo_shape_id
+    set titlebar(left_shape_id) $left_shape_id
+    set titlebar(middle_shape_id) $middle_shape_id
+    set titlebar(right_shape_id) $right_shape_id
+    set orange [SetColor 255 79 0 255]
+    snowmix parses "shape add $left_shape_id"
+    snowmix parse "shape add $left_shape_id Title Box Left Side"
+    snowmix parse "shape newpath $left_shape_id"
+    snowmix parse "shape arc_ccw $left_shape_id 0 0 0.5 1PI/2 -1PI/2"
+    snowmix parse "shape lineto $left_shape_id 0.51 -0.5"
+    snowmix parse "shape lineto $left_shape_id 0.51 0.5"
+    snowmix parse "shape closepath $left_shape_id"
+    snowmix parse "shape fill $left_shape_id"
+    snowmix parse "shape inshape $left_shape_id $logo_shape_id"
+
+    snowmix parses "shape add $right_shape_id"
+    snowmix parse "shape add $right_shape_id Title Box Left Side"
+    snowmix parse "shape newpath $right_shape_id"
+    snowmix parse "shape arc_cw $right_shape_id 0 0 0.5 -1PI/2 1PI/2"
+    snowmix parse "shape closepath $right_shape_id"
+    snowmix parse "shape fill $right_shape_id"
+
+    snowmix parses "shape add $middle_shape_id"
+    snowmix parse "shape add $middle_shape_id Title Box Middle"
+    snowmix parse "shape rectangle $middle_shape_id -0.5 -0.5 1 1"
+    snowmix parse "shape fill $middle_shape_id"
+    snowmix parse "shape newpath $middle_shape_id"
+    snowmix parse "shape line cap $middle_shape_id butt"
+    snowmix parse "shape line width $middle_shape_id 0.08"
+    snowmix parse "shape moveto $middle_shape_id -0.45 0.08"
+    snowmix parse "shape lineto $middle_shape_id 0.50 0.08"
+    snowmix parse "shape source rgb $middle_shape_id $orange"
+    snowmix parse "shape stroke $middle_shape_id"
+
+  }
+
+  proc CreateTitleBar { titlebar_id } {
+    global titlebar logo system
+    if {[info exist titlebar($titlebar_id)]} {
+      snowmix message "Error: titlebar $titlebar_id already exist"
+      return
+    }
+    if {![string is integer $titlebar_id] || $titlebar_id < 0} {
+      snowmix message "Error: titlebar id is less than 0."
+      return
+    }
+    if {![info exist logo(shape_id)]} {
+      snowmix message "Error : logo has no shape_id"
+      return
+    }
+    set titlebar(left_shape,$titlebar_id) [ReserveNextAvail shape]
+    set titlebar(middle_shape,$titlebar_id) [ReserveNextAvail shape]
+    set titlebar(right_shape,$titlebar_id) [ReserveNextAvail shape]
+    MakeTitleBar2 $logo(shape_id) $titlebar(left_shape,$titlebar_id) $titlebar(middle_shape,$titlebar_id) $titlebar(right_shape,$titlebar_id)
+    set scale_x [expr $system(width) / 12.0]
+    set scale_y [expr $system(height) / 12.0]
+    if {$scale_y < $scale_x} { set scale_x $scale_y } else { set scale_x $scale_y }
+    puts "scale $scale_x,$scale_y"
+  }
+
+  proc TitleBarPlace { titlebar_id x y } {
+    global titlebar
+    if {[info exist titlebar(placed_shape_id,$titlebar_id)]} {
+      snowmix parse "shape place coor $titlebar(placed_shape_id,$titlebar_id) $x $y"
+    }
+    set text_x [expr int($x + 0.6 * $titlebar(height,$titlebar_id))]
+    if {[info exist titlebar(placed_text1,$titlebar_id)]} {
+      set text_y [expr int($y - $titlebar(height,$titlebar_id) / 20)]
+      snowmix parse "text coor $titlebar(placed_text1,$titlebar_id) $text_x $text_y"
+    }
+    if {[info exist titlebar(placed_text2,$titlebar_id)]} {
+      set text_y [expr int($y + $titlebar(height,$titlebar_id) / 6)]
+      snowmix parse "text coor $titlebar(placed_text2,$titlebar_id) $text_x $text_y"
+    }
+    set titlebar(x,$titlebar_id) $x
+    set titlebar(y,$titlebar_id) $y
+  }
+
+  proc TitleBarOverlay { titlebar_id } {
+    global titlebar
+    if {[info exist titlebar(placed_shape_id,$titlebar_id)]} {
+      snowmix parse "shape place overlay $titlebar(placed_shape_id,$titlebar_id)"
+    }
+    if {[info exist titlebar(placed_text1,$titlebar_id)]} {
+      snowmix parse "text overlay $titlebar(placed_text1,$titlebar_id)"
+      #puts "snowix parse text overlay $titlebar(placed_text1,$titlebar_id)"
+    }
+    if {[info exist titlebar(placed_text2,$titlebar_id)]} {
+      snowmix parse "text overlay $titlebar(placed_text2,$titlebar_id)"
+    }
+  }
+  proc TitleBarSetText { titlebar_id text1 text2 } {
+    global titlebar
+    set titlebar(text1,$titlebar_id) $text1
+    set titlebar(text2,$titlebar_id) $text2
+    snowmix parse "text string $titlebar(string_id1,$titlebar_id) $text1"
+    snowmix parse "text string $titlebar(string_id2,$titlebar_id) $text2"
+  }
+  proc TitleBarSetFont { font_id } {
+    global titlebar
+    set titlebar(font_id) $font_id
+  }
+  TitleBarSetFont 1
+
+  # MakeLogo { shape_id x0 y0 r deg delta1 delta2 }
+  MakeLogo 20 0.405 0.575 0.5 54.90 2.16 5
+  # MakeTitleBar2 { logo_shape_id left_shape_id middle_shape_id right_shape_id }
+  MakeTitleBar2 20 21 22 23
+  CreateTitleBar 1
+  TitleBarMake 1 48 200
+  TitleBarPlace 1 100 100
+  TitleBarSetText 1 "Peter Mærsk-Møller" "StreamTeam Live Producer"
+  
+command end
+tcl exec CS_Logo.tcl
+
+
+shape add 19 Square
+shape rectangle 19 -0.5 -0.5 1 1
+shape fill 19
+
+shape place 1 19 512 288 1024 576
+shape place rgb 1 0.3 0.3 0.3
+#shape place 2 20 500 288 500 500
+shape place 3 21 300 288 48 48
+shape place rgb 3 0.4 0.4 0.4
+shape place 4 23 574 288 48 48
+shape place rgb 4 0.4 0.4 0.4
+shape place 5 22 449 288 250 48
+shape place rgb 5 0.4 0.4 0.4
+
+
+image place 1 1 500 288
+image place 2 2 650 180
+image alpha 1 0.4
+image align 1 center middle
+image scale 1 0.74 0.74
+image scale 2 0.3 0.3
+command create Show
+  #shape place overlay 1 2
+  #shape place overlay 2
+  #image overlay 1 2
+  image overlay 1
+  image overlay 2
+  shape place overlay 3 4 5
+  tcl eval TitleBarOverlay 1
+  loop
+command end
+
+overlay finish Show
+stack 0
+image alpha 1 0.4
+
+#shape place scale 2 700 700
+#shape place coor 2 500 300
+image alpha 1 0
+

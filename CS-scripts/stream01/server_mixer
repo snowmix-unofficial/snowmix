@@ -1,0 +1,57 @@
+#!/bin/bash
+listenport=5070
+serverport=5030
+serverportraw=5040
+serverip=81.7.134.69
+rate=47990
+rate=44100
+channels=2
+
+gstlaunch=`which gst-launch-1.0`
+if [ X$gstlaunch != X ] ; then
+  VIDEOCONVERT=videoconvert
+  VIDEO=video/x-raw
+  AUDIO=audio/x-raw
+  vfid=string
+  afid="format=(string)S16LE, "
+else
+  gstlaunch=`which gst-launch-0.10`
+  if [ X$gstlaunch != X ] ; then
+    VIDEOCONVERT=ffmpegcolorspace
+    VIDEO=video/x-raw-rgb
+    AUDIO=audio/x-raw-int
+    vfid=fourcc
+    afid=""
+  else
+    echo "Could not find gst-launch-1.0 or gst-launch-0.10. Stopping"
+    exit
+  fi
+fi
+
+INAUDIOFORMAT=$AUDIO', '$afid' endianness=(int)1234, signed=(boolean)true, width=(int)16, depth=(int)16, rate=(int)'$rate', channels=(int)'$channels
+
+pid_file=/var/run/stream/$0.$$
+echo $$ >$pid_file
+basename=`basename $0`
+
+while true ; do
+  echo Listening for Speak audio
+  if [ ! -f $pid_file ] ; then
+    echo "pid file removed. Stopping."
+    exit 0
+  fi
+  $gstlaunch -v udpsrc port=$listenport ! \
+	mpegtsparse		! \
+	queue			! \
+	tee name=t1		! \
+	queue			! \
+	tcpserversink port=$serverport host=$serverip t1. ! \
+	queue			! \
+	mpegtsdemux		! \
+	decodebin2		! \
+	$INAUDIOFORMAT		! \
+	queue 			! \
+	tcpserversink port=$serverportraw host=$serverip
+  echo server fail
+  sleep 5
+done

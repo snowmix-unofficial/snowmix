@@ -1,0 +1,961 @@
+		Release Notes for Snowmix Version 0.5.1
+		Copyright 2016 - Peter Maersk-Moller
+		Released 9th February 2016
+
+Please read the Release note from http://snowmix.sourceforge.net/Documentation/releasenotes.html
+or see below.
+
+Overall Theme:
+	The overall theme for this Snowmix release 0.5.1 is to release GUI programs for
+	controlling Snowmix for Live video production. Secondary, this release includes
+	a number of bugfixes and smaller improvements overall making Snowmix even more
+	stable and dependable for a Live production environment.
+
+New GUI Programs:
+	The GUI program snowcub.tcl is no longer included, but have been replaced by
+	programs such as snowaudio.tcl, snowscene.tcl and snowoutput.tcl.
+
+	The program snowaudio.tcl is a GUI program that can be used to control and
+	mix audio in a live production environment running Snowmix. Snowaudio.tcl
+	reads its configuration from a running session of Snowmix.
+
+	The program snowscene.tcl is a GUI program that can be used to control and
+	mix video scenes in a live production environment running Snowmix. Snowscene.tcl
+	reads its configuration from a running session of Snowmix.
+
+	The program snowoutput.tcl is a GUI program that can be used to monitor the
+	output statistics of Snowmix in a live production environment.
+
+New commands:
+	The following new commands, enhancements, improvements and bugfixes are included
+	in this version. Details can be found in the Changelog.
+
+	1) Tcl command *snowmix info output ((info | status) [ format ]) | syntax*.
+
+Enhancements and improvements:
+	1) 24 bit RGB PNG images are now supported in addition to 32 bit RGBA.
+	2) Audio clipping range changed from betwenn -32768 and 32767 to
+	   now -32767 tand 32767.
+	3) Cleanup for the command *tcl help*.
+	4) Cosmetic cleanup for command *audio sink status*.
+	5) Cosmetic cleanup for the tcl command
+	   *snowmix info audio mixer source extended format*
+	7) Changes to the Snowmix Library command "SceneSetFrameActive".
+	8) Adding konsole and xfc4-terminal to snowmix_demo script.
+	
+Bugfixes:
+	1) Deleting or loading an image into an existing image place holder
+	   would leak memory.
+	2) Text grow would fail for certain combination of UTF8 multi character
+	   strings.
+	3) Text background had switched rb values for the *text backgr rgb* command.
+	4) Tcl command *snowmix info* would in some case make Snowmix dump core.
+	5) Snowmix audio mixer had problems adjusting the audio level when source
+	   had fewer channels than the mixer it self.
+	6) Audio mixer would in some cases not detect audio clipping correct.
+	7) Unbalanced list for the tcl command *snowmix info audio mixer source info ...*.
+	8) The command *audio feed delay <feed id> <ms>* would print to stderr and
+	   not the controlling channel.
+	9) The tcl command *snowmix info audio mixer source* printed wrong
+	   value for mute. The same applied for the command
+	   *snowmix info audio feed status ...* and *snowmix info audio sink status ...*.
+	10) Format error for the tcl command *snowmix info audio mixer source ...*.
+	11) images/CS directory was not installed (minor issue).
+	12) Output2screen could potentially hang on some systems.
+	13) The snowmix_demo script could hang on Linux systems without gnome_terminal.
+	14) Tcl include files that are not executable directly, are now installed
+	    as data files with mode 644.
+	15) Snowmix on OS X could exit without a warning if a connecting shmsrc exits.
+
+Compile and install:
+	Please see the compile and install instructions for version 0.5.1 on
+	http://snowmix.sourceforge.net/Intro/compileandinstall.html
+	Support for OpenGL is still considered alpha code and not enabled by default.
+	To enable support for OpenGL, please run the command before running make:
+
+		./configure --prefix=$prefix --libdir=$prefix=lib --enable-snowmixosmesa \
+			--enable-snowmixx11 --enable-snowmixglu --enable-snowmixglut
+
+	The variable $prefix is usually /opt/local for Mac OS X and /usr/local for all others.
+	Alternatively use the file bootstrapmin-opengl
+
+Tested platforms:
+	This version of Snowmix has before release been tested on:
+
+	- Mac OS X 10.11.3 El Capitan.
+	- Mac OS X 10.08.5 Mountain Lion.
+	- Mac OS X 10.09.5 Maverick.
+	- Mac OS X 10.10.5 Yosemite.
+	- Linux Centos 7 15.11 amd64 (See comments)
+	- Linux Chakra 15.11 Fermi amd64. (See comments)
+	- Linux Debian 8.2 amd64. (See comments)
+	- Linux Fedora Workstation 23 amd64. (See comments)
+	- Linux Mint Cinnamon 17.2 amd64.
+	- Linux OpenSUSE Leap 42.1 amd64.
+	- FreeBSD PCBSD10.2. (See comment about /bin/bash)
+	- Linux Ubuntu 14.04 LTS amd64, ARMv7.
+	- Linux Ubuntu 15.11 amd64.
+
+Comments on installing on various platforms:
+Mac OS X:The bootstrap script will install all that is needed.
+CentOS: You need to add rights to do 'sudo' for the user compiling and installing
+	Snowmix.  The program snowmix_demo needs encoder and decoder modules for
+	GStreamer for H.264 and AAC (unclear how get this). 
+Chakra: Compiles and runs fine, but needs BWidget to run GUI apps. BWidget seems
+	not to be available for Chakra although it is for Arch Linux. You may
+	be able to download and install BWidget from Sourceforge manually.
+Debian: Needs package 'sudo' to be installed. Need to add rights to do 'sudo' for
+	the user download and install missing tools/libs and for installing Snowmix.
+Fedora: Fedora 23. You need to add the rpmfusion repository and install relevant gstreamer
+	plugins to run the snowmix_demo. Similar for Fedora 22, but untested.
+	sudo rpm -Uvh http://download1.rpmfusion.org/free/fedora/rpmfusion-free-release-23.noarch.rpm
+	sudo rpm -Uvh http://download1.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-23.noarch.rpm
+	sudo dnf install gstreamer-plugins-bad gstreamer-plugins-bad-free-extras gstreamer-plugins-bad-nonfree gstreamer-plugins-ugly gstreamer-ffmpeg gstreamer1-libav gstreamer1-plugins-bad-free-extras gstreamer1-plugins-bad-freeworld gstreamer1-plugins-base-tools gstreamer1-plugins-good-extras gstreamer1-plugins-ugly gstreamer1-plugins-bad-free gstreamer1-plugins-good gstreamer1-plugins-base gstreamer1
+Mint:	The bootstrap script will install all that is needed.
+PCBSD:	You need to execute the following command "sudo ln -s /usr/local/bin/bash /bin/bash"
+	for the scripts to work. Run all commands in bash rather than other shells.
+	No video/image sinks was found for GStreamer1.0 for PCBSD10.2.
+	No 'wish' needed for tcl GUI programs was found.
+OpenSUSE: The package gstreamer-plugins-libav isn't found by zypper. You need to
+	find the right version yourself and install it manually. Without it, you may
+	miss important decoders such as decoder for H.264 etc.
+Ubuntu:	The bootstrap script will install all that is needed.
+
+--------------------------------------------------------------------------------
+
+
+
+		Release Notes for Snowmix Version 0.5.0
+		Copyright 2015 - Peter Maersk-Moller
+		Released 31st July 2015
+
+The overall theme for this Snowmix release 0.5.0 is to make Snowmix installable
+as a regular program. Furthermore the theme is also to add support for
+industry standard OpenGL 3D graphics both Off Screen CPU based and
+hardware accelerated GPU based rendering. In addition to these overall themes,
+this release come with a number of bugfixes, speed-ups, cosmetic changes
+and EndOfLife implementations.
+
+This version's release notes are especially important to pay attention to for
+those of you who have been using earlier versions of Snowmix. Because Snowmix
+is now changing its major version number, a long list of commands are
+now changing their syntax or are being retired as earlier made clear
+in the EndOfLife announcements. Please see the EndofLife Announcement
+for this version to see the list of commands and functionality now
+changing or retirering. This is also listed in the ChangeLog.
+
+In addition to these changes, it is also important to know that from
+this version on, the file names in the ini file given for feed control
+sockets and system socket must be given as an absolute file name starting
+with a leading '/'. This mean that you will have to change this in your
+ini files, if you are reusing ini files from previous versions.
+
+Snowmix will from this version and on refuse to run, if the environment
+variable SNOWMIX has not been set to the install path of Snowmix. By
+default, when Snowmix is running the configure command as part of the
+bootstrap script, the install prefix is set to /usr/local for all but
+Mac OS X and to /opt/local for the latter. If you have an install prefix
+being /usr/local, you must set the enviroment variable SNOWMIX to be:
+
+	export SNOWMIX=/usr/local/lib/Snowmix-0.5.0
+
+If you do not do this, Snowmix will not work properly.
+
+From this version and on, Snowmix will, unless filename is absolute and
+starting with a leading '/', be using a search path when:
+
+	- include an ini file for reading
+	- include a Snowmix library file (slib directory)
+	- load an image file for reading
+	- load a dead-image file for a feed (from the frames directory)
+	- open an audio sink output file for writing
+	- open an image file for writing
+
+The search path will contain the following paths in this order:
+
+	Current working directory
+	$HOME/$SNOWMIX_PREFIX
+	$SNOWMIX
+
+If the environment variable SNOWMIX_PREFIX has not been set to a name,
+Snowmix will for Mac OS X use 'Snowmix' and for all other use '.snowmix'.
+If you in your ini file include the following files:
+
+	# First file
+	include ../ini/my_ini_file
+	# Second file
+	include ini/my_ini_file
+	# Third file
+	include /ini/my_ini_file
+
+Then Snowmix will for the first file look for my_ini_file in this order:
+
+	'current working directory'/../ini/my_ini_file
+	$HOME/$SNOWMIX_PREFIX/../ini/my_ini_file
+	$SNOWMIX/../ini/my_ini_file
+
+If a file is found, the file will will be includes and no further search
+is done. If all search paths fails, the include command fails.
+
+The second file will be attempted read as
+
+	'current working directory'/ini/my_ini_file
+	$HOME/$SNOWMIX_PREFIX/ini/my_ini_file
+	$SNOWMIX/ini/my_ini_file
+
+Third filename is absolute, so Snowmix will only attempt to read the file
+/ini/my_ini_file.
+
+So go over your older ini files and probably remove the '../' for images,
+audio sinks etc. and you will probably also copy your old ini files to
+$HOME/.snowmix/ini/ for Linux and $HOME/Snowmix/ini/ for Mac OS X.
+See also the ChangeLog for more details on this.
+
+In addition to the 72 new glshape commands, this version adds the following
+3 commands:
+
+	feed drop <feed id> <n drops>
+	if exist(image,<image id>)
+	shape newsubpath <shape id>
+
+Details are found in the ChangeLog.
+
+Snowmix now support installation on CentOS. However see the ChangeLog for a missing
+component of GStreamer on CentOS.
+
+This version of Snowmix has before release been tested on:
+
+	Linux Ubuntu 14.04 LTS amd64, ARMv7.
+	Linux Centos 7 15.03 amd64
+	Linux Chakra 14.11 Euler amd64.
+	Linux Debian 7.7 amd64.
+	Linux Mint Cinnamon 17.1, 17.2 amd64.
+	Linux Fedora Workstation 21 amd64.
+	Mac OS X 10.09 Maverick.
+	Mac OS X 10.10.4 Yosemite.
+
+--------------------------------------------------------------------------------
+
+
+		Release Notes for Snowmix Version 0.4.5
+		Copyright 2015 - Peter Maersk-Moller
+		Released january 21st 2015
+
+The overall theme for Snowmix release 0.4.5 has been to update and expand
+the commands and command api for virtual feeds and bring it more
+in-line with the capabilities of Snowmix images, shapes, feeds and texts.
+Virtual feeds now support anchoring, alignment and handle offset
+for rotation correct.
+
+This release also updates aspects of Snowmix image commands along the
+same lines. Furthermore Snowmix can now create new images or snapshots
+of images sourced from other images, feeds and the main mixer frame.
+Controls include clip, scale, rotation and alpha. With this feature,
+the main mixer frame can be used to create complex images and then a
+snapshot can be taken. After that clearing the main mixer frame is
+required before mixing the frame for output is done.
+
+In this release is also optimization of text command parsing and
+text overlay. This and the other optimization has reduced the
+Snowmix load on an old Thinkpad T61 from 23-24% to 18-19% using
+the ini/basic_feeds example. Other settings with larger
+geometries, fewer text overlays etc. may show less performance gain.
+
+IMPORTANT: This release includes an End Of Life Announcement for a
+number of commands syntax and some functionality. This is as always
+described in the file EndOfLifeAnnouncements. If you write your own
+ini files and/or Snowmix scripts or in some way interact with Snowmix
+through external programs, please read the file EndOfLifeAnnouncements.
+
+This version introduces the following new 17 commands:
+
+	- image geometry [<place id>]
+	- image move offset [<place id> <delta offset x> <delta offset y> <step offset x> <step offset y>]
+	- image place anchor [<place id> (n | s | e | w | c | ne | nw | se | sw)]
+	- image source [(feed | image | frame) <image id> <source id> [ <offset x> <offset y> <width> height> [<scale_x> <scale_y> [<rotation> <alpha> [(fast | good | best | nearest | bilinear | gaussian)]]]]]
+	- image verbose [<level>]
+	- shape place anchor [<place id> (n | s | e | w | c | ne | nw | se | sw)]
+	- text place anchor [<place id> (n | s | e | w | c | ne | nw | se | sw)]
+	- text offset [<place id> <offset x> <offset y>]
+	- vfeed align [<vir id> (left | center | right ) ( top | middle | bottom)]
+	- vfeed alpha [ <vir id> <alpha> ]
+	- vfeed anchor [<vir id> (n | s | e | w | c | ne | nw | se | sw)]
+	- vfeed coor [<vir id> <x> <y>]
+	- vfeed clip [<vir id> <clip w> <clip h> <src_x> <src_y>]
+	- vfeed info
+	- vfeed move offset [<vir id> <delta offset x> <delta offset y> <step offset x> <step offset y>]
+	- vfeed rotation [<vir id> <rotation>]
+	- vfeed scale [<vir id> <scale_x> <scale_y>]
+	- vfeed verbose [<level>]
+
+Please see the ChangeLog file for detailed information on new commands.
+This release also include a newly created reference manual for *vfeed*
+commands as well as a newly created reference manual for *image* commands.
+Please finde these manuals at
+
+  - Reference Images : https://sourceforge.net/p/snowmix/wiki/Reference%20Images/
+  - Reference Virtual Feeds : https://sourceforge.net/p/snowmix/wiki/Reference%20Virtual%20Feeds/
+
+This versions adds/change the following functions to the Snowmix Libraries
+
+	- tcl eval FeedWatch <feed id>
+	- tcl eval FeedUnWatch <feed id>
+	- tcl eval FeedWatchCommand <feed id> <state> <command>
+	- tcl eval FeedWatchCheck
+	- tcl eval ScenePush <scene id> [ <fade> ]
+	- tcl eval ScenePop [ <fade> ]
+
+Please see the ChangeLog file for detailed information on these new functions.
+
+The recommended platform is still Ubuntu 14.04.1 LTS amd64 with GStreamer-1.4.x,
+but other platforms are supported as well.
+
+In addition to previous announced support for various OS and distros,
+this release adds support for:
+
+	Linux Debian 7.7.0 Wheezy (tested with amd64)
+	Linux Chakra 2014.11 Euler (tested with amd64)
+	Linux OpenSUSE 12.3 Harlequin (tested with amd64)
+
+As always this release includes a long list og bugfixes and cosmetic corrections. Please see the ChangeLog file for detailed information on this.
+
+FOR LINUX UBUNTU:
+
+	- All works well.
+
+FOR LINUX MINT:
+
+	- All works well. Replace autovideosink with ximagesink in
+	scripts/output2screen and scripts/av_output2screen if you have
+	problem with seeing the mixed result when running scripts/demo.
+
+FOR LINUX DEBIAN:
+
+	- You need to add your login name to the group sudo in the
+	/etc/group file before running the bootstrap script. This script
+	will check for and install missing packages. After adding your
+	login name you need to logout and login again before running the
+	bootstrap script.
+
+FOR LINUX FEDORA:
+
+	- You need to find a GStreamer package with support H.264 encoding
+	and decoding to get the full value of the demo script and the
+	example scripts for feeding H.264 encoded video for Snowmix and
+	for encoding Live video from Snowmix. You quite likely also want
+	an AAC encoder/decoder and MP3 encoder/decoder fo GStreamer, but
+	Snowmix is compiling cleanly.
+
+FOR LINUX OPENSUSE:
+
+	- The package gstreamer-plugins-libav does not seem to be available
+	for OpenSUSE 12.3. As such H.264 encoding and decoding seems to
+	be missing for GStreamer for now. For this, some of the scripts
+	for input and output to Snowmix will not work with H.264 video.
+
+	- The scripts output2screen and av_output2screen uses GStreamer
+	autovideosink selecting glimagesink. This works poorly on
+	OpenSUSE 12.3 running in a VirtualBox. You may replace autovideosink
+	in multiple places in both scripts with ximagesink or better with
+	xvimagesink if you have it. Use 'gst-inspect-1.0 xvimagesink'
+	to check.
+
+FOR CHAKRA:
+	- The bootstrap script will install the packages openbsd-netcat,
+	bc and gst-libav, if they are missing.
+
+
+For Mac OS X:
+
+	- The GUI control called snowcub.tcl does not work. You can run
+	  the GUI control from a Linux installation, perhaps in a VirtualBox
+	  installation on your Mac. Snowmix will offer to install macports
+	  and tools and libraries needed for autoconfigurering, compiling
+	  and linking Snowmix.
+
+IMPORTANT: Should you experience problems during installation, then please
+tell us so through the support forum so we can improve the package.
+	  
+Enjoy the Snowmix version 0.4.5
+
+
+################################################################################
+
+		Release Notes for Snowmix Version 0.4.4
+		Copyright 2014 - Peter Maersk-Moller
+
+The overall theme for Snowmix release 0.4.4 has been to expand the number of
+supported platforms beyond Ubuntu Desktop amd64. Snowmix now installs and run
+on the following platforms:
+
+	- Ubuntu amd64/i386/i686/ARMv7.
+	- Fedora Live Desktop amd64 and i386/i686.
+	- Linux Mint amd64 and i386/i686.
+	- Mac OS X Mountain Lion and Maverick 64bit
+
+Another overall theme for this release has been to provide communication
+between the embedded Tcl Interpreter and Snowmix internals. Embedded scripts can now query Snowmix settings directly as well as execute Snowmix commands directly without wating for a function to return.
+
+Last but not least, the Snowmix Libraries \(slib) have been overhauled and are now supported although they are considered alpha code. Please help test it. Most notably among the libraries is the Scenes Libraries offering advanced video mixing functionality. The Scenes pane on the GUI snowcub.tcl has been rewritten and expanded quite a lot wrt. to functionality. The support for Snowmix libraries are followed up by documentation on the following pages:
+
+	- https://sourceforge.net/p/snowmix/wiki/Snowmix%20Libraries/
+	- https://sourceforge.net/p/snowmix/wiki/Snowmix%20Tutorials%20-%20Scenes/
+	- https://sourceforge.net/p/snowmix/wiki/Snowmix%20Libraries%20-%20System/
+	- https://sourceforge.net/p/snowmix/wiki/Snowmix%20Libraries%20-%20Texts/
+	- https://sourceforge.net/p/snowmix/wiki/Snowmix%20Libraries%20-%20Feeds/
+	- https://sourceforge.net/p/snowmix/wiki/Snowmix%20Libraries%20-%20Images/
+	- https://sourceforge.net/p/snowmix/wiki/Snowmix%20Libraries%20-%20Basic%20Shapes/
+	- https://sourceforge.net/p/snowmix/wiki/Snowmix%20Libraries%20-%20Scenes/
+	- https://sourceforge.net/p/snowmix/wiki/Snowmix%20Libraries%20-%20Scenes%202/
+	
+
+This version introduces the following 27 commands:
+
+	- audio mixer source [pause <mixer id> <source no> <frames>]
+	- audio mixer source [rmsthreshold <mixer id> <source no> <level>]
+	- command pointer atline [ <command name> [ <line> ]]
+	- feed filter [ <feed no> (fast | good | best | nearest | bilinear | gaussian)]
+	- feed overlay (<id> | <id>..<id> | all | end | <id>..end) [ (<id> | <id>..<id> | all | end | <id>..end) ] .... 
+	- feed fast overlay <feed id> <col> <row> <feed col> <feed row> <cut cols> <cut rows> <scale 1> <scale 2> <par_w> <par_h> <place>
+	- text place backgr alpha [<place id> <alpha>]
+	- text place backgr rgb [<place id> [ <red> <green> blue> [ <alpha> ]]
+	- image place filter [ <feed no> (fast | good | best | nearest | bilinear | gaussian)]
+	- image name [<image id> [<name>]]
+	- shape filter <shape id> (fast | good | best | nearest | bilinear | gaussian)
+	- tcl reset
+	- tcl help
+	- tcl eval snowmix info audio (feed | sink) (info | status | extended | syntax) (format | ids | maxid | nextavail | <id_list>)
+	- tcl eval snowmix info audio mixer (info | status | extended | source info | source status | source extended | syntax) (format | ids | maxid | nextavail | <id_list>)
+	- tcl eval snowmix info command ( names | list | at | syntax ) [ format | <name> ]
+	- tcl eval snowmix info feed (geometry | status | extended | state | syntax) (format | ids | maxid | nextavail | <id_list>)
+	- tcl eval snowmix info image (load | place | move | extended | syntax) (format | ids | maxid | nextavail | <id_list>)
+	- tcl eval snowmix info text (string | font | place | move | backgr | linpat | syntax) (format | ids | maxid | nextavail | <id_list>)
+	- tcl eval snowmix info (vfeed | virtual feed) (place | move | extended | syntax) (format | ids | maxid | nextavail | <id_list>)
+	- tcl eval snowmix info shape (info | list | place | move) ( format | ids | maxid | nextavail | <id_list> )
+	- tcl eval snowmix info system (info | status | maxplaces | overlay | syntax) [ format ]
+	- tcl eval snowmix info shape ( syntax | ( ( info | list | place | move ) ( format | ids | maxid | nextavail | <id_list>) )
+	- tcl eval snowmix info system (info | status | maxplaces | overlay | syntax) [ format ]
+	- tcl eval snowmix parse <command>
+	- tcl eval snowmix (parse silent | parses) <command>
+	- virtual feed filter [ <feed no> (fast | good | best | nearest | bilinear | gaussian)]
+
+
+Additional:
+
+	- International character support UTF-8 for text commands.
+	- Misaligned audio input is now handled correctly.
+	- Image as a source for virtual feeds now works
+	- The command *stack* can now list its setting.
+	- Delay of mixing audio source for specified time period.
+	- Drop of an audio frame below a speciified RMS threshold.
+	- Control of overlaying quality through Cairo Filters.
+
+In addition to enhanced platform support, this version has a long list of bug
+fixes and stability improving corrections. Please see the Change Log for more details
+
+The previous release version 0.4.3 omitted to mention the 7 new commands:
+
+	- system output buffers <buffer count>
+	- system output delay <frames>
+	- system output freeze <number frames to freeze>
+	- system output info
+	- system output mode <mode>
+	- system output reset
+	- system output status
+
+For more information on these commands, please see the Change Log for version 0.4.4.
+
+This release also include an End Of Life Announcement for a number of commands
+and functionality. This is described in the file EndOfLifeAnnouncements.
+
+The recommended platform is Ubuntu 14.04 LTS amd64 with GStreamer-1.4.x.
+
+Snowmix scripts has previously been tested with GStreamer versions such as 0.10.x, 1.0.x, and 1.2.x, but current scripts are no longer tested against these versions although they may work.
+
+To install please unpack the tar archive using the command tar -xzvf Snowmix-0.4.4.tar.gz.
+Then cd to Snowmix-0.4.4 and run the command ./bootstrap and follow instructions.
+After following the instructions including running make and including setting
+the environment variable SM to the directory of Snowmix as explained in the
+instructions, you can run the demo program by executing the command scripts/demo.
+
+Version 0.4.4 has been tested with the following platforms, tools and libraries.
+
+	- Linux Ubuntu Desktop 12.04 LTS, 12.10, 13.10, 14.04 LTS amd64
+	- Linux Ubuntu Server 12.04 i386
+	- Linux Fedora Live Desktop 20 amd64
+	- Linux Mint 16 and 17 Cinnamon amd64
+	- Linux Linaro 12.11 on ODROID-2U for ARM Cortex-A9 Quad Core.
+	- Mac OS X 10.8.5 Mountain Lion
+		Xcode 5.0.2 - LLVM 5.0 x86_64-apple-darwin12.5.0
+		MacPorts 2.2.1
+			gcc/g++ (LLVM 5.0 x86_64-apple-darwin12.5.0)
+			autoconf 2.69.2
+			automake 1.14.1_0
+			libtool 2.4.2._3
+			libcairo 1.12.16_2+x11
+			libpango 1.36.1_1+x11
+			pkgconfig 0.28.0A
+			libsdl 1.2.15_3+x11
+		libpng 1.2.50
+		tcl8.5/tk8.5
+	- Mac OS X 10.9.1-10.9.4 - Maverick
+		Xcode 5.0.2/5.1.1 - LLVM 5.0/5.1 x86_64-apple-darwin13.0.0/13.3.0
+		MacPorts 2.2.1
+			gcc/g++ (LLVM 5.0/5.1 x86_64-apple-darwin13.0.0/13.3.0)
+			autoconf 2.69.2
+			automake 1.14.1_0
+			libtool 2.4.2._3
+			libcairo 1.12.16_2+x11
+			libpango 1.36.1_1+x11
+			pkgconfig 0.28.0A
+			libsdl 1.2.15_3+x11
+		libpng 1.2.50
+		tcl8.5/tk8.5
+
+To compile Snowmix on OS X, please install Xcode first. Then unpack the Snowmix gzipped archive, enter the Snowmix directory and execute ./bootstrap and follow instructions. The boostrap script will check for port for Mac and install it if missing. It will also install using port any missing library needed for Snowmix.
+
+
+------------------------
+		
+
+########################################################################################
+			Release Notes for Snowmix Version 0.4.3
+
+			  Copyright 2013 - Peter Maersk-Moller
+				     January 17th 2014
+
+The overall theme for Snowmix release 0.4.3 has been to fix bugs, correct
+minor cosmetic errors to streamline the use of Snowmix, improving the bootstrap
+and compilation process, adding script support for GStreamer 1.0 and offer better
+control of the output process. Last but not least, the restrictions on scale
+and PAR for video feeds has been removed and the CPU required for mixing video
+feed with odd scales or PAR considerably lowered.
+
+This release also introduces the following 7 new commands:
+
+	audio mixer source [delete <mixer id> <source no>]
+	feed alpha [<feed id> <alpha>]
+	system name [<system name>]
+	system output buffers <buffer count>
+	system output delay <frames>
+	system output mode <mode>
+	system output reset
+
+Details are available in the ChangeLog file. Individual highlights of changes
+and improvements are:
+
+  1) Removing restictions on scale and PAR for video feeds as well as speeding
+     up video stacking of feeds for odd scales and PAR.
+  2) Overlay finish and pre can now list the command name associated.
+  3) Audio feed, mixer and sink no longer have erronous counter wrap after
+     27+ hours at 44100Hz.
+  4) A mixer source can now be deleted/changed.
+  5) Issues when closing a controller channel is now fixed.
+  6) Better control of output. It can be reset and can now operate in one of
+     3 modes. It also offers a number of commands for fine tuning and listing.
+  7) Snowmix can now use 1 of 2 different mixer loops. The loops differ in how
+     timing is handled.
+  8) System name added.
+  9) System socket can now be listed.
+  10) More information with the system info command.
+  11) Scripts made more robust and updated for GStreamer-1.0
+  12) Overhaul of bootstrap process. Better support for Ubuntu 12.10, 13.04 and 13.10.
+  13) Better check on necessary libraries and better support for downloading
+      and installation of these.
+
+Please see the ChangeLog for much more information on changes and new features.
+
+
+
+
+
+########################################################################################
+			Release Notes for Snowmix Version 0.4.2
+
+			  Copyright 2013 - Peter Maersk-Moller
+				     July 31st 2013
+
+The overall theme for Snowmix release 0.4.2 has been to fix bugs and correct
+minor cosmetic errors to streamline the use of Snowmix. The relase also
+includes some perfomance enhancements as well as adding animation to audio
+volumes. The release is compatible with ini files for version 0.4.x with
+the exceptions that some commands as explained in the ChangeLog has
+minor changes to the result.
+
+This release introduce the following 12 new commands:
+
+	audio feed move volume - animation of volume for audio feeds.
+	audio mixer move volume - animation of volume for audio mixers.
+	audio mixer source move volume - animation of volume for source for audio mixers.
+	audio sink move volume - animation of volume for audio sinks.
+	shape arcrel_cw - relative placement of an arc element
+	shape arcrel_cww - relative placement of an arc element
+	shape source alphaadd - adding a constant to the alpha level.
+	shape source alphamul - multiply a factor to the alpha level.
+	shape tell scale - for debugging purposes.
+	text place backgr round - for round corners of text background.
+	text place font - quick change of the font of a placed text.
+	text place string - quick change of the string of a placed text.
+
+Further details are available in the ChangeLog.
+
+This release has been performance optimized and/or enhanced further in the
+following ares or for the specific commands:
+
+	Update loop of all placed text using the animation command *move*.
+	Parsing of all **text** commands.
+	Parsing of all **feed** commands.
+	All **text place** commands are now checked and will return error in case of error.
+	Command image load now closes the file it reads.
+	The command text grow is now by default using a fixed size for placing and for background, but size can be set variable if desired.
+	feed list - cometic changes
+	feed info - additional information
+	feed add - can now list feeds as other add comands.
+
+Further details are available in the ChangeLog.
+
+This release fixes a couple of bugs for the following commands:
+
+	shape list - was not listing all entries in a shape correctly.
+	shape source rgb/rgba - was mixing the print of the two variants in verbose mode.
+	shape help - missing rectangle entry.
+	shape recursion - made a printing error in verbose mode.
+	shape line width - cosmetic printing error in verbose mode.
+	shape inshape - cosmetic printing error in verbose mode.
+	shape arc_ccw - was parsed incorrectly and thus unusable.
+	shape list help - was printing incorrect syntax for some commands.
+	shape move entry - was in some cases erronously deleting an entry.
+	text string concat - was core dumping.
+	pattern add - was deleting a shape rather than a pattern.
+
+Further details are available in the ChangeLog.
+
+In addition to the enhancements and fixes of Snowmix, the control and validation tool snowcub.tcl has been updated with more functions. Snowcub remain currently undocumented.
+
+Last but not least, a collection of Snowmix library functions implemented in Tcl is available in the slib library. These functions includes scene creation and management, clocks, graphs and a radar application that can be used in Snowmix and controlled by Snowcub.
+
+As always, you can the updated information on how to compile and run the demo on:
+https://sourceforge.net/p/snowmix/wiki/Compiling%20and%20Installing/
+
+
+
+########################################################################################
+			Release Notes for Snowmix Version 0.4.1
+
+			  Copyright 2013 - Peter Maersk-Moller
+				     4th July 2013
+
+
+The overall theme for Snowmix release 0.4.1 has been to add shapes to Snowmix.
+Shapes adds support for complex graphics and image drawing, clipping, patterns,
+gradients and masking using graphic primitives of the 2D Cairo Graphics library.
+In this context, a video feed is an image that happens to change at the frame
+rate.  More information on the Cairo Graphics library is available at
+http://cairographics.org/
+
+In Snowmix shapes are macros with zero or more Cairo Graphics commands. This
+release adds support for the following 46 new basic shapes commands where
+the Cairo Graphics commands are marked with *)
+
+	shape add
+	shape arc_cw		*)
+	shape arc_ccw		*)
+	shape clip		*)
+	shape closepath		*)
+	shape curveto		*)
+	shape curverel		*)
+	shape feed		*)
+	shape fill		*)
+	shape fill preserve	*)
+	shape help
+	shape info
+	shape image		*)
+	shape inshape		*)
+	shape line width	*)
+	shape line join		*)
+	shape line cap		*)
+	shape lineto		*)
+	shape linerel		*)
+	shape list
+	shape mask pattern	*)
+	shape moveentry
+	shape moverel		*)
+	shape moveto		*)
+	shape newpath		*)
+	shape operator		*)
+	shape overlay
+	shape paint		*)
+	shape pattern add
+	shape pattern radial	*)
+	shape pattern linear	*)
+	shape pattern stoprgb	*)
+	shape recursion
+	shape restore		*)
+	shape rotation		*)
+	shape save		*)
+	shape scale		*)
+	shape source rgb	*)
+	shape source rgba	*)
+	shape source pattern	*)
+	shape stroke		*)
+	shape stroke preserve	*)
+	shape translate		*)
+	shape transform		*)
+	shape verbose
+	shape place help
+
+For most shape commands their names (largely), function and parameter values
+are identical to the corresponding commands available in the Cairo Graphics
+library. For this reason, much documentation on the use and function of the
+graphic primitives are available on the Cairo Graphics webpages.
+
+A placed shape is an abstraction of a shape with coordinates (its placement),
+a rotation, a scale, an offset, a base color and an alpha value. In addition
+to the basic shape commands, the release also adds support for the following 14
+shape place commands:
+
+	shape place
+	shape place alpha
+	shape place coor
+	shape place move alpha
+	shape place move coor
+	shape place move offset
+	shape place move rotation
+	shape place move scale
+	shape place offset
+	shape place rgb
+	shape place rotation
+	shape place scale
+	shape place shape
+	shape place status 
+
+The 5 move commands adds animation for placed shapes for scale, coordinates, rotation,
+offset and alpha blend.
+
+Other new commands in this release are:
+
+	messagef
+	text place clipabs
+	image write
+	audio mixer source invert
+	system host allow
+
+The image write command is not recommended used for live systems due to possible delay.
+
+In addition to the new commands, a number of changes and bugfixes are also included in
+this release. Details for these new commands are listed in the ChangeLog.
+
+To install and run demo, please execute the following commands:
+
+	$ tar -xzvf Snowmix-0.4.1
+	$ cd Snowmix-0.4.1
+	$ sh bootstrap
+	$ ./configure
+	$ make
+	$ cd scripts
+	$ bash demo
+
+
+
+
+########################################################################################
+			Release Notes for Snowmix Version 0.4.0
+
+			  Copyright 2013 - Peter Maersk-Moller
+				   19th January 2013
+
+
+The overall theme for Snowmix release 0.4.0 has been to add many new commands supporting
+audio mixing. This version adds the following 51 new audio related commands:
+
+        audio feed add
+        audio feed add silence
+        audio feed channels
+        audio feed ctr isaudio
+        audio feed delay
+        audio feed drop
+        audio feed format
+        audio feed info
+        audio feed mute
+        audio feed rate
+        audio feed status
+        audio feed verbose
+        audio feed volume
+        audio feed help
+
+        audio mixer add
+        audio mixer add silence
+        audio mixer drop
+        audio mixer channels
+        audio mixer mute
+        audio mixer queue
+        audio mixer rate
+        audio mixer source
+        audio mixer source add silence
+        audio mixer source map
+        audio mixer source maxdelay
+        audio mixer source mute
+        audio mixer source volume
+        audio mixer start
+        audio mixer stop
+        audio mixer verbose
+        audio mixer volume
+        audio mixer status
+        audio mixer help
+
+        audio sink add
+        audio sink add silence
+        audio sink channels
+        audio sink ctr isaudio
+        audio sink drop
+        audio sink file
+        audio sink format
+        audio sink mute
+        audio sink queue
+        audio sink queue maxdelay
+        audio sink rate
+        audio sink source
+        audio sink start
+        audio sink status
+        audio sink stop
+        audio sink verbose
+        audio sink volume
+        audio sink help
+
+In addition to the audio commands, this release also adds the following 5 new commands:
+
+	overlay pre
+	system info
+	image place matrix
+	virtual feed place matrix
+	image place matrix
+
+These commands are described a little bit more in the ChangeLog file.
+
+
+				PLEASE NOTE THIS:
+				-----------------
+
+In addition to the new commands listed above, the following 4 commands has changed syntax breaking
+the format of previous ini files. The commands changed will need to have the token 'system' prepended.
+
+        port            -> system control port
+        geometry        -> system geometry
+        frame rate      -> system frame rate
+        socket          -> system socket
+
+==================================================================================================
+
+
+
+
+
+
+########################################################################################
+			Release Notes for Snowmix Version 0.3.4
+
+			  Copyright 2012 - Peter Maersk-Moller
+				   18th October 2012
+
+The overall theme for Snowmix release 0.3.4 has been to add many new commands supporting
+images.  This version adds the following 13 new commands:
+
+	image place image
+	image place offset
+	image place clip
+	image place move clip
+	image place scale
+	image place move scale
+	image place alpha
+	image place move alpha
+	image place rotation
+	image place move rotation
+	image place coor
+	image place move coor
+	image place align
+	image verbose
+	message
+	text verbose
+	image help
+
+The command image place now support for anchoring. This version also fixes
+a list of bugs. Details on new commands and list of bugs fixed can be found
+in the Changelog file or at the url https://sourceforge.net/p/snowmix/wiki/Changelog/
+
+
+
+
+
+
+########################################################################################
+			Release Notes for Snowmix Version 0.3.3
+
+			  Copyright 2012 - Peter Maersk-Moller
+				   6th October 2012
+
+The overall theme for Snowmix release 0.3.3 has been to add many new commands to
+the command language of Snowmix. These commands are intended to easy flow structure
+when programming and controlling events and conditions.
+
+This version adds the following 13 new commands:
+
+	command at ...
+	include ...
+	label ...
+	goto ...
+	if ...
+	else
+	endif
+	command addatline ...
+	command deleteline ...
+	command push ...
+	command pop ...
+	command delete
+	require version
+
+This release also change the command 'nextframe' to 'next'.
+
+For more details, please see the ChangeLog, where additional information about added
+commands as well as information about fixes and other added functionality is available.
+
+
+
+
+
+
+########################################################################################
+			Release Notes for Snowmix Version 0.3.2
+
+			  Copyright 2012 - Peter Maersk-Moller
+
+The overall theme for Snowmix release 0.3.2 has been to finish adding most
+if not all planned commands for defining and manipulating text and text objects.
+
+This release adds a text tutorial which can be seen by executing the following commands:
+
+	# In the src directory
+	$ xterm -e 'sh ../scripts/output2screen'&
+	$ ./snowmix ../ini/text_tutorial
+
+The text tutorial contain 4 tutorials starting with TextTutorial1 and ending with
+TextTutorial4. If you want to start with a tutorial other than '1', you can in the
+file ini/text_tutorial comment out 'TextTutorial1' in the bottom of the file by
+adding a '#' in front of 'TextTutorial1' and remove a leading '#' for the tutorial
+you want to start with.
+
+This versions adds the 11 following commands:
+
+	text font available
+	text place move clip
+	text place backgr move clip
+	text place scale
+	text place move scale
+	text place clip
+	text place backgr clip
+	text place backgr move alpha
+	text place move alpha
+	text place move rotation
+	text string concat
+
+For more details, please see the ChangeLog, where additional information about added
+commands as well as information about fixes and other added functionality is available.

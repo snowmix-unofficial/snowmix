@@ -1,0 +1,178 @@
+<div class="content">
+
+	<div class="item">
+
+		<h1>Snowmix News</h1>
+		<div class="descr">Updated for Snowmix 0.5.1</div>
+	</div>
+
+	<div class="item">
+
+		<h3>New Snowmix version 0.5.1</h3>
+		<div class="descr">February 9th 2016 by Peter Maersk-Moller</div>
+		<br/>
+
+		<p>New Snowmix version 0.5.1 is <a href="https://sourceforge.net/projects/snowmix/files/latest/download">available for download</a>.</p>
+
+		<p>This version Snowmix adds a number of new GUI programs suitable for controlling
+		Snowmix in a Live production enviroment. In addition to this, a number of bugfixes
+		and improvements are included further strengthening the stability and suitability of
+		Snowmix in a Live production environment. Details are available in the
+		<a href="[HOME]Documentation/releasenotes.html#0.5.1">Release Notes</a>.</p>
+
+		<p>Snowmix is now supported on the following
+		<a href="[HOME]Intro/requirements.html#platforms">platforms</a>:</p>
+
+		<ul>
+			<li>Linux CentOS, Chakra, Debian, Fedora, Linaro, Mint, OpenSUSE, Ubuntu</li>
+			<li>FreeBSD PCBSD</li>
+			<li>Mac OS X El Capitan, Yosemite, Maverick, Mountain Lion</li>
+		</ul>
+
+		<p>Snowmix has been tested to run on the following <a href="[HOME]Intro/requirements.html#hardware">architectures</a>:</p>
+		<ul>
+			<li>i386, i586, i686</li>
+			<li>amd64/x86_64</li>
+			<li>ARMv7</li>
+		</ul>
+
+		<p>If you have used previous versions of Snowmix, it is important that you read the
+		<a href="[HOME]Documentation/releasenotes.html#0.5.1">Release Notes</a>.</p>
+
+		<p>As always, details of changes and new implementations are listed in the
+		<a href="[HOME]Documentation/changelog.html#0.5.1">Change Log</a> and an
+		updated version for how to
+		<a href="[HOME]Intro/compileandinstall.html">compile and install</a>
+		Snowmix is likewise available. The
+		<a href="[HOME]Documentation/developmentplans.html">development plans</a>
+		has also been updated to reflect this new release.</p>
+
+		<div align="right"><a href="">Top</a></div>
+	</div>
+
+	<div class="item">
+
+		<h3>New Snowmix version 0.5.0</h3>
+		<div class="descr">July 31st 2015 by Peter Maersk-Moller</div>
+		<br/>
+
+		<p>New Snowmix version 0.5.0 is <a href="https://sourceforge.net/projects/snowmix/files">available for download</a>.</p>
+
+		<p>This version makes Snowmix installable and add for the first time for Snowmix support for
+		industry standard OpenGL hardware accelerated 2D and 3D graphic manipulation.
+		Details are in the <a href="[HOME]Documentation/releasenotes.html#0.5.0">Release Notes</a>.</p>
+
+		<p>In addition to the usual new commands, bugfixes, speed-ups and cosmetic changes, the previous
+		<a href="[HOME]Intro/endoflife.html#0.5.0">EndOfLife announcements</a> are now implemented.</p>
+
+		<p>Snowmix is now supported on the following
+		<a href="[HOME]Intro/requirements.html#platforms">platforms</a>:</p>
+
+		<ul>
+			<li>Linux CentOS, Chakra, Debian, Fedora, Linaro, Mint, OpenSUSE, Ubuntu</li>
+			<li>Mac OS X Yosemite, Maverick, Mountain Lion, Lion and Snowleopard</li>
+		</ul>
+
+		<p>Snowmix has been tested to run on the following <a href="[HOME]Intro/requirements.html#hardware">architectures</a>:</p>
+		<ul>
+			<li>i386, i586, i686</li>
+			<li>amd64/x86_64</li>
+			<li>ARMv7</li>
+		</ul>
+
+		<p>If you have used previous versions of Snowmix, it is important that you read the
+		<a href="[HOME]Documentation/releasenotes.html#0.5.0">Release Notes</a>.</p>
+
+		<p>As always, details of changes and new implementations are listed in the
+		<a href="[HOME]Documentation/changelog#0.5.0">Change Log</a> and an
+		updated version for how to
+		<a href="[HOME]Intro/compileandinstall.html#0.5.0">compile and install</a>
+		Snowmix is likewise available. The
+		<a href="[HOME]Documentation/developmentplans.html">development plans</a>
+		has also been updated to reflect this new release.</p>
+
+		<div align="right"><a href="">Top</a></div>
+	</div>
+
+	<div class="item">
+
+		<h1>A New FAQ</h1>
+		<div class="descr">Jan 24th 2015 by Peter Maersk-Moller</div>
+		<br/>
+
+		<p>A new <a href="faq.html">FAQ</a> has been released. It is a good
+		starting point for newbies and for those who seek an overview
+		of entries to more advanced advanced information on Snowmix.</p>
+
+		<div align="right"><a href="">Top</a></div>
+	</div>
+
+	<div class="item">
+
+		<h1>New version 0.4.5.</h1>
+
+		<div class="descr">Jan 21th 2015 by Peter Maersk-Moller</div>
+
+		<p>New version 0.4.5 is <a href="https://sourceforge.net/projects/snowmix/files/latest/download">available for download</a>.</p>
+
+		<p>This version supports OS X on Intel and Linux Ubuntu, Fedora, Mint,
+		Debian, OpenSUSE, Chakra and and Linero on amd64, i386/i686 and ARMv7 platforms.</p>
+
+		<p>This versions mainly updates  and upgrades virtual feed and image commands
+		and capabilities for overlay/mixing, but it also includes optimization
+		especially for overlaying text.</p>
+
+		<p>The version includes 17 new commands and includes a longer list of
+		bugfixes, correct minor cosmetic errors, improving the bootstrap and
+		compilation process. Also 2 new reference manuals has been written for
+		this release. Details are all listed in <a href="[HOME]/Documentation/changelog.html">Changelog</a>.
+		See also the <a href="[HOME]/Documentation/releasenotes.html">Release Notes</a>.</p>
+
+		<p>As always you can download the <a href="http://sourceforge.net/projects/snowmix/files/">latest version here</a>.</p>
+
+		<p>If you have used previous versions of Snowmix, it is important that you read the
+		<a href="[HOME]Documentation/releasenotes.html#0.5.0">Release Notes</a>.</p>
+
+		<p>As always, details of changes and new implementations are listed in the
+		<a href="[HOME]Documentation/releasenotes.html#0.5.0">Change Log</a> and an
+		updated version for how to
+		<a href="[HOME]Intro/compileandinstall.html#0.5.0">compile and install</a>
+		Snowmix is likewise available. The
+		<a href="[HOME]Documentation/developmentplans.html">development plans</a>
+		has also been updated to reflect this new release.</p>
+
+		<div align="right"><a href="">Top</a></div>
+	</div>
+
+	<div class="item">
+
+		<h1>New version 0.4.4.</h1>
+		<div class="descr">Sep 3rd 2014 by Peter Maersk-Moller</div>
+		<br/>
+
+		<p>New version 0.4.4 is <a href="https://sourceforge.net/projects/snowmix/files/latest/download">available for download</a>.</p>
+		<p>This version supports OS X on Intel and Linux Ubuntu, Fedora, Mint and
+		Linero on amd64, i386/i686 and ARMv7 platforms.</p>
+
+		<p>It [scripting capabilities](Scripting) has vastly been improved with new querying
+		capabilities from inside the [embedded Tcl Interpreter](Tcl Interpreter) for
+		Snowmix internal settings.
+		There are also significant improvement to the Scenes pane and the Video pane of
+		snowcub.tcl, the GUI for controlling Snowmix.
+		[Snowmix Libraries](Snowmix Libraries) has been overhauled, upgraded, improved
+		and are now supported. Earlier issues with Ubuntu 14.04 LTS
+		has been fixed and better visual scaling of video and images is now available.</p>
+
+		<p>The version includes 27 new commands and includes a longer list of bugfixes,
+		correct minor cosmetic errors, improving the bootstrap and compilation process.
+		Details are all listed in <a href="changelog.html>Changelog</a>.
+		See also the <a href="releasenotes.html">Release Notes</a>.</p>
+
+		<p>As always you can download the <a href="http://sourceforge.net/projects/snowmix/files/">latest version here</a>.</p>
+
+		<p>The <a href="developmentplans.html">development plans are available here</a> and
+		updated <a href="compileandinstall.html">compiling and installation instructions are also available</a>.</p>
+		<div align="right"><a href="">Top</a></div>
+	</div>
+
+</div>

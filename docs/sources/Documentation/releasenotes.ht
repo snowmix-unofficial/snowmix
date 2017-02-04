@@ -1,0 +1,327 @@
+<div class="content">
+
+	<div class="item">
+
+		<h1>Release Notes</h1>
+		<div class="descr">Updated for Snowmix 0.5.1</div>
+
+		<p>This is the Release Notes for Snowmix.</p>
+
+		<ul>
+			<li>Release Notes for version <a href="#0.5.1">0.5.1</a>.</li>
+			<li>Release Notes for version <a href="#0.5.0">0.5.0</a>.</li>
+		</ul>
+
+		<p>If you are looking for the Release Notes for versions prior to version 0.5.0, please see
+		<a href="https://sourceforge.net/p/snowmix/wiki/Release%20Notes">here</a>.</p>
+
+	</div>
+
+	<div class="item">
+		<div align="right"><a href="">Top</a></div>
+		<h1><a name="0.5.1">Snowmix version 0.5.1</a></h1>
+		<div class="descr">Released February 9th 2016</div>
+
+		<h3>Overall Theme</h3>
+		<br/>
+
+		<p>The overall theme for this
+		<a href="https://sourceforge.net/projects/snowmix/files/">Snowmix release 0.5.1</a>
+		is to release GUI programs for
+		controlling Snowmix for Live video production. Secondary, this release includes
+		a number of bugfixes and smaller improvements overall making Snowmix even more
+		stable and dependable for a Live production environment.</p>
+
+		<p><strong>New GUI Programs:</strong><br/> 
+		The GUI program <i>snowcub.tcl</i> is no longer included, but have been replaced by
+		programs such as <i>snowaudio.tcl</i>, <i>snowscene.tcl</i> and <i>snowoutput.tcl</i>.</p>
+
+		<p>The program <i>snowaudio.tcl</i> is a GUI program that can be used to control and
+		mix audio in a live production environment running Snowmix. <i>snowaudio.tcl</i>
+		reads its configuration from a running session of Snowmix.</p>
+
+		<p>The program <i>snowscene.tcl</i> is a GUI program that can be used to control and
+		mix video scenes in a live production environment running Snowmix. <i>snowscene.tcl</i>
+		reads its configuration from a running session of Snowmix.</p>
+
+		<p>The program <i>snowoutput.tcl</i> is a GUI program that can be used to monitor the
+		output statistics of Snowmix in a live production environment.</p>
+
+		<p><strong>New commands:</strong><br/>
+		The following new commands, enhancements, improvements and bugfixes are included
+		in this version. Details can be found in the
+		<a href="[HOME]Documentation/changelog.html">ChangeLog</a>.</p>
+
+		<p>Tcl command<br/></p>
+		<code>snowmix info output ((info | status) [ format ]) | syntax</code>
+
+		<p><strong>Enhancements and Improvements:</strong><br/>
+		<ul>
+			<li>OpenGL support tested to work for Mac OS X.</li>
+			<li>24 bit RGB PNG images are now supported in addition to 32 bit RGBA.</li>
+			<li>Audio clipping range changed from betwenn -32768 and 32767 to
+           			now -32767 tand 32767.</li>
+			<li>Cleanup for the command <i>tcl help</i>.</li>
+			<li>Cosmetic cleanup for command <i>audio sink status</i>.</li>
+			<li>Cosmetic cleanup for the tcl command
+           			<i>snowmix info audio mixer source extended format</i></li>
+			<li>Changes to the Snowmix Library command "SceneSetFrameActive".</li>
+			<li>Adding konsole and xfc4-terminal to snowmix_demo script.</li>
+		</ul></p>
+
+		<p><strong>Bugfixes:</strong><br/>
+		<ul>
+			<li>Deleting or loading an image into an existing image place holder
+           			would leak memory.</li>
+			<li>Text grow would fail for certain combination of UTF8 multi character
+           			strings.</li>
+			<li>Text background had switched rb values for the <i>text backgr rgb</i> command.</li>
+			<li>Tcl command <i>snowmix info</i> would in some case make Snowmix dump core.</li>
+			<li>Snowmix audio mixer had problems adjusting the audio level when source
+           			had fewer channels than the mixer it self.</li>
+			<li>Audio mixer would in some cases not detect audio clipping correct.</li>
+			<li>Unbalanced list for the tcl command <i>snowmix info audio mixer source info ...</i>.</li>
+			<li>The command <i>audio feed delay &lt;feed id> &lt;ms></i> would print to stderr and
+           			not the controlling channel.</li>
+			<li>The tcl command <i>snowmix info audio mixer source</i> printed wrong
+           			value for mute. The same applied for the command
+           			<i>snowmix info audio feed status ...</i> and <i>snowmix info audio sink status ...</i>.</li>
+			<li>Format error for the tcl command <i>snowmix info audio mixer source ...</i>.</li>
+			<li>Images/CS directory was not installed (minor issue).</li>
+			<li>Output2screen could potentially hang on some systems.</li>
+			<li>The snowmix_demo script could hang on Linux systems without gnome_terminal.</li>
+			<li>Tcl include files that are not executable directly, are now installed
+            			as data files with mode 644.</li>
+			<li>Snowmix on OS X could exit without a warning if a connecting shmsrc exits.</li>
+		</ul></p>
+
+		<p><strong>Compile and install:</strong><br/>
+		Please see the
+		<a href="[HOME]Intro/compileandinstall.html">compile and install instructions</a>.
+		for version 0.5.1.</p>
+
+		<p>Support for OpenGL is still considered alpha code and not enabled by default.
+		To enable
+		<a href="[HOME]Documentation/guide-glshapes.html">support for OpenGL</a>,
+		please run the command before running make:</p>
+
+                <code>./configure --prefix=$prefix --libdir=$prefix/lib --enable-snowmixosmesa \
+	--enable-snowmixx11 --enable-snowmixglu --enable-snowmixglut</code>
+
+        <p>The variable $prefix is usually /opt/local for Mac OS X and /usr/local for all others.
+        Alternatively use the file bootstrapmin-opengl.</p>
+		<code>./bootstrapminopengl</code>
+
+		<p><strong>Tested platforms:</strong><br/>
+        	This version of Snowmix has before release been tested on:</p>
+		<ul>
+			<li>Mac OS X 10.11.3 El Capitan.</li>
+			<li>Mac OS X 10.10.5 Yosemite.</li>
+			<li>Mac OS X 10.9. Mavericks.</li>
+			<li>Mac OS X 10.8.5 Mountain Lion.</li>
+			<li>Linux Centos 7 15.11 amd64 (See comments)</li>
+			<li>Linux Chakra 15.11 Fermi amd64. (See comments)</li>
+			<li>Linux Debian 8.2 amd64. (See comments)</li>
+			<li>Linux Fedora Workstation 23 amd64. (See comments)</li>
+			<li>Linux Mint Cinnamon 17.2 amd64.</li>
+			<li>Linux OpenSUSE Leap 42.1 amd64.</li>
+			<li>FreeBSD PCBSD10.2. (See comment about /bin/bash)</li>
+			<li>Linux Ubuntu 14.04 LTS amd64, ARMv7</li>
+			<li>Linux Ubuntu 15.10 amd64</li>
+		</ul>
+		</p>
+
+		<p><strong>Comments on installing on various platforms:</strong><br/>
+		Please see <a href="[HOME]Intro/compileandinstall.html">compile and install instructions</a> for further details.
+		<ul>
+			<li><strong>Mac OS X</strong>:The bootstrap script will install all that is needed.</li>
+			<li><strong>CentOS</strong>: You need to add rights to do 'sudo' for the user compiling and installing
+        Snowmix.  The program snowmix_demo needs encoder and decoder modules for
+        GStreamer for H.264 and AAC (unclear how get this).</li>
+			<li><strong>Chakra</strong>: Compiles and runs fine, but needs BWidget to run GUI apps. BWidget seems
+        not to be available for Chakra although it is for Arch Linux. You may
+        be able to download and install BWidget from Sourceforge manually.</li>
+			<li><strong>Debian</strong>: Needs package 'sudo' to be installed. Need to add rights to do 'sudo' for
+        the user download and install missing tools/libs and for installing Snowmix.
+Fedora: Fedora 23. You need to add the rpmfusion repository and install relevant gstreamer
+        plugins to run the snowmix_demo. Similar for Fedora 22, but untested.<br/>
+        <code>sudo rpm -Uvh http://download1.rpmfusion.org/free/fedora/rpmfusion-free-release-23.noarch.rpm
+sudo rpm -Uvh http://download1.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-23.noarch.rpm
+sudo dnf install gstreamer-plugins-bad gstreamer-plugins-bad-free-extras \
+	gstreamer-plugins-bad-nonfree gstreamer-plugins-ugly gstreamer-ffmpeg \
+	gstreamer1-libav gstreamer1-plugins-bad-free-extras gstreamer1-plugins-bad-freeworld \
+	gstreamer1-plugins-base-tools gstreamer1-plugins-good-extras gstreamer1-plugins-ugly \
+	gstreamer1-plugins-bad-free gstreamer1-plugins-good gstreamer1-plugins-base gstreamer1</code></li>
+			<li><strong>Mint</strong>:The bootstrap script will install all that is needed.</li>
+			<li><strong>PCBSD</strong>:  You need to execute the following command "sudo ln -s /usr/local/bin/bash /bin/bash"
+        for the scripts to work. Run all commands in bash rather than other shells.
+        No video/image sinks was found for GStreamer1.0 for PCBSD10.2.
+        No 'wish' needed for tcl GUI programs was found.</li>
+			<li><strong>OpenSUSE</strong>: The package gstreamer-plugins-libav isn't found by zypper. You need to
+        find the right version yourself and install it manually. Without it, you may
+        miss important decoders such as decoder for H.264 etc.</li>
+			<li><strong>Ubuntu</strong>:The bootstrap script will install all that is needed.</li>
+		</ul>
+		</p><br/>
+		<div align="right"><a href="">Top</a></div>
+	</div>
+
+	<div class="item">
+
+		<h1><a name="0.5.0">Snowmix version 0.5.0</a></h1>
+		<div class="descr">Released July 31st 2015</div>
+
+		<h3>Overall Themes</h3>
+		<br/>
+
+		<p>The overall theme for this Snowmix release 0.5.0 is to make Snowmix installable
+		as a regular program. Furthermore the theme is also to add support for
+		industry standard OpenGL 3D graphics both Off Screen CPU based and
+		hardware accelerated GPU based rendering. In addition to these overall themes,
+		this release come with a number of bugfixes, speed-ups, cosmetic changes
+		and <a href="[HOME]Documentation/endoflife.html">EndOfLife</a> implementations.</p>
+
+		<h3>Why are the Release Notes important?</h3>
+		<br/>
+
+		<p>This version's release notes are <strong>especially important to pay attention to</strong> for
+		those of you who have been using earlier versions of Snowmix. Because Snowmix
+		is now changing its major version number, a long list of commands are
+		now changing their syntax or are being retired as earlier made clear
+		in the <a href="[HOME]Documentation/endoflife.html">EndOfLife announcements</a>.
+		Please see the <a href="[HOME]Documentation/endoflife.html">EndofLife Announcement</a>
+		for this version to see the list of commands and functionality now
+		changing or retirering. This is also listed in the <a href="[HOME]Documentation/changelog.html">ChangeLog</a>.</p>
+
+		<p>In addition to these changes, it is also <strong>important</strong> to know that from
+		this version on, the file names in the ini file given for feed control
+		sockets and system socket must be given as an absolute file name starting
+		with a leading '/'. This mean that you will have to change this in your
+		ini files, if you are reusing ini files from previous versions.</p>
+
+		<p>Snowmix will from this version and on <strong>refuse to run</strong>, if the environment
+		variable SNOWMIX has not been set to the install path of Snowmix. By
+		default, when Snowmix is running the configure command as part of the
+		bootstrap script, the install prefix is set to /usr/local for all but
+		Mac OS X and to /opt/local for the latter. If you have an install prefix
+		being /usr/local, you must set the enviroment variable SNOWMIX to be:</p>
+
+		<code>export SNOWMIX=/usr/local/lib/Snowmix-0.5.0</code>
+
+		<p>If you do <u>not</u> do this, <strong>Snowmix will not work properly</strong>.
+
+		<h3>New Search Path</h3>
+		<br/>
+
+		<p>From this version and on, Snowmix will, unless filename is absolute and
+		starting with a leading '/', be using a search path when:</p>
+
+		<ul>
+			<li>include an ini file for reading
+			<li>include a Snowmix library file (slib directory)
+			<li>load an image file for reading
+			<li>load a dead-image file for a feed (from the frames directory)
+			<li>open an audio sink output file for writing
+			<li>open an image file for writing
+		</ul>
+
+
+		<p>The search path will contain the following paths in this order:</p>
+
+		<code>Current working directory
+$HOME/$SNOWMIX_PREFIX
+$SNOWMIX</code>
+
+		<p>If the environment variable SNOWMIX_PREFIX has not been set to a name,
+		Snowmix will for Mac OS X use 'Snowmix' and for all other platforms use '.snowmix'.
+		If you in your ini file include the following files:</p>
+
+		<code># First file
+include ../ini/my_ini_file
+# Second file
+include ini/my_ini_file
+# Third file
+include /ini/my_ini_file</code>
+
+		<p>Then Snowmix will for the first file look for my_ini_file in this order:</p>
+
+		<code>'current working directory'/../ini/my_ini_file
+$HOME/$SNOWMIX_PREFIX/../ini/my_ini_file
+$SNOWMIX/../ini/my_ini_file</code>
+
+		<p>If a file is found, the file will be includeded and no further search
+		is done. If all search paths fails, the include command fails. The second file will
+		be attempted read as:</p>
+
+		<code>'current working directory'/ini/my_ini_file
+$HOME/$SNOWMIX_PREFIX/ini/my_ini_file
+$SNOWMIX/ini/my_ini_file</code>
+
+		<p>Third filename is absolute, so Snowmix will only attempt to read the file
+		/ini/my_ini_file.</p>
+
+		<p>Because search paths are used when opening a file for writing for audio
+		sinks, an absolute file name <strong>must</strong> be used if the file
+		does not exist when the file is opened.</p>
+
+		<p>So go over your older ini files and probably remove the '../' for images,
+		audio sinks etc. and you will probably also copy your old ini files to
+		$HOME/.snowmix/ini/ for Linux and $HOME/Snowmix/ini/ for Mac OS X.
+		See also the <a href="[HOME]Documentation/changelog.html">ChangeLog</a> for more details on this.</p>
+
+		<p>In addition to the 72 new glshape commands, this version adds the following
+		3 commands:</p>
+
+		<code>feed drop <feed id> <n drops>
+if exist(image,&lt;image id>)
+shape newsubpath &lt;shape id></code>
+
+		<p>Details are found in the <a href="[HOME]Documentation/changelog.html">ChangeLog</a>.</p>
+
+		<p>For a list of the new glshape commands, please see the
+		<a href="[HOME]Documentation/reserved.html">Reserved Command</a> list
+		in the section <a href="[HOME]Documentation/reserved.html#glshape">GL Shape Commands</a>
+		and <a href="[HOME]Documentation/reserved.html#glshape">Placed GL Shape Commands</a>.
+		Please also see the new <a href="[HOME]Documentation/guides.html">Snowmix Guide</a> on
+		<a href="[HOME]Documentation/iguide-glshapes.html">GL Shapes</a>.</p>
+
+		<p>Snowmix now support installation on CentOS. However see the <a href="[HOME]Documentation/changelog.html">ChangeLog</a> for a missing
+		component of GStreamer on CentOS.</p>
+
+		<p>This version of Snowmix has before release been tested on:</p>
+
+		<ul>
+			<li>Linux Ubuntu 14.04 LTS amd64 ARMv7</li>
+			<li>Linux CentOS 7 15.03 amd64</li>
+			<li>Linux Chakra 14.11 Euler amd64</li>
+			<li>Linux Debian 7.7.0 amd64</li>
+			<li>Linux Mint Cinnamon amd64 17.1, 17.2 amd64</li>
+			<li>Linux Fedora Workstation 21 amd64</li>
+			<li>Mac OS X 10.09 Maverick</li>
+			<li>Mac OS X 10.10.4 Yosemite</li>
+		</ul>
+
+		<p>For Snowmix version 0.5.0 on OS X, the OSMesa Context may not work. This may just be a
+                linking issue, but the root cause has not been found yet.</p>
+
+                <p>OpenGL has not been tested on the ARMv7 platform. Most implementations
+                with ARMv7 offers OpenGL ES as opposed to regular OpenGL. Quite likely only
+                few changes to Snowmix will be necessary to get Snowmix to work with OpenGL ES,
+                but this is currently untested.</p>
+
+		<h3>Compilation and installation</h3>
+		<br/>
+
+		<p>For compilation, please see the page on
+		<a href="[HOME]Intro/compileandinstall.html">compilation and installation</a>. Please note
+		that OpenGL 3D Graphics support is alpha code and not enabled by default. You need to
+		enable OpenGL support before compilation to includde OpenGL support. Details are found
+		on the page on <a href="[HOME]Intro/compileandinstall.html">compilation and installation</a>
+		and on the page <a href="[HOME]Documentation/guide-glshapes.html#including">Snowmix GL Shape Guide</a>.</p>
+	
+		<div align="right"><a href="">Top</a></div>
+	</div>
+</div>
+
+
+

@@ -1,0 +1,41 @@
+#!/bin/bash
+date=`date`
+basename=`basename $0`
+pid_dir=/var/run/stream
+pid_file=$pid_dir/$basename.$$
+echo $$ >$pid_file
+echo $date >>$pid_file
+echo "command : $0 $*" >>$pid_file
+
+localserverport=5010
+remoteserver=81.7.134.69
+remoteserverport=5050
+
+gstlaunch=`which gst-launch-1.0`
+if [ X$gstlaunch != X ] ; then
+  VIDEOCONVERT=videoconvert
+  VIDEO=video/x-raw
+  AUDIO=audio/x-raw
+  vfid=string
+  afid="format=(string)S16LE, "
+else
+  gstlaunch=`which gst-launch-0.10`
+  if [ X$gstlaunch != X ] ; then
+    VIDEOCONVERT=ffmpegcolorspace
+    VIDEO=video/x-raw-rgb
+    AUDIO=audio/x-raw-int
+    vfid=fourcc
+    afid=""
+  else
+    echo "Could not find gst-launch-1.0 or gst-launch-0.10. Stopping"
+    exit
+  fi
+fi
+
+while true ; do
+	$gstlaunch -v -e tcpclientsrc host=localhost port=$localserverport ! \
+		queue			! \
+		mpegtsparse		! \
+		tcpclientsink host=$remoteserver port=$remoteserverport
+	sleep 5
+done

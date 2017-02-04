@@ -1,0 +1,659 @@
+<div class="content">
+
+	<div class="item">
+
+		<h1>Changelog for Snowmix</h1>
+		<div class="descr">Updated for version 0.5.1</div>
+
+		<h3>Introduction</h3>
+
+		<p>This document tracks changes to the functionality of Snowmix and its
+		accompanying scripts and files.</p>
+		<ul>
+			<li>ChangeLog for version <a href="#0.5.1">0.5.1</a></li>
+			<li>ChangeLog for version <a href="#0.5.0.1">0.5.0.1</a></li>
+			<li>ChangeLog for version <a href="#0.5.0">0.5.0</a></li>
+		</ul>
+
+		<p>Changelog for older versions are availble here:</p>
+		<ul>
+			<li><a href="https://sourceforge.net/p/snowmix/wiki/Changelog/">Snowmix version 0.4.4-0.4.5</a>
+			<li><a href="https://sourceforge.net/p/snowmix/wiki/Changelog%200.4.0-0.4.3/">Snowmix version 0.4.0-0.4.3</a>
+			<li><a href="https://sourceforge.net/p/snowmix/wiki/Changelog-0.3.x/">Snowmix version 0.3.x</a>
+		</ul>
+
+	</div>
+
+	<div class="item">
+
+		<h3><a name="0.5.1">Changelog for Snowmix 0.5.1</a></h3>
+		<div align="right"><a href="">Top</a></div>
+
+		<br/>
+		<ul>
+
+		<li>Debian support now has its own additional bootstrap file to be executed
+	  automatically when running bootstrap. Will check for GStreamer 1.0
+	  and offer to download relevant packages.</li>
+			<br/>
+
+		<li>Including OpenGL GLUT support now requires '--enable-snowmixglut'
+	  when running configure. Full OpenGL support can be enabled by:</li>
+		</ul>
+
+	<code>./configure --prefix=$prefix --libdir=$prefix/lib --enable-snowmixosmesa \
+	--enable-snowmixx11 --enable-snowmixglu -enable-snowmixglut</code>
+
+			<p>Replace $prefix with the correct path.</p>
+		<ul>
+		<li>On Mac OS X, a pipeline closing connection to Snowmix output control
+	  connection setup by GStreamer shmsrc, would under certain circumstances
+	  make Snowmix exit without any explanation. This happened when Snowmix
+	  would "send" data to the control connection of the connecting shmsrc
+	  and the shmsrc had broken the connection. Due to OS X not supporting
+	  MSG_NO_SIGNAL, a SIGPIPE would make Snowmix exit without warnings.
+	  Snowmix now correctly sets the socket option SO_NOSIGPIPE for OS X and
+	  catches the signal and closing the socket nicely. Linux just sets
+	  MSG_NOSIGNAL flag when sending. This bugfix has also been implemented
+	  on the feed control connection although so far, the bug has not been
+	  reproduced on OS X on the fed control connection.</li>
+		<br/>
+
+		<li>Deleting a loaded image or loading an image into an already used image id,
+	  would leak memory. This is now fixed. This is a bugfix.</li>
+		<br/>
+
+		<li>Error in CCairoGraphic::OverlayText() and UTF8Bytes() would in some cases
+	  lead to incorrect fewer number of characters being overlayed when using
+	  "text grow" combined with a string containing multibyte charaters. In
+	  some cases libPango would object to malformed UTF8 string with a for Snowmix
+	  unpredictable result. This is a bugfix.</li>
+		<br/>
+
+		<li>In addition to loading PNG images WITH an alpha channel/layer, Snowmix now
+	  also support loading PNG images without an alpha channel/layer.</li>
+		<br/>
+
+		<li>The command "text backgr rgb" with argument would switch the green and blue
+	  value. The correct order is red, green and blue. This is a bugfix.</li>
+		<br/>
+
+		<li>For Mac OS X, updating bootstrap-OSX for GStreamer 1.6.3 and MacPort 2.3.4.</li>
+		<br/>
+
+		<li>The tcl command "snowmix info xxxx ids" would in many cases overwrite memory
+	  unintended for image load, test, shape, virtual feed, feed, audio feed,
+	  audio mixer and audio sink leading to unpredictable results, usually a crash.
+	  This is a bugfix.</li>
+		<br/>
+
+		<li>Clipping of audio was detected as being outside the range of -32768 to 32767.
+	  The valid range for audio with no clipping is now set to -32767 to 32767.
+	  The previous range is not considered a bug and the change is as such just
+	  a minor adjustment.</li>
+		<br/>
+
+		<li>When having a source in CAudioMixer with fewer channels than the mixer
+	  itself, the mixer would, if volume of the source for the mixer was different
+	  from 1.0, for some samples of the source frequently multiply the volume
+	  to the source more than once. This was most clearly heard as clicking when volume for
+	  the source in CAudioMixer was set beyond 1.0 and very clearly heard when
+	  volume was set above 1.2-1.3. If volume was set to 1.3, then for most samples for
+	  the source these would be multiplied by 1.3, but some every now and then would
+	  be multiplied by 1.3*1.3. This is a bugfix.</li>
+		<br/>
+
+		<li>Adding/mixing  multiple sources in CAudioMixer would not correctly set
+	  newbuf->clipped to 100, if result exceeded +-32767, but it was rather set
+	  to true (=1) thus mostly avoiding detection of clipping. This is a bugfix.</li>
+		<br/>
+
+		<li>Adding a new option for the snowmix command of the  embedded interpreter.
+	  The command can be used to import settings and states from the output
+	  modules of Snowmix into the embedded Interpreter. The syntax of the
+	  new command option is:</li>
+		</ul>
+
+<code>snowmix info output ((info | status) [ format ]) | syntax</code>
+
+	  <p>One way to use the command can be like this:</p>
+<code>tcl eval snowmix message [snowmix info output info]</code>
+
+		<ul>
+
+		<li>The command "tcl help" would print lines for "snowmix info shapes" and
+	  "snowmix info system" twice and the second print was not correct. Seconds
+	  removed. Cosmetic change.
+		</li>
+			<br/>
+
+		<li>The command "audio feed delay <feed id> <ms>" would print to stderr, aka
+	  the Snowmix console instead of the controller issuing the command. Verbose
+	  mode for audio feed is needed. This is a bugfix.
+		</li>
+			<br/>
+
+		<li>The command "audio sink status" was missing a parameter name "queue" in
+	  the format list included in the beginning of the list. This is a bugfix.
+		</li>
+			<br/>
+
+		<li>The tcl command "snowmix info audio mixer source extended format" was missing
+	  the parameter name delay in its list. When using the format list to
+	  index output from "snowmix info audio mixer source extended ..." it
+	  would lead to a misinterpretation of the data. This is a bugfix.
+		</li>
+			<br/>
+
+		<li>The tcl command "snowmix info audio mixer source info ..." would return an
+	  unbalanced tcl list if any of the mixer sources had a source map configured.
+	  This is a bugfix.
+		</li>
+			<br/>
+
+		<li>The tcl command "snowmix info audio mixer source" would print signed/unsigned instead
+	  of muted/unmuted and it would print the value for signed/unsigned. Should be
+	  the value for muted/unmuted. This is a bugfix.
+		</li>
+			<br/>
+
+		<li>The tcl command "snowmix info audio mixer source ..." would miss a space between an
+	  ending '}' and a starting '{' and mess up the use of this list if used as a list in
+	  tcl. This is a bugfix.
+		</li>
+			<br/>
+
+		<li>The tcl commands "snowmix info audio feed status ..." and "snowmix info audio sink status ..."
+          would print signed/unsigned instead of muted/unmuted. It would also return a malformed tcl
+	  list with unbalanced '{}'. This is a bugfix.
+		</li>
+			<br/>
+
+		<li>The tcl command "snowmix info audio mixer source extended ..." would access sample_count
+	  of an audio queue, also when none was appointed leading to a NULL pointer seg fault.
+	  This is a bugfix.
+		</li>
+			<br/>
+
+		<li>Setting the Windows attribute override_redirect to true should now make the glx
+	  COpenglVideo class bypass the window manager. Enhancement.
+		</li>
+			<br/>
+
+		<li>Update to slib/scenes.slib. SceneSetFrameActive used to set or list active frame/frames.
+          Used without arguments, it will list the all frame states for all scenes.
+          Used with scene_id as argument, it will list all frame state for that scene
+          Used with scene_id and frame_id as argument, it will list frame state for that scene and
+	  that frame. Enhancement. The syntax is:</li>
+		</ul>
+
+<code>SceneSetFrameActive [ scene_id [ frame_id [ active silent ] ] ]</code>
+
+		<ul>
+		<li>Adding support for compiling Snowmix with Cairo Graphics older than version 1.10. This
+	  however limits the list of Cairo Graphics Operators. See
+			<a href="http://cairographics.org/operators/">Cairo Operators</a>.</li>
+			<br/>
+
+		<li>In configure.ac we now actually test for libtcl8.6, libtcl8.5 and libtcl in that order
+	  instead of just assuming it existence from location of header files.</li>
+			<br/>
+
+		<li>Adding freebsd as platform to configure.ac. Used for FreeBSD distro
+			<a href="http://www.pcbsd.org">PCBSD</a>.</li>
+			<br/>
+
+		<li>Updating bootstrap files in bootstrapd for all platforms</li>
+	</ul>
+
+		<div align="right"><a href="">Top</a></div>
+	</div>
+	<div class="item">
+
+		<h3><a name="0.5.0.1">Changelog for Snowmix 0.5.0.1 - Never Released</a></h3>
+		<div align="right"><a href="">Top</a></div>
+
+		<br/>
+		<ul>
+			<li>Adding xfc4-terminal and lxterm to possible terminal emulators for
+			the demo script.  Enhancement.</li>
+			<br/>
+
+       			<li>The images/CS directory was not installed rendering the demo example
+			for ini/sapphire-basis flawed when using the scene tab in snowcub. Bugfix.</li>
+			<br/>
+
+			<li>The script scripts/av_output2screen used 'nc' rather than $NC. Potential
+			stall on some systems.  Bugfix.</li>
+			<br/>
+
+			<li>The script scripts/demo installed as snowmix_demo is missing a '&'
+			preventing the demo script from working correctly on Linux/*nix systems
+			(except MacOSX) if gnome-terminal is not installed. See
+			<a href="https://sourceforge.net/p/snowmix/discussion/Snowmix_Support_Forum/thread/551db9a7/">Forum discussion on the matter.</a> Bugfix.</li>
+			<br/>
+
+			<li>The line with 'audiorate' in the script av_output2screen would in some
+			cases stall the pipeline. The line has now been removed although on some systems
+			it may be needed to avoid clicking sounds building up over time where the audio
+			device is running slightly faster than system clock. Seen on Macs and some
+			Linux systems. Sort of a bugfix.</li>
+		</ul>
+		<div align="right"><a href="">Top</a></div>
+	</div>
+
+	<div class="item">
+
+		<h3><a name="0.5.0">Changelog for Snowmix 0.5.0</a></h3>
+
+		<br/>
+		<ul>
+			<li>The following 72 new commands has been added to Snowmix providing OpenGL support.
+			<ul>
+			<li>glshape add [&lt;glshape id> [&lt;shape name>]]</li>
+			<li>glshape arcxz &lt;glshape id> &lt;angle> &lt;aspect> &lt;slices> &lt;texleft> &lt;texright> &lt;textop> &lt;texbottom></li>
+			<li>glshape arcyz &lt;glshape id> &lt;angle> &lt;aspect> &lt;slices> &lt;texleft> &lt;texright> &lt;textop> &lt;texbottom></li>
+			<li>glshape begin &lt;glshape id> &lt;form>
+			<li>glshape blendfunc &lt;glshape id> &lt;s factor> &lt;d factor>
+			<li>glshape clear &lt;glshape id> (depth | color | color+depth)
+			<li>glshape clearcolor &lt;glshape id> &lt;red> &lt;green> &lt;blue> [&lt;alpha>]
+			<li>glshape color &lt;glshape id> &lt;red> &lt;green> &lt;blue> [&lt;alpha>]
+			<li>glshape context [(osmesa|glx|auto)]
+			<li>glshape disable &lt;glshape id> &lt;mode>
+			<li>glshape enable &lt;glshape id> &lt;mode>
+			<li>glshape end &lt;glshape id>
+			<li>glshape entry &lt;glshape id> (active|inactivate|number)
+			<li>glshape finish &lt;glshape id>
+			<li>glshape flush &lt;glshape id>
+			<li>glshape glucylinder &lt;glshape id> &lt;quad id> &lt;base> &lt;top> &lt;height> &lt;slices> &lt;stacks>
+			<li>glshape gludisk &lt;quad id> &lt;inner> &lt;outer> &lt;slices> &lt;loops>
+			<li>glshape gludrawstyle &lt;glshape id> &lt;quad id> (fill|line|point|silhouette)
+			<li>glshape glunormals &lt;glshape id> &lt;quad id> (none|flat|smooth)
+			<li>glshape gluorientation &lt;glshape id> &lt;quad id> (outside|inside)
+			<li>glshape glupartialdisk &lt;quad id> &lt;inner> &lt;outer> &lt;slices> &lt;loops> &lt;start> &lt;sweep>
+			<li>glshape gluperspective &lt;glshape id> &lt;fovy> &lt;aspect> &lt;znear> &lt;zfar>
+			<li>glshape glusphere &lt;glshape id> &lt;quad id> &lt;radius> &lt;slices> &lt;stacks>
+			<li>glshape glutexture &lt;glshape id> &lt;quad id> (0|1)
+			<li>glshape if (osmesa|glx) &lt;glshape id> &lt;glshape command>
+			<li>glshape info
+			<li>glshape inshape &lt;glshape id> &lt;inglshape id>
+			<li>glshape light &lt;shape id> &lt;gllight i> &lt;pname> &lt;value>
+			<li>glshape lightv &lt;shape id> &lt;gllight i> &lt;pname> &lt;vector id>
+			<li>glshape loadidentity &lt;glshape id>
+			<li>glshape materialv &lt;glshape id> &lt;face> &lt;pname> &lt;vector id>
+			<li>glshape matrixmode &lt;glshape id> (projection | modelview | texture | color)
+			<li>glshape modify &lt;glshape id> &lt;line> (&lt;no>[,&lt;no>...] (&lt;value> | values>)
+			<li>glshape moveentry &lt;shape id> &lt;entry id> [&lt;to entry>]
+			<li>glshape normal &lt;glshape id> &lt;x> &lt;y> &lt;z>
+			<li>glshape noop &lt;glshape id>
+			<li>glshape ortho &lt;glshape id> &lt;left> &lt;right> &lt;bottom> &lt;top> &lt;near> &lt;far>
+			<li>glshape popmatrix &lt;glshape id>
+			<li>glshape pushmatrix &lt;glshape id>
+			<li>glshape recursion &lt;glshape id> &lt;level>
+			<li>glshape rotate &lt;glshape id> &lt;angle> &lt;x> &lt;y> &lt;z>
+			<li>glshape scale &lt;glshape id> &lt;scale x> &lt;scale y> &lt;scale z>
+			<li>glshape scissor &lt;glshape id> &lt;x> &lt;y> &lt;width> &lt;height>
+			<li>glshape shademodel &lt;glshape id> (flat|smooth)
+			<li>glshape snowmix &lt;glshape id> &lt;snowmix command>
+			<li>glshape translate &lt;glshape id> &lt;x> &lt;y> &lt;z>
+			<li>glshape texcoord &lt;glshape id> &lt;s> [&lt;r> [&lt;t> [&lt;q>]]]
+			<li>glshape texfilter2d &lt;glshape id> &lt;near filter> &lt;mag filter>
+			<li>glshape texture add [&lt;texture id> [&lt;texture name>]]
+			<li>glshape texture bind &lt;glshape id> &lt;texture id> [&lt;min> &lt;mag>] [(2d | cube)]
+			<li>glshape texture source [&lt;texture id> (feed &lt;feed id>|frame &lt;frame id>|image &lt;image id>)|none [&lt;id>]]
+			<li>glshabe vbo add &lt;vbo id> &lt;name>
+			<li>glshabe vbo config &lt;vbo id> [(static|dynamic|stream) &lt;form> (c3 | c4 | n3 | t1 | t2 | t3 | t4 | v2 | v3 | v4) ...]
+			<li>glshabe vbo data &lt;vbo id> [&lt;data 0> &lt;data 1> ...]
+			<li>glshabe vbo indices &lt;vbo id> [&lt;index 0> &lt;index 1> ...]
+			<li>glshabe vbo &lt;glshape id> &lt;vbo id>
+			<li>glshape vector add [&lt;vector id> [&lt;vector name>]]
+			<li>glshape vector value [&lt;vector id> &lt;a> &lt;b> [&lt;c> [&lt;d>]]]
+			<li>glshape verbose [&lt;level>]
+			<li>glshape vertex &lt;glshape id> &lt;x> [&lt;y> [&lt;z> [&lt;w>]]]
+			<li>glshape help [form | mode | filter | factor | light | modify]
+			<li>glshape place help
+			<li>glshape copyback [frame | image &lt;image_id> &lt;x> &lt;y> &lt;width> &lt;height>]
+			<li>glshape [ place ] overlay (&lt;id> | &lt;id>..&lt;id> | &lt;id>..end | all) [(&lt;id> | &lt;id>..&lt;id> | &lt;id>..end | all)] ....
+			<li>glshape place [&lt;place id> [ &lt;shape id> &lt;x> &lt;y> &lt;z> [&lt;scale x> &lt;scale y> &lt;scale z> [&lt;rotation> &lt;rx> &lt;ry> &lt;rz> [&lt;red> &lt;green> &lt;blue> [&lt;alpha>]]]]]
+			<li>glshape place alpha [&lt;place id> [&lt;alpha>]]
+			<li>glshape place coor [&lt;place id> [&lt;x> &lt;y> &lt;z>]]
+			<li>glshape place rgb [&lt;place id> [&lt;red> &lt;green> &lt;blue> [&lt;alpha>]]]
+			<li>glshape place rotation [&lt;place id> [&lt;rotation> &lt;rx> &lt;ry> &lt;rz>]]
+			<li>glshape place scale [&lt;place id> [&lt;scale x> &lt;scale y> &lt;scale z>]]
+			<li>glshape place help
+			</ul>
+
+		<li><p>Adding 4 entries to be listed for the command 'help'. The entries are:
+		<code>glshape help
+glshape place help
+shape help
+shape place help</code></p></li>
+		<li><p>As announced in <a href="https://sourceforge.net/p/snowmix/wiki/End%20of%20Life%20Announcements/">EndOfLifeAnnouncements in earlier versions</a>, this version no longer
+	  	supports the following commands:<br/>
+
+		<table>
+			<tr>
+				<td>Removed command</td><td>Replacement command</td>
+			</tr>
+			<tr><td colspan=2>--------------------------------------------------------------------------------</td></tr>
+			<tr><td>cairoverlay</td>		<td>-- no replacement --</td></tr>
+			<tr><td>image place align</td>		<td>image align</td></tr>
+			<tr><td>image place alpha</td><td>           image alpha</td></tr>
+			<tr><td>image place anchor</td><td>          image anchor</td></tr>
+			<tr><td>image place clip</td><td>            image clip</td></tr>
+			<tr><td>image place coor</td><td>            image coor</td></tr>
+			<tr><td>image place filter</td><td>          image filter</td></tr>
+			<tr><td>image place image</td><td>           image image</td></tr>
+			<tr><td>image place matrix</td><td>          image matrix</td></tr>
+			<tr><td>image place move alpha</td><td>      image move alpha</td></tr>
+			<tr><td>image place move clip</td><td>       image move clip</td></tr>
+			<tr><td>image place move coor</td><td>       image move coor</td></tr>
+			<tr><td>image place move offset</td><td>     image move offset</td></tr>
+			<tr><td>image place move rotation</td><td>   image move rotation</td></tr>
+			<tr><td>image place move scale</td><td>      image move scale</td></tr>
+			<tr><td>image place offset</td><td>          image offset</td></tr>
+			<tr><td>image place rotation</td><td>        image rotation</td></tr>
+			<tr><td>image place scale</td><td>           image scale</td></tr>
+			<tr><td>overlay feed</td>		<td>feed overlay</td></tr>
+			<tr><td>overlay image</td>		<td>image overlay</td></tr>
+			<tr><td>overlay virtual feed</td>	<td>vfeed overlay</td></tr>
+			<tr><td>overlay text</td>		<td>text overlay</td></tr>
+			<tr><td>text place align</td><td>            text align</td></tr>
+			<tr><td>text place alpha</td><td>            text alpha</td></tr>
+			<tr><td>text place anchor</td><td>           text anchor</td></tr>
+			<tr><td>text place backgr alpha</td><td>     text backgr alpha</td></tr>
+			<tr><td>text place backgr clip</td><td>      text backgr clip</td></tr>
+			<tr><td>text place backgr linpat</td><td>    text backgr linpat</td></tr>
+			<tr><td>text place backgr round</td><td>     text backgr round</td></tr>
+			<tr><td>text place backgr alpha</td><td>     text backgr alpha</td></tr>
+			<tr><td>text place backgr move alpha</td><td>text backgr move alpha</td></tr>
+			<tr><td>text place backgr move clip</td><td> text backgr move clip</td></tr>
+			<tr><td>text place backgr rgb</td><td>       text backgr rgb</td></tr>
+			<tr><td>text place backgr</td><td>           text backgr</td></tr>
+			<tr><td>text place clip</td><td>             text clip</td></tr>
+			<tr><td>text place clipabs</td><td>          text clipabs</td></tr>
+			<tr><td>text place coor</td><td>             text coor</td></tr>
+			<tr><td>text place grow</td><td>             text grow</td></tr>
+			<tr><td>text place move alpha</td><td>       text move alpha</td></tr>
+			<tr><td>text place move clip</td><td>        text move clip</td></tr>
+			<tr><td>text place move coor</td><td>        text move coor</td></tr>
+			<tr><td>text place move rotation</td><td>    text move rotation</td></tr>
+			<tr><td>text place move scale</td><td>       text move scale</td></tr>
+			<tr><td>text place offset</td><td>           text offset</td></tr>
+			<tr><td>text place repeat move</td><td>      text repeat move</td></tr>
+			<tr><td>text place rgb</td><td>              text rgb</td></tr>
+			<tr><td>text place rotation</td><td>         text rotation</td></tr>
+			<tr><td>text place scale</td><td>            text scale</td></tr>
+		</table></p>
+
+		<li><p>As announced in <a href="https://sourceforge.net/p/snowmix/wiki/End%20of%20Life%20Announcements/">EndOfLifeAnnouncements in earlier versions</a>, this version no longer
+	  	execute returned strings from the Tcl Interpreter as Snowmix
+	  	commands. Version 0.4.4 introduced the embedded tcl command
+	  	<i>snowmix parse</i> to excute Snowmix commands from within the embedded
+	  	interpreter.</p>
+
+		<li><p>Adding new command <i>feed drop</i> to drop frames from the input FIFO
+	  	for feeds. It is not possible to drop more frames that the fifo
+	  	contains minus one. The syntax is:</p>
+
+		<code>feed drop &lt;feed id> &lt;n drops> </code>
+
+		<li><p>If a feed was connected but a frame never arrived, the feed would have
+	  	the state RUNNING. It should be STALLED. This is a bugfix.</p>
+
+		<li><p>A TCP connection to Snowmix's control port where the connection IP
+		address was not allowed (ie. not in the allow list) would cause
+		Snowmix to exit. This is a bugfix.</p>
+
+		<li><p>If verbose is set using the command <i>verbose 1</i>, a connecting
+		TCP connection to Snowmix will now cause the IP address to
+		be printed at console. Before the IP would be printed as an integer
+		and a hex.</p>
+
+		<li><p>The command <i>image move scale</i> could reduce the scale of an image
+		to zero. When a overlayed placed image was reduce to scale zero,
+		overlaying other images would be affected (they became invisible).
+		This is now fixed by ensuring the move command can not make the
+		scale become zero. This is a bugfix.</p>
+
+		<li><p>Testing for existence of a loaded image is now possible as it
+		has been and is possible to test for the existence of a command
+		macro. Example:</p>
+
+		<code>command create TestImage14
+  if exist(image,14)
+    message image 14 is loaded
+  else
+    message image 14 is not loaded
+  endif
+  loop
+command end</code>
+
+		<li><p>Image loaded and image placed now have a sequence number. This
+		number will for each image_id or place_id be incremented
+		when deleted or a new image is loaded. Currently the sequence
+		number for a placed image is currently not incremented.</p>
+
+		<li><p>Making CVideoMixer m_geometry_width and m_geometry_height
+		private and exposing the geometry through the calls
+		GetSystemWidth(), GetSystemHeight() and SystemGeometry().</p>
+
+		<li><p>In configure.ac. We now check for libcairo and fail if it is not
+		available. We now check for libpangocairo and fail if it is not
+		available. We now skip checking GTK+ if snowmixgui is not enabled.
+		We now skip checking for OSMesa if snowmixosmesa is not enabled.
+		We now skip checking for GLEW if snowmixglew is not enabled.</p>
+
+		<li><p>Adding command <i>shape newsubpath</i> to add the Cairo Graphic primitive
+	  	newsubpath. The syntax is:</p>
+
+		<code> shape newsubpath &lt;shape id> </code>
+
+		<li><p>When a shape includes a <i>shape arcrel_cw</i> or <i>shape arcrel_ccw</i>,
+		it is now checked if the there is a current point. If there is
+		no current point, a relative arc is not possible and a warning
+		is printed on the console. There is no current point right after
+		a <i>shape newpath</i>.</p>
+
+		<li><p>Support for CentOS Linux 7.0 added to bootstrap. However at
+		current state CentOS is missing AAC codec and H264 codec
+		for both GStreamer 0.10 and 1.0. Furthermore the 1.0 version
+		is at current state version 1.0.7, which is buggy. Version
+		1.2.4 or 1.4.x would be preferable.</p>
+
+		<li><p>Bootstrap for Fedora forced system update. Fixed. Now it is
+		optional. Package libpng12-devel changed to libpng-devel.</p>
+
+		<li><p>Renaming ini files so they end in <i>.ini</i>
+
+		<li><p>There was a double free error when deleting a loaded image.
+		This is a bugfix.</p>
+
+		<li><p>The script demo would only run the basic_feeds demo case.
+		any other choice would make the script exit. This is a bugfix.</p>
+
+		<li><p>Version 0.4.5 would print to Snowmix console when adding
+		or deleting fonts. Fixed.</p>
+
+		<li><p>The program snowcub.tcl is now installed as a symbolic link
+		typically in /usr/local/bin or /opt/local/bin to snowcub.tcl
+		in the tcl directory of the lib/Snowmix-0.5.0 typically in
+		/usr/local or /opt/local. The program can now be executed
+		anywhere assuming you have set enviroment variable PATH to
+		include the bin directory. The syntax for snowcub.tcl is
+		still:</p>
+
+		<code>snowcub.tcl [-- -FLAGS] [ IP:PORT ] </code>
+
+		<li><p>where FLAGS are any of the characters 'avsrto'. If IP:PORT
+		is not specified, it will use default settings which are
+		whatever the environment variables SNOWMIX_IP and SNOWMIX_PORT
+		is set to. If these variables are not set, snowcub.tcl will use
+		127.0.0.1 for IP and 9999 for PORT.</p>
+
+		<li><p>When snowmix starts, it will no longer write the node name
+		on the Snowmix consol. Use command <i>system info</i> to see the
+		node name. By default, the <i>system name</i> is set to the node
+		name of the system running Snowmix.</p>
+
+		<li><p>If Snowmix was started with an ini file without a reasonably
+		system frame rate, Snowmix would wait for a very long time in
+		deleting CVideoOutput class when the command <i>quit</i> was
+		given. This bug has now been fixed.</p>
+
+		<li><p>Snowmix is now installable and SHOULD be installed running the
+		command:</p>
+
+		<code>$ cd WHERE_YOU_UNPACKED_SNOWMIX_TO
+$ ./bootstrap
+$ make
+$ sudo make install</code>
+
+		<li><p>You only need sudo if you install Snowmix to a place that needs
+		sudo rights. By default Snowmix will be installed into
+		/usr/local. If you want to install it to somewhere else, you
+		can execute the following command after the bootstrap and before
+		the make:</p>
+
+		<code>$ ./configure --prefix=WHERE_EVER_YOU_WANT_TO_INSTALL_SNOWMIX </code>
+
+		<li><p>When Snowmix is installed it will install the following in the
+		prefix directory:</p>
+
+		<code>bin/snowmix
+lib/Snowmix-VERSION/frames/.....
+lib/Snowmix-VERSION/images/.....
+lib/Snowmix-VERSION/ini/.....
+lib/Snowmix-VERSION/scripts/.....
+lib/Snowmix-VERSION/slib/.....
+lib/Snowmix-VERSION/tcl/.....
+lib/Snowmix-VERSION/test/.....</code>
+
+		<li><p>and it will make symbolic links for all scripts in the scripts
+		directory in bin. The VERSION must be replaced by the version
+		number of Snowmix here 0.5.0. The symbolic links will potentially
+		overwrite programs in the bin directory with similar names. After
+		installation you will need to set the enviroment variable SNOWMIX
+		to point to the Snowmix diretory holding the frames, images etc.
+		directories. You do this by adding the following line to your
+		~/.profile or ~/.bashrc or ~/.bash_profile depending on you
+		system and choice of shell AND installation point:</p>
+
+		<code>export SNOWMIX=/usr/local/lib/Snowmix-0.5.0 </code>
+
+		<li><p>typical for Linux depending on your installation point. For
+		Mac OS X you will typically have to add the following to your
+		~/.bash_profile</p>
+
+		<code>export SNOWMIX=/opt/local/lib/Snowmix-0.5.0 </code>
+
+		<li><p>After adding the setting to your ~/.profile or ~/.bashrc or
+		your ~/.bash_profile depending on system and shell, you must
+		logout and login again for the settings to take effect.</p>
+
+		<li><p>Snowmix <strong>now requires</strong> the environment variable SNOWMIX to be set
+		to either the base directory of the Snowmix file tree or the
+		installation directory of Snowmix.</p>
+
+		<li><p>The SNOWMIX variable setting depends on the version of Snowmix
+		and where you choose to install Snowmix. The program snowmix will
+		exit if the environment variable SNOWMIX is not set to point to the
+		installation directory. After setting the enviroment variable,
+		and after logging out and in again, you can test it by executing
+		the commands in seperate windows:</p>
+
+		<code>$ snowmix ini/basic_feeds
+$ output2screen </code>
+
+		<li><p>Enforcing that control socket name for a <i>feed</i> file name MUST be
+		absolute by starting with a '/'</p>
+
+		<li><p>Enforcing the <i>system socket</i> path file name MUST be absolute by
+		starting with a '/'.</p>
+
+		<li><p>Snowmix now creates a search path with by default the following
+		3 paths in the listed order using environment variables:</p>
+
+		<code>Current working directory
+$HOME/$SNOWMIX_PREFIX
+$SNOWMIX</code>
+
+		<li><p>Snowmix will exit if the the environment variables HOME and
+		SNOWMIX is not set. If SNOWMIX_PREFIX is not set, Snowmix will
+		use the following default prefix:
+
+		<code>Unix		: '.snowmix'
+Mac OS X	: 'Snowmix'
+Windows		: 'Application Data/Snowmix' </code>
+
+		<li><p>Snowmix is not yet fully ported to Windows because GStreamer does not yet
+		support shmsink and shmsrc. Snowmix will in the $HOME/$SNOWMIX_PREFIX create
+		the following directories, if they do not exist.</p>
+
+		<code>frames	: for your personal Snowmix raw frames.
+images	: for your personal Snowmix png images.
+ini	: for your personal Snowmix ini files.
+scripts	: for your personal Snowmix scripts.
+slib	: for your personal Snowmix libraries.
+tcl	: for your personal Snowmix tcl scripts.
+test	: for your personal Snowmix test movies.</code>
+
+		<li><p>NOTE: Because of the search path feature, you may have to change
+		your ini file if it contains relative paths to loading images,
+		including files or writes audio sink to a file with relative
+		path. Typically you will change '../images/someimage.png' to
+		'images/someimages.png'. The following script can do it for
+		you:
+
+		<code># Use with caution
+cd YOUR_INI_FILE_DIRECTORY
+files=`ls`
+for file in $files ; do sed -e 's/\.\.\///g' < $file >tmpfile ; mv tmpfile $file ; done </code>
+
+		<li><p>You can use the 'ls' command to set the files you want the change
+		for. <strong>THINK AND USE WITH CAUTION.</strong></p>
+	  
+		<li><p>Snowmix will now use the search path when loading the intital
+		ini file unless file name is absolute, ie starting with a '/'.</p>
+
+		<li><p>Snowmix will list the search path on the Snowmix console when
+		starting Snowmix.</p>
+
+		<li><p>The command <i>system info</i> will now include information about the
+		absolute file name for the initial ini file.</p>
+
+		<li><p>Snowmix will now use the search path when including files using
+		the <i>include</i> command unless file name is absolute, ie starting
+		with a '/'.</p>
+
+		<li><p>Snowmix will now use the search path when loading images unless
+		the file name given is absolut, ie starting with a '/'. Further
+		more when using the command <i>image load</i> to list loaded images,
+		the absolute file name loaded will be listed.</p>
+
+		<li><p>Snowmix will now use the search path when opening a file for
+		writing for audio sink unless file name is absolute, ie. starting
+		with a '/'.</p>
+
+		<li><p>bootstrap for Mac OS X will now offer to install GStreamer 1.4.5
+		instead of 1.4.4. 1.5.0-1.5.2 have issues with matroskamux and tsmux/tsdemux.</p>
+
+		<li><p>The bootstrap script was calling a subscript with sh rather than
+		bash. This could result in minor printing confusion if /bin/sh
+		was not bash. Now testing for bash and uses bash over sh.</p>
+
+		<li><p>The bootstrap process will now look for libpng15 in addition
+		to libpng16 and libpng12.</p>
+
+		<li><p>The command <i>image source</i> missed the alignment parameter in its
+		call to OverlayFrame messing up parameters. This is a bugfix.</p>
+
+		<li><p>Banner message when connecting to Snowmix now adds a '.' in the end.</p>
+
+		<li><p>For the command *audio sink help* the audio volume was listed as going from 0..255.
+          Valid volume is from 0.0..4.0. This has now been corrected.</p>
+
+		</ul>
+		<div align="right"><a href="">Top</a></div>
+	</div>
+</div>

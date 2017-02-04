@@ -1,0 +1,58 @@
+<div class="content">
+
+	<div class="item">
+
+		<h1>Reference Manuals</h1>
+		<div class="descr">Updated for Snowmix 0.5.1</div>
+	</div>
+
+	<div class="item">
+
+		<h3>Introduction</h3>
+		<br/>
+
+		<p>This page list all the reference manuals for Snowmix. However <strong>some manuals
+		are still work in progress</strong>.</p>
+
+		<p>The reference manuals are organized in groups as listed on the
+		<a href="reserved.html">Reserved Commands</a> page. In the reference manual
+		each Snowmix command is listed with its name, its syntax and its parameters. Each
+		command's effect is also explained and many commands are listed with example of usage.</p>
+
+		<p>The reference manuals will over time be written and ported to this web site, but
+		for now, most reference manuals are found in the old
+		<a href="https://sourceforge.net/p/snowmix/wiki/Home/">Wiki system</a> for Snowmix.</p>
+
+		<div align="right"><a href="">Top</a></div>
+	</div>
+
+	<div class="item">
+
+		<h3>Overview</h3>
+		<br/>
+
+		<p>The refreserved commands can be split up into the following groups of commands:</p>
+
+		<ul>
+			<li>Reference manual for <a href="https://sourceforge.net/p/snowmix/wiki/Home/">Audio Feed commands</a>.
+			<li>Reference manual for <a href="https://sourceforge.net/p/snowmix/wiki/Home/">Audio Mixer commands</a>.
+			<li>Reference manual for <a href="https://sourceforge.net/p/snowmix/wiki/Home/">Audio Sink commands</a>.
+			<li>Reference manual for <a href="https://sourceforge.net/p/snowmix/wiki/Reference%20Feeds">Feed commands</a>.
+			<li>Reference manual for <a href="https://sourceforge.net/p/snowmix/wiki/Home/">General commands</a>.
+			<li>Reference manual for <a href="https://sourceforge.net/p/snowmix/wiki/Reference%20Images">Image commands</a>.
+			<li>Reference manual for <a href="https://sourceforge.net/p/snowmix/wiki/Home/">Macros and conditionals</a>.
+			<li>Reference manual for <a href="https://sourceforge.net/p/snowmix/wiki/Reference%20GL%20Shapes/">OpenGL Shape commands</a>.
+			<li>Reference manual for <a href="https://sourceforge.net/p/snowmix/wiki/Reference%20Placed%20GL%20Shapes/">OpenGL Placed Shape commands</a>.
+			<li>Reference manual for <a href="https://sourceforge.net/p/snowmix/wiki/Home/">Placed Shape commands</a>.
+			<li>Reference manual for <a href="https://sourceforge.net/p/snowmix/wiki/Reference%20Shapes/">Shape Commands</a>.
+			<li>Reference manual for <a href="https://sourceforge.net/p/snowmix/wiki/Home/">Tcl Interpreter commands</a>.
+			<li>Reference manual for <a href="https://sourceforge.net/p/snowmix/wiki/Reference%Texts">Text commands</a>.
+			<li>Reference manual for <a href="https://sourceforge.net/p/snowmix/wiki/Home/">Virtual Feed commands</a>.
+		</ul>
+
+		<p>Because reference manuals are a little dry to read and often do not reveal the greater picture,
+		<a href="guides.html">Snowmix Guides</a> has been written for some of command groups.</p>
+
+		<div align="right"><a href="">Top</a></div>
+	</div>
+</div>

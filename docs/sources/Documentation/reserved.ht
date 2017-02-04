@@ -1,0 +1,608 @@
+<div class="content">
+
+	<div class="item">
+
+		<h1>Reserved Commands</h1>
+		<div class="descr">Updated for Snowmix 0.5.1</div>
+	</div>
+
+	<div class="item">
+
+		<h3>Introduction</h3>
+		<br/>
+
+		<p>This page list all reserved commands of Snowmix and their syntax.
+		A reserved command is a word sequence which has a built-in functionality.
+		Reserved commands super seeds any definition made by the Snowmix command
+		<i>command create</i>. As such, while it is possible to create a command
+		with a name similar to the first word of a reserved command, it can not be executed.</p>
+
+		<p>Nearly all commands can be executed as part of an ini file, executed
+		as part of created Snowmix commands, given interactively over a TCP control
+		connection or executed from within Snowmix's embedded Tcl interpreter.</p>
+
+		<p>Some commands can only be used inside a command macro and for the overlay
+		commands, these only have an effect if they are inside a command macro set
+		to be executed by the <overlay finish</i> command. The conditional commands
+		are only useful when used within a command macro. A command macro is created
+		with the command <i>command create</i>.
+
+		<div align="right"><a href="">Top</a></div>
+	</div>
+
+	<div class="item">
+
+		<h3>Overview</h3>
+		<br/>
+
+		<p>The reserved commands can be split up into the following groups of commands:</p>
+
+		<ul>
+			<li><a href="#afeed">Audio Feed commands</a>.
+			<li><a href="#amixer">Audio Mixer commands</a>.
+			<li><a href="#asink">Audio Sink commands</a>.
+			<li><a href="#feed">Feed commands</a>.
+			<li><a href="#general">General commands</a>.
+			<li><a href="#image">Image commands</a>.
+			<li><a href="#macro">Macros and conditionals</a>.
+			<li><a href="#glshape">OpenGL Shape commands</a>.
+			<li><a href="#shape">Shape Commands</a>.
+			<li><a href="#placedshape">Placed Shape commands</a>.
+			<li><a href="#placedglshape">OpenGL Placed Shape commands</a>.
+			<li><a href="#tcl">Tcl Interpreter commands</a>.
+			<li><a href="#text">Text commands</a>.
+			<li><a href="#vfeed">Virtual Feed commands</a>.
+		</ul>
+
+		<div align="right"><a href="">Top</a></div>
+	</div>
+
+	<div class="item">
+
+		<a name="afeed"><h3>Audio Feed</h3></a>
+		<br/>
+
+		<p>The audio feed group of commands are commands for creating and manipulating audio feeds within Snowmix. The commands are:</p>
+
+		<ul>
+			<li><i>audio feed add</i> - Create an audio feed or list created audio feeds.
+			<li><i>audio feed add silence</i> - Add silent samples to an audio feed.
+			<li><i>audio feed channels</i> - Configure channels for an audio feed or list channels for created audio feeds.
+			<li><i>audio feed ctr isaudio</i> - Define control connection as input for audio and start audio feed.
+			<li><i>audio feed delay</i> - Configure initial delay for audio feed or list configured initial delay for audio feeds.
+			<li><i>audio feed drop</i> - Drop samples for an audio feed.
+			<li><i>audio feed format</i> - Configure input format for an audio feed or list format for created audio feeds.
+			<li><i>audio feed info</i> - List rarely changing audio feed info.
+			<li><i>audio feed move volume</i> - Set animation parameters for volume level for an audio feed or list animation parameters for volume level for created audio feeds.
+			<li><i>audio feed mute</i> - Mute or unmute an audio feed or list mute status for created audio feeds.
+			<li><i>audio feed rate</i> - Configure sample rate for an audio feed or list sample rates for created audio feeds.
+			<li><i>audio feed status</i> - List frequently changing audio feed information.
+			<li><i>audio feed verbose</i> - Set verbose level for audio feeds.
+			<li><i>audio feed volume</i> - Set volume level for an audio feed or list volume level for created audio feeds.
+			<li><i>audio feed help</i> - List syntax for available audio feed commands.
+		</ul>
+		<div align="right"><a href="">Top</a></div>
+	</div>
+
+	<div class="item">
+
+		<a name="amixer"><h3>Audio Mixer</h3></a>
+		<br/>
+
+		<p>The audio mixer group of commands are commands for creating and manipulating audio mixers within Snowmix. The commands are:</p>
+
+		<ul>
+			<li><i>audio mixer add</i> - Create an audio mixer or list created audio mixers.
+			<li><i>audio mixer add silence</i> - Add silent samples to a created mixer.
+			<li><i>audio mixer drop</i> - Drop samples for a created mixer.
+			<li><i>audio mixer channels</i> - Set channels for an audio mixer or listed created audio mixers.
+			<li><i>audio mixer info</i> - List audio mixer info.
+			<li><i>audio mixer mute</i> - Set mute on/off for an audio mixer or list mute state for created audio mixers.
+			<li><i>audio mixer queue</i> - List status for audio mixer queues.
+			<li><i>audio mixer rate</i> - Set sample rate for an audio mixer or list sample rates for created audio mixers.
+			<li><i>audio mixer source</i> - List audio mixer source info and status.
+			<li><i>audio mixer source feed</i> - Set an audio feed as source for a created audio mixer.
+			<li><i>audio mixer source mixer</i> - Set an audio mixer as source for a created audio mixer.
+			<li><i>audio mixer source add silence</i> -  Add silent samples to an audio mixer's source.
+			<li><i>audio mixer source delete</i> - Delete an added source for a created audio mixer.
+			<li><i>audio mixer source drop</i> - Drop samples for a created audio mixer's source.
+			<li><i>audio mixer source invert</i> - Invert samples for an audio mixer's source.
+			<li><i>audio mixer source map</i> - Set how channels are mapped when mixing an audio mixer's source.
+			<li><i>audio mixer source maxdelay</i> - Set the maximum delay a queue of a source for a created audio mixer can have.
+			<li><i>audio mixer source mindelay</i> - Set the minimu delay a queue of a source for a created audio mixer can have.
+			<li><i>audio mixer source move volume</i> - Set animation parameters for changing an audio mixer's source volume.
+			<li><i>audio mixer source</i> - Set mute on/off for an audio mixer's source.
+			<li><i>audio mixer source</i> - Set pause parameters for an audio mixer's source.
+			<li><i>audio mixer source</i> - Set RMS threshold for an audio mixer's source.
+			<li><i>audio mixer source</i> - Set volume for an audio mixer's source.
+			<li><i>audio mixer start</i> - Start and audio mixer.
+			<li><i>audio mixer status</i> - List status of a created audio mixer.
+			<li><i>audio mixer stop</i> - Stop a created and started audio mixer.
+			<li><i>audio mixer verbose</i> - Set verbose level for the CAudioMixer Class.
+			<li><i>audio mixer volume</i> - Set the volume level for an audio mixer or list audio volume level for created audio mixers.
+			<li><i>audio mixer help</i> - List syntax for audio mixer commands.
+		</ul>
+		<div align="right"><a href="">Top</a></div>
+	</div>
+
+	<div class="item">
+
+		<a name="asink"><h3>Audio Sink</h3></a>
+		<br/>
+
+		<p>The audio sink group of commands are commands for creating and manipulating audio feeds within Snowmix. The commands are:</p>
+
+		<ul>
+			<li><i>audio sink add</i> - Create an audio sink or list created audio sinks.
+			<li><i>audio sink add silence</i> - Add silent samples to an audio sink.
+			<li><i>audio sink channels</i> - Configure channels for an audio sink or list channel settings for created audio sinks.
+			<li><i>audio sink ctr isaudio</i> - Define control connection as output for audio and start audio sink.
+			<li><i>audio sink drop</i> - Drop samples for an audio sink.
+			<li><i>audio sink file</i> - Set a file as destination for audio sink.
+			<li><i>audio sink format</i> - Configure input format for an audio sink or list format for created audio sinks.
+			<li><i>audio sink info</i> - List rarely changing audio sink info.
+			<li><i>audio sink move volume</i> - Set animation parameters for volume level for an audio sink or list animation parameters for volume level for created audio sinks.
+			<li><i>audio sink mute</i> - Mute or unmute an audio sink or list mute status for created audio sinks.
+			<li><i>audio sink queue</i> - List queue information for created audio sinks.
+			<li><i>audio sink queue maxdelay</i> - Set maximum delay for a queue for a created audio sink. Obsolete.
+			<li><i>audio sink rate</i> - Configure sample rate for an audio sink or list sample rates for created audio sinks.
+			<li><i>audio sink source</i> - Set audio sink source for a created audio sink or list sources for created audio sinks.
+			<li><i>audio sink start</i> - Start a created audio sink or list state for created audio sinks.
+			<li><i>audio sink status</i> - List status data for created audio sinks.
+			<li><i>audio sink stop</i> - Stop a created and started audio sink or list state of created audio sinks.
+			<li><i>audio sink verbose</i> - Set verbose level for the CAudioSink Class.
+			<li><i>audio sink volume</i> - Set volume level for an audio sink or list volume level for created audio sinks.
+			<li><i>audio sink help</i> - List syntax for available audio sink commands.
+		</ul>
+		<div align="right"><a href="">Top</a></div>
+	</div>
+
+	<div class="item">
+
+		<a name="feed"><h3>Feed Commands</h3></a>
+		<br/>
+
+		<p>The feed group of commands are commands for creating and manipulating video feeds within Snowmix. The commands are:</p>
+
+		<ul>
+			<li><i>feed add</i> - add a place holder for a feed.
+			<li><i>feed buffers</i> - print debugging information on feed buffers.
+			<li><i>feed cutout</i> - sets a cutout window for the stack command.
+			<li><i>feed geometry</i> - set the feed geometry.
+			<li><i>feed help</i> - print the syntax for feed commands.
+			<li><i>feed idle</i> - set timeout and idle image for a feed stalled/disconnected.
+			<li><i>feed info</i> - print information on feeds.
+			<li><i>feed fast overlay</i> - overlay a feed with a specific set of settings.
+			<li><i>feed filter</i> - set the scaling/overlaying method for a feed.
+			<li><i>feed name</i> - set or change the name of a feed.
+			<li><i>feed list</i> - print detailed information on feeds.
+			<li><i>feed overlay</i> - overlay a specific feed or list of ids.
+			<li><i>feed socket</i> - set the feed's control socket for input from GStreamer shmsink.
+			<li><i>feed shift</i> - set where the feed should be overlayed when using the stack command.
+			<li><i>feed live/recorded</i> - set whether the feed is a live feed or a recorded feed.
+		</ul>
+		<div align="right"><a href="">Top</a></div>
+	</div>
+
+	<div class="item">
+
+		<a name="general"><h3>General Commands</h3></a>
+		<br/>
+
+		<p>General commands are commands that typical either affects Snowmix parameters
+		system wide and/or not easily fit within the other catagories. The commands are:</p>
+
+		<ul>
+			<li><i>include</i> - Include an ini file or a snowmix library (slib).
+			<li><i>maxplaces</i> - Set max number of objects for strings, fonts, texts, images, imageplaces, video feeds, virtual feeds, audio feeds, audio mixers, audio sinks.
+			<li><i>message</i> - Write a message to control connection.
+			<li><i>messagef</i> - Write a message to control connection and prepend current output frame number.
+			<li><i>monitor</i> - Open a monitor window to show mixed video result.
+			<li><i>overlay finish</i> - Setting command macro to execute before output.
+			<li><i>overlay pre</i> - Setting command macro to execute at frame rate before mixing the system frame.
+			<li><i>png write</i> - Write output frame to a png file.
+			<li><i>quit</i> - Quit/exit Snowmix.
+			<li><i>require version</i> - Check that the version of Snowmix match the required version for the ini file.
+			<li><i>select</i> - Select a video feed as the base frame.
+			<li><i>stack</i> - Mix (stack) video feeds onto base frame.
+			<li><i>stat</i> - List status and configuration of feeds.
+			<li><i>system control port</i> - Set the control port number.
+			<li><i>system frame rate</i> - Set the frame rate by which Snowmix will produce output frames.
+			<li><i>system geometry</i> - Set the size of the (system) video mixer output frame.
+			<li><i>system host allow</i> - Control which hosts can establish a control connection.
+			<li><i>system info</i> - List system information.
+			<li><i>system name</i> - Set the name of the Snowmix session.
+			<li><i>system output buffers</i> - Set the number of frames allocated for output.
+			<li><i>system output delay</i> - Delay the output stream a specified number of frames
+			<li><i>system output freeze</i> - Freeze video output by outputting the same static frame.
+			<li><i>system output info</i> - List configured settings for output.
+			<li><i>system output mode</i> - Sets the video output mode.
+			<li><i>system output reset</i> - Reset (close) the output connection.
+			<li><i>system output status</i> - List the status of the output connection.
+			<li><i>system socket</i> - Set the mixer's control socket for output to GStreamer shmsrc
+			<li><i>verbose</i> - Be verbose to print more information.
+		</ul>
+		<div align="right"><a href="">Top</a></div>
+	</div>
+
+	<div class="item">
+
+		<a name="glshape"><h3>Glshape Commands</h3></a>
+		<br/>
+
+		<p>The glshape group of commands are commands for creating and manipulating glshapes within Snowmix. The commands are:</p>
+
+		<ul>
+			<li><i>glshape add</i> - Add a place holder for a glshape or list created glshapes. NOE.
+			<li><i>glshape arcxz</i> - Within a glshape draw a 3D arc xz plane. NOE.
+			<li><i>glshape arcyz</i> - Within a glshape draw a 3D arc yz plane. NOE.
+			<li><i>glshape begin</i> - Within a glshape start delimiter of the vertices of a primitive or a group of like primitives. glBegin().
+			<li><i>glshape blendfunc</i> - Within a glshape specify pixel arithmetic. glBlendFunc().
+			<li><i>glshape clear</i> - Within a glshape clear buffers to preset values. glClear().
+			<li><i>glshape clearcolor</i> - Within a glshape specify clear values for the color buffers. glClearColor().
+			<li><i>glshape color</i> - Within a glshape set the current color and possibly alpha. glColor().
+			<li><i>glshape context</i> - Specify which OpenGL context to use. NOE.
+			<li><i>glshape disable</i> - Within a glshape disable server-side GL capabilities. glDisable().
+			<li><i>glshape enable</i> - Within a glshape enable server-side GL capabilities. glEnable().
+			<li><i>glshape end</i> - Within a glshape end delimiter of the vertices of a primitive or a group of like primitives. glEnd().
+			<li><i>glshape entry</i> - Activate or inactivate an entry in a glshape. NOE.
+			<li><i>glshape finish</i> - Within a glshape block until all GL execution is complete. glFinish().
+			<li><i>glshape flush</i> - Within a glshape force execution of GL commands in finite time. glFlush().
+			<li><i>glshape glucylinder</i> - Within a glshape draw a cylinder. gluCylinder().
+			<li><i>glshape gludisk</i> - Within a glshape draw a disk. gluDisk().
+			<li><i>glshape gludrawstyle</i> - Within a glshape specify the draw style desired for quadrics. gluQuadricDrawStyle().
+			<li><i>glshape glunormals</i> - Within a glshape specify what kind of normals are desired for quadrics. gluQuadricNormals().
+			<li><i>glshape gluorientation</i> - Within a glshape specify inside/outside orientation for quadrics. gluQuadricOrientation().
+			<li><i>glshape glupartialdisk</i> - Within a glshape draw an arc of a disk. gluPartialDisk().
+			<li><i>glshape gluperspective</i> - Within a glshape set up a perspective projection matrix. gluPerspective().
+			<li><i>glshape glusphere</i> - Within a glshape draw a sphere. gluSphere().
+			<li><i>glshape glutexture</i> - Within a glshape specify if texturing is desired for quadrics. gluQuadricTexture().
+			<li><i>glshape if (osmesa|glx) </i> - Within a glshape conditional execution of a glshape command depending on OpenGL context type. Outside a glshape conditional execution of a Snowmix command depending on OpenGL context type. NOE.
+			<li><i>glshape info</i> - List glshape info data. NOE.
+			<li><i>glshape inshape</i> - Within a glshape include a glshape. NOE.
+			<li><i>glshape light</i> - Within a glshape set light source parameters. glLightf().
+			<li><i>glshape lightv</i> - Within a glshape set light source vector parameters. glLightfv().
+			<li><i>glshape loadidentity</i> - Within a glshape replace the current matrix with the identity matrix. glLoadIdentity().
+			<li><i>glshape materialv</i> - Within a glshape specify materialvector parameters for the lighting model. glmaterialfv().
+			<li><i>glshape matrixmode</i> - Within a glshape set matrix mode to either projection, modelview, texture or color. glMatrixMode().
+			<li><i>glshape modify</i> - Modify parameters within an entry in a glshape. NOE.
+			<li><i>glshape moveentry</i> - Move or delete an entry in a glshape. NOE
+			<li><i>glshape normal</i> - Within a glshape set the current normal vector. glNormal().
+			<li><i>glshape noop</i> - Within a glshape add an entry with no effect. NOE.
+			<li><i>glshape ortho</i> - Within a glshape multiply the current matrix with an orthographic matrix. glOrtho().
+			<li><i>glshape popmatrix</i> - Within a glshape pop the current matrix stack. glPopMatrix().
+			<li><i>glshape pushmatrix</i> - Within a glshape push the current matrix stack. glPushMatrix().
+			<li><i>glshape recursion</i> - Within a glshape change the maximum allowed recursion level. NOE.
+			<li><i>glshape rotate</i> - Within a glshape multiply the current matrix by a rotation matrix. glRotate().
+			<li><i>glshape scale</i> - Within a glshape multiply the current matrix by a general scaling matrix. glScale().
+			<li><i>glshape scissor</i> - Within a glshape define the scissor box. glScissor().
+			<li><i>glshape shademodel</i> - Within a glshape select flat or smooth shading. glShadeModel().
+			<li><i>glshape snowmix</i> - Within a glshape execute a Snowmix command. NOE.
+			<li><i>glshape translate</i> - Within a glshape multiply the current matrix by a translation matrix. glTranslate().
+			<li><i>glshape texcoord</i> - Within a glshape set the current texture 1D/2D/3D/4D coordinates. glTexCoord().
+			<li><i>glshape texfilter2d</i> - Within a glshape setting the min and mag filter for texture. glTexParameteri() for MIN_FILTER and MAG_FILTER.
+			<li><i>glshape texture add</i> - Create/delete a place holder for a texture or list created textures. NOE.
+			<li><i>glshape texture bind</i> - Within a glshape bind a texture. glGenTextures(), glBindtexture(), glTexImage2D(), gluBuild2DMipmaps(), glTexParameteri().
+			<li><i>glshape texture source</i> - Set source of a texture. NOE.
+			<li><i>glshabe vbo add</i> - Create/delete a place holder for a Vertex Buffer Object or list craeated VBOs. No simple OpenGL equivalent.
+			<li><i>glshabe vbo config</i> - Define the configuration of a Vertex Buffer Object. No simple OpenGL equivalent.
+			<li><i>glshabe vbo data</i> - Define the data set for a configured VBO. No simple OpenGL equivalent.
+			<li><i>glshabe vbo indices</i> - Define the indices of the data set for a configured VBO. No simple OpenGL equivalent.
+			<li><i>glshabe vbo</i> - Within a glshape include a VBO. No simple OpenGL equivalent.
+			<li><i>glshape vector add</i> - Create/delete a vector place holder or list created vectors. NOE.
+			<li><i>glshape vector value</i> - Set the values of a 2, 3 and 4 dimensional vector. NOE.
+			<li><i>glshape verbose</i> - Set the verbose level for gl COpenGLVideo Class.
+			<li><i>glshape vertex</i> - Within a glshape specify a 1D, 2D, 3D or 4D vertex. glVertex().
+			<li><i>glshape help form</i> - List valid &lt;form> parameters. NOE.
+			<li><i>glshape help mode</i> - List valid &lt;mode> parameters. NOE.
+			<li><i>glshape help factor</i> - List valid &lt;factor> parameters. NOE.
+			<li><i>glshape help filter</i> - List valid &lt;near filter> and &lt;mag filter> parameters. NOE.
+			<li><i>glshape help light</i> - List valid parameters for light. NOE.
+			<li><i>glshape help modify</i> - List the type of glshape entries that can be changed with the glshape modify command. NOE.
+		</ul>
+		<p>NOE = "No OpenGL equivalent".</p>
+		<div align="right"><a href="">Top</a></div>
+	</div>
+
+
+	<div class="item">
+
+		<a name="image"><h3>Image Commands</h3></a>
+		<br/>
+
+		<p>The image group of commands are commands for creating and manipulating images within Snowmix. The commands are:</p>
+
+		<ul>
+			<li><i>image align</i> - Set or list horizontal and vertical alignment of a placed image.
+			<li><i>image alpha</i> - Set or list the alpha for a placed image.
+			<li><i>image anchor</i> - Set or list anchor a placed image.
+			<li><i>image coor</i> - Set or list coordinates for a placed image.
+			<li><i>image clip</i> - Set or list clip parameters for a placed image.
+			<li><i>image filter</i> - Set or list the filter method for mixing/overlaying a placed image.
+			<li><i>image geometry</i> - List the geometry for placed image.
+			<li><i>image image</i> - Set or list the image source (loaded image) of a placed image.
+			<li><i>image load</i> - Load an image.
+			<li><i>image matrix</i> - Set or list the Cairo Graphics transformation matrix.
+			<li><i>image move alpha</i> - Set or list animation settings for alpha for a placed image.
+			<li><i>image move clip</i> - Set or list animation settings for clip for a placed image.
+			<li><i>image move coor</i> - Set or list animation settings for coordinates for a placed image.
+			<li><i>image move offset</i> - Set or list animation settings for offset for a placed image.
+			<li><i>image move rotation</i> - Set or list animation settings for rotation for a placed image.
+			<li><i>image move scale</i> - Set or list animation settings for scale for a placed image.
+			<li><i>image name</i> - Set or list the name of a loaded image.
+			<li><i>image overlay</i> - Overlay a placed image.
+			<li><i>image place</i> - Place a loaded image.
+			<li><i>image rotation</i> - Set or list rotation for a placed image.
+			<li><i>image scale</i> - Set or list the scale for a placed image.
+			<li><i>image verbose</i> - Set the verbose level for image commands.
+			<li><i>image write</i> - Write a loaded image to disk as a raw BGRA copy.
+		</ul>
+
+		<div align="right"><a href="">Top</a></div>
+	</div>
+
+	<div class="item">
+
+		<a name="macro"><h3>Macros and Conditionals</h3></a>
+		<br/>
+
+		<p>The group of command macro commands and conditionals is a group of commands that
+		can be used to create and manipulate command macros. The commands are:</p>
+
+		<ul>
+			<li><i>command addatline</i> - Add a line to a command macro
+			<li><i>command afterend</i> - Sets the execution pointer of a command macro to point after the end of the command macro. Further execution of the command macro has no effect.
+			<li><i>command at</i> - Orders the execution of a command at an absolute or relative time in the future.
+			<li><i>command create</i> - Create a command macro
+			<li><i>command delete</i> - Delete a command macro
+			<li><i>command deleteline</i> - Delete a line in a command macro.
+			<li><i>command end</i> - Signals the end of a command macro being created.
+			<li><i>command help</i> - List the command macro commands
+			<li><i>command list</i> - List the name of command macros or the content of a specific command macro.
+			<li><i>command pointer atline</i> - Set the execution pointer of a command macro to point at a specific line in the macro.
+			<li><i>command pop</i> - Pop one or more lines from the end of a command macro.
+			<li><i>command push</i> - Push a single line of command to the end of a command macro.
+			<li><i>command restart</i> - Reset the execution pointer of command macro to point at the beginning of a command macro and reset any internal counters within the command macro.
+		</ul>
+
+		<p>The following are the conditional commands possible to use within a command macro:</p>
+		<code>if &lt;condition>
+else
+endif
+goto &lt;label name>
+next [&lt;number>]
+label &lt;label name>
+loop [&lt;number>]
+
+&lt;condition> = ['!']&lt;cond> [('||' | '&&') &lt;condition>]
+&lt;cond>      = &lt;feedstate> | &lt;prevstate> | &lt;exist>
+&lt;feedstate> = feedstate(&lt;feed no>,&lt;feed state>) |
+&lt;prevstate> = prevstate(&lt;feed no>,&lt;feed state>) |
+&lt;exist>     = exist(command,&lt;command name>);
+&lt;feed no>   = 0....(2^32)-1
+&lt;feed state>= 'SETUP' | 'PENDING' | 'RUNNING' | 'STALLED' | 'DISCONNECTED'</code>
+		<div align="right"><a href="">Top</a></div>
+	</div>
+
+	<div class="item">
+
+		<a name="shape"><h3>Shape Commands</h3></a>
+		<br/>
+
+		<p>The shape group of commands are commands for creating and manipulating shapes within Snowmix. The commands are:</p>
+
+		<ul>
+			<li><i>shape add</i> - Add/delete a shape place holder or list created shape place holders.
+			<li><i>shape arc_cw</i> - Define an arc element clock wise within a shape.
+			<li><i>shape arc_ccw</i> - Define an arc element counter clock wise within a shape.
+			<li><i>shape clip</i> - Perform clipping along the path within a shape.
+			<li><i>shape closepath</i> - Close path in a shape.
+			<li><i>shape curveto</i> - Define absolute a curve element in a shape.
+			<li><i>shape curverel</i> - Define relative a curve element in a shape.
+			<li><i>shape feed</i> - Include in a shape a video feed.
+			<li><i>shape fill</i> - Define a fill operation within a shape.
+			<li><i>shape fill preserve</i> - Define a fill operation within a shape and preserve the path.
+			<li><i>shape filter</i> - Set filter/overlay algorithm for overlaying/scaling/rotating an image or feed in a shape.
+			<li><i>shape help</i> - List shape syntax overview.
+			<li><i>shape info</i> - List shape info data.
+			<li><i>shape image</i> - Include in a shape a loaded image.
+			<li><i>shape inshape</i> - Include shape in a shape.
+			<li><i>shape line width</i> - Set line width in a shape.
+			<li><i>shape line join</i> - Set how lines are joined in a shape.
+			<li><i>shape line cap</i> - Set how lines are ended in a shape.
+			<li><i>shape lineto</i> - Define a line segment in a shape drawing absolute within the shape.
+			<li><i>shape linerel</i> - Define a line segment in a shape drawing relative within the shape.
+			<li><i>shape list</i> - List defined shapes or list definition of a specific shape
+			<li><i>shape mask pattern</i> - Define a pattern mask for a shape.
+			<li><i>shape moveentry</i> - Move or delete an entry, a line, within a shape
+			<li><i>shape moverel</i> - Move to a relative coordinate in a shape within a shape.
+			<li><i>shape moveto</i> - Move to an absolute coordinate in a shape within a shape.
+			<li><i>shape newpath</i> - Start a new path within a shape.
+			<li><i>shape operator</i> - Define operator for adding/subtracting/overlaying within a shape.
+			<li><i>shape paint</i> - Define a paint operation within a shape.
+			<li><i>shape pattern add</i> - Create/delete a pattern place holder or list pattern place holders.
+			<li><i>shape pattern radial</i> - Define a radial pattern.
+			<li><i>shape pattern linear</i> - Define a linear pattern.
+			<li><i>shape pattern stoprgb</i> - Define stop points within a linear or radial pattern.
+			<li><i>shape rectangle</i> - Define a rectangle within a shape.
+			<li><i>shape recursion</i> - Define allowed recursion level within a shape.
+			<li><i>shape restore</i> - Restore a save context within a shape.
+			<li><i>shape rotation</i> - Define a relative or absolute rotation within a shape.
+			<li><i>shape save</i> - Save a context within a shape.
+			<li><i>shape scale</i> - Scale absolute or relative within a shape.
+			<li><i>shape source alphamul</i> - Multiply a constant to the alpha value within a shape.
+			<li><i>shape source rgb</i> - Set RGB value within a shape.
+			<li><i>shape source rgba</i> - Set RGB and alpha channel value within a shape.
+			<li><i>shape source pattern</i> - Add a pattern to a shape.
+			<li><i>shape stroke</i> - Perform a stroke within a shape.
+			<li><i>shape stroke preserve</i> - Perform a stroke within a shape and preserve path.
+			<li><i>shape translate</i> - Move coordinate system within a shape.
+			<li><i>shape transform</i> - Add a coordinate, rotation and scale transformation to a shape.
+			<li><i>shape verbose</i> - Set verbose level within the CVideoShape Class.
+		</ul>
+		<div align="right"><a href="">Top</a></div>
+	</div>
+
+	<div class="item">
+
+		<a name="placedglshape"><h3>Placed GL Shape Commands</h3></a>
+		<br/>
+
+		<p>The placed glshape group of commands are commands for creating and manipulating placed glshapes within Snowmix. The commands are:</p>
+
+		<ul>
+			<li><i>glshape copyback</i> - Copy back OpenGL mixed result to Snowmix main frame or to a loaded image. Image will be created if it does not exist.
+			<li><i>glshape [ place ] overlay</i> - Execute and possibly overlay placed glshapes.
+			<li><i>glshape place</i> - Create/delete a place holder for a placed glshape or list created placed shapes.
+			<li><i>glshape place alpha</i> - Set alpha for a placed glshape or list alpha for placed glshapes.
+			<li><i>glshape place coor</i> - Set coordinates for a placed glshape or list coordinates for placed glshapes.
+			<li><i>glshape place rgb</i> - Set color for a placed glshape or list colors for placed glshapes.
+			<li><i>glshape place rotation</i> - Set rotation for a placed glshape or list rotation for placed glshapes.
+			<li><i>glshape place scale</i> - Set scale for a placed glshape or list scale for placed glshapes.
+			<li><i>glshape place help</i> - List syntax for glshape place commands.
+		</ul>
+		<div align="right"><a href="">Top</a></div>
+	</div>
+
+	<div class="item">
+
+		<a name="placedshape"><h3>Placed Shape Commands</h3></a>
+		<br/>
+
+		<p>The placed shape group of commands are commands for creating and manipulating placed shapes within Snowmix. The commands are:</p>
+
+		<ul>
+			<li><i>shape [place] overlay</i> - Overlay a shape.
+			<li><i>shape place</i> - place a shape or list placed shapes.
+			<li><i>shape place alpha</i> - Set/change/list the alpha value for a placed shape.
+			<li><i>shape place anchor</i> - Set/change/list the anchor value for a placed shape.
+			<li><i>shape place coor</i> - Set/change/list the set of coordinate for a placed shape.
+			<li><i>shape place move alpha</i> - Set/change/list alpha animation settings for placed shapes.
+			<li><i>shape place move coor</i> - Set/change/list coordinate animation settings for placed shapes.
+			<li><i>shape place move offset</i> - Set/change/list offset animation settings for placed shapes.
+			<li><i>shape place move rotation</i> - Set/change/list rotation animation settings for placed shapes.
+			<li><i>shape place move scale</i> - Set/change/list scale animation settings for placed shapes.
+			<li><i>shape place offset</i> - Set/change/list the offset for a placed shape.
+			<li><i>shape place rgb</i> - Set/change/list the base color for a placed shape.
+			<li><i>shape place rotation</i> - Set/change/list the rotation for a placed shape.
+			<li><i>shape place scale</i> - Set/change/list the scale for a placed shape.
+			<li><i>shape place shape</i> - Set/change/list the shape for a placed shape.
+			<li><i>shape place status</i> - List status of placed shapes.
+			<li><i>shape place help</i> - List syntax for place shape commands.
+		</ul>
+		<div align="right"><a href="">Top</a></div>
+	</div>
+
+	<div class="item">
+
+		<a name="tcl"><h3>Tcl Commands</h3></a>
+		<br/>
+
+		<p>The Tcl group of commands are commands for interfacing to the built-in Tcl Interpreter of Snowmix. The commands are:</p>
+
+		<ul>
+			<li><i>tcl eval</i> - Evaluate tcl command in the interpreter.
+			<li><i>tcl exec</i> - Evaluate tcl script by command macro name.
+			<li><i>tcl reset</i> - Delete interpreter and initialize new.
+			<li><i>tcl help</i> - List tcl command syntax.
+		</ul>
+
+		<p>The commands <i>snowmix info</i> and <i>snowmix parse</i> are available within the Tcl Interpreter as Tcl functions or procedures to get access from within the Interpreter to Snowmix settings and to execute from within the interpreter Snowmix commands respectively:</p>
+
+		<p>The Tcl commands are:</p>
+		<ul>
+			<li><i>snowmix info audio (feed | sink) (info | status | extended | syntax) (format | ids | maxid | nextavail | &lt;id_list\>)</i>
+			<li><i>snowmix info audio mixer (info | status | extended | source info | source status | source extended | syntax) (format | ids | maxid | nextavail | &lt;id_list>)</i>
+			<li><i>snowmix info command ( names | list | at | syntax ) [ format | &lt;name> ]</i>
+			<li><i>snowmix info feed (geometry | status | extended | state | pixel &lt;x> &lt;y> | syntax) (format | ids | maxid | nextavail | &lt;id_list>)</i>
+			<li><i>snowmix info image (load | place | move | extended | syntax) (format | ids | maxid | nextavail | &lt;id_list>)</i>
+			<li><i>snowmix info output ((info | status) [ format ]) | syntax</i>
+			<li><i>snowmix info shape (info | list | place | move | alpha) ( format | ids | maxid | nextavail | &lt;id_list> )</i>
+			<li><i>snowmix info system (info | status | maxplaces | overlay | syntax) [ format ]</i>
+			<li><i>snowmix info shape ( syntax | ( ( info | list | place | move ) ( format | ids | maxid | nextavail | &lt;id_list>) )</i>
+			<li><i>snowmix info system (info | status | maxplaces | overlay | syntax) [ format ]</i>
+			<li><i>snowmix info text (string | font | place | move | backgr | linpat | syntax) (format | ids | maxid | nextavail | &lt;id_list>)</i>
+			<li><i>snowmix info (vfeed | virtual feed) (place | move | extended | syntax) (format | ids | maxid | nextavail | &lt;id_list>)</i>
+			<li><i>snowmix parse &lt;snowmix command></i>
+		<ul>
+		<div align="right"><a href="">Top</a></div>
+	</div>
+
+	<div class="item">
+
+		<a name="text"><h3>Text Commands</h3></a>
+		<br/>
+
+		<p>The text group of commands are commands for creating and manipulating texts within Snowmix. The commands are:</p>
+
+		<ul>
+			<li><i>text align</i> - Align place text or list alignment for placed text.
+			<li><i>text alpha</i> - Set alpha for placed text or list alpha value for placed texts.
+			<li><i>text anchor</i> - Anchor placed text or list anchoring for placed text.
+			<li><i>text backgr</i> - Set/remove background for placed text or list values for background for placed texts.
+			<li><i>text backgr alpha</i> - Set alpha for background for placed text or list alpha value for background for placed texts.
+			<li><i>text backgr clip</i> - Set clip parameters for background for placed text or list clip parameters for background for placed texts.
+			<li><i>text backgr linpat</i> - Define a linear pattern set for background for placed text or list values for linear pattern sets for background for placed texts.
+			<li><i>text backgr move alpha</i> - Set animation value for alpha for background for placed text or list values for animation for alpha for background for placed texts.
+			<li><i>text backgr move clip</i> - Set animation value for clip for background for placed text or list values for animation for clip for background for placed texts.
+			<li><i>text backgr round</i> - Set round or rectangle corners for background for placed text or list values for corners of background for placed text.
+			<li><i>text backgr rgb</i> - Set colour and optional alpha for background for placed text or list colour and alpha for background for placed texts.
+			<li><i>text clip</i> - Set relative clip parameters for placed text or list relative clip parameters for placed texts.
+			<li><i>text clipabs</i> - Set absolute clip parameters for placed text or list absolute clip parameters for placed texts.
+			<li><i>text coor</i> - Change coordinates for placed text or list coordinates for placed texts.
+			<li><i>text font</i> - Define a font set or list defined font sets.
+			<li><i>text font available</i> - List available fonts on system.
+			<li><i>text grow</i> - Let the number of characters shown for a placed text grow/increase or diminish/decrease.
+			<li><i>text help</i> - List help for text commands.
+			<li><i>text move alpha</i> - Set animation value for alpha for placed text or list values for animation for alpha for placed texts.
+			<li><i>text move clip</i> - Set animation value for clip for placed text or list values for animation for clip for placed texts.
+			<li><i>text move coor</i> - Set animation value for coordinates for placed text or list values for animation for coordinates for placed texts.
+			<li><i>text move rotation</i> - Set animation value for rotation for placed text or list values for animation for rotation for placed texts.
+			<li><i>text move scale</i> - Set animation value for scale for placed text or list values for animation for scale for placed texts.
+			<li><i>text overlay</i> - Overlay placed text.
+			<li><i>text place</i> - Place text or list placed texts.
+			<li><i>text place font</i> - Change font set for placed text or list font set for placed texts.
+			<li><i>text place string</i> - Set the string id to use for a placed text or list used string id for placed texts.
+			<li><i>text repeat move</i> - Define a placed text as rolling text and set parameters or list rolling text parameters for placed texts.
+			<li><i>text rgb</i> - Set colour for placed text or list colour values for placed texts.
+			<li><i>text rotation</i> - Set rotation for placed text or list rotation values for placed texts.
+			<li><i>text scale</i> - Set scale for placed text or list scale values for placed texts.
+			<li><i>text string</i> - Define a string to be used for a placed text or list defined strings.
+			<li><i>text string concat</i> - Concatenate two strings possibly into a third string
+		</ul>
+
+		<div align="right"><a href="">Top</a></div>
+	</div>
+	<div class="item">
+
+		<a name="vfeed"><h3>Virtual Feed Commands</h3></a>
+		<br/>
+
+		<p>The virtual feed group of commands are commands for creating and manipulating virtual feeds within Snowmix. The commands are:</p>
+
+		<ul>
+			<li><i>vfeed add</i> - Add or delete a virtual feed place holder or list virtual feeds.
+			<li><i>vfeed align</i> - Set or list horizontal and vertical alignment of a virtual feed.
+			<li><i>vfeed alpha</i> - Set or list the alpha for a virtual feed.
+			<li><i>vfeed anchor</i> - Set or list anchor the virtual feed.
+			<li><i>vfeed coor</i> - Set or list a virtual feeds coordinates.
+			<li><i>vfeed clip</i> - Set or list clip parameters for virtual feed.
+			<li><i>vfeed filter</i> - Set or list the filter method for mixing/overlaying the virtual feed.
+			<li><i>vfeed geometry</i> - List the geometry for virtual feed.
+			<li><i>vfeed help</i> - List the syntax for vfeed commands.
+			<li><i>vfeed place rect</i> - Set or list a virtual feed.
+			<li><i>vfeed move alpha</i> - Set or list animation settings for alpha for virtual feed.
+			<li><i>vfeed move clip</i> - Set or list animation settings for clip for virtual feed.
+			<li><i>vfeed move coor</i> - Set or list animation settings for coordinates for virtual feed.
+			<li><i>vfeed move offset</i> - Set or list animation settings for offset for virtual feed.
+			<li><i>vfeed move rotation</i> - Set or list animation settings for rotation for virtual feed.
+			<li><i>vfeed move scale</i> - Set or list animation settings for scale for virtual feed.
+			<li><i>vfeed overlay</i> - Overlay virtual feeds.
+			<li><i>vfeed rotation</i> - Set or list rotation for virtual feed.
+			<li><i>vfeed scale</i> - Set or list the scale for virtual feed.
+			<li><i>vfeed source</i> - Set or list the source of a virtual feed.
+		</ul>
+		<div align="right"><a href="">Top</a></div>
+	</div>
+</div>
+

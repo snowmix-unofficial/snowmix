@@ -1,0 +1,151 @@
+<div class="content">
+
+	<div class="item">
+
+		<h1>Output Video from Snowmix</h1>
+		<div class="descr">Updated for Snowmix 0.5.0 and GStreamer 1.x</div>
+		<br/>
+
+	</div>
+
+	<div class="item">
+
+		<h3>Minimal Configuration for output</h3>
+		<br/>
+
+		<p>For snowmix to send the mixed video frames to output, Snowmix must have
+		at least a minmial configuration similar to the configuration shown below.</p>
+
+		<code>    port 9999
+    geometry 1024 576 BGRA
+    frame rate 24
+    socket /tmp/mixer1
+    feed idle 0 1
+    stack 0</code>
+
+		<p>The first line tells Snowmix to listen for command and control connections on port 9999.
+		The second line sets the system geometry, the geometry of the mixer to 1024x576 and use the
+		internal pixel format BGRA. The third line sets the mixer frame rate to 24 fps. The fourth
+		line instructs Snowmix to use the socket /tmp/mixer1 for communicating with an external
+		program using a <a href="http://gstreamer.freedesktop.org/">GStreamer</a> <i>shmsrc</i> interface for getting the mixed frames from Snowmix.
+		Obviously your system must support shared memory. The fifth line sets the idle time for
+		feed 0 to 1 frame. The fifth line instructs Snowmix to stack Snowmix's system frame as
+		the bottom frame of every frame Snowmix will output. Feed 0, or the system frame provides
+		by default a black background as the basis for the entire mixed frame unless configured
+		for something different.</p>
+
+		<p>Obviously you will for most cases also want to add inputs and display them as shown in
+		the <a href"[HOME]Examples/input.html">Snowmix GStreamer Input examples</a>.</p>
+		<div align="right"><a href="">Top</a></div>
+	</div>
+
+	<div class="item">
+
+		<h3>Getting Mixed Frames from Snowmix</h3>
+		<br/>
+
+		<p>The main loop of Snowmix, the mixing of video frames, is skipped by a running
+		Snowmix session until data is read on its output interface. No need to mix a frame
+		that is never read. The output interface of Snowmix is compatible with <a href="http://gstreamer.freedesktop.org/">GStreamer</a>
+		shared memory module <i>shmsrc</i>. The examples below shows how <a href="http://gstreamer.freedesktop.org/">GStreamer</a> can be
+		used to read frames from Snowmix.</p>
+
+		<p>The first example will display the mixed frame on the local machine running Snowmix
+		assuming it has a graphic display. It has been tested with GStreamer 0.10, 1.0.0 through
+		1.5.2 although GStreamer 0.10 is no longer official supported.</p>
+
+		<code>    #!/bin/sh
+    # Deliver mixer1 output to screen.
+    # The geometry and framerate are from your system settings in Snowmix
+    width=1024
+    height=576
+    framerate='24/1'
+    which gst-launch-1.0 2>/dev/null 1>&2
+    if [ $? -eq 0 ] ; then
+      gstlaunch=gst-launch-1.0
+      VIDEOCONVERT=videoconvert
+      MIXERFORMAT='video/x-raw, format=BGRA, pixel-aspect-ratio=1/1, interlace-mode=progressive'
+    else
+      gstlaunch=gst-launch-0.10
+      VIDEOCONVERT=ffmpegcolorspace
+      MIXERFORMAT="video/x-raw-rgb,bpp=32,depth=32,endianness=4321,red_mask=65280,green_mask=16711680"
+      MIXERFORMAT="$MIXERFORMAT,blue_mask=-16777216,pixel-aspect-ratio=1/1,interlaced=false"
+    fi
+    $gstlaunch -v             \
+        shmsrc socket-path=/tmp/mixer1 do-timestamp=true is-live=true      !\
+        $MIXERFORMAT", framerate=$framerate, width=$width, height=$height" !\
+        queue                !\
+        $VIDEOCONVERT        !\
+        queue                !\
+        autovideosink</code>
+
+		<p>If the autovideosink fails for your system depending on your setup, then try
+		one of the other videosinks such as xvimagesink, ximagesink, glimagesink etc.
+		There are many to choose from depending on your system.</p>
+		<div align="right"><a href="">Top</a></div>
+	</div>
+
+	<div class="item">
+
+		<h3>Stream H.264 Video as RTP over UDP from Snowmix</h3>
+		<br/>
+
+		<p>The example below encodes the output from Snowmix with x264 and send it to
+		another host using RTP over UDP.</p>
+
+		<code>    #!/bin/bash
+    # The geometry and frame rate are from your system settings in Snowmix
+    width=1024
+    height=576
+    framerate='24/1'
+    which gst-launch-1.0 2>/dev/null 1>&2
+    if [ $? -eq 0 ] ; then
+      gstlaunch=gst-launch-1.0
+      VIDEOCONVERT=videoconvert
+      MIXERFORMAT='video/x-raw, format=BGRA, pixel-aspect-ratio=1/1, interlace-mode=progressive'
+    else
+      gstlaunch=gst-launch-0.10
+      VIDEOCONVERT=ffmpegcolorspace
+      MIXERFORMAT="video/x-raw-rgb,bpp=32,depth=32,endianness=4321,red_mask=65280,green_mask=16711680"
+      MIXERFORMAT="$MIXERFORMAT,blue_mask=-16777216,pixel-aspect-ratio=1/1,interlaced=false"
+    fi
+    SRC='shmsrc socket-path=/tmp/mixer1 do-timestamp=true is-live=true'
+    X264SETTINGS='bitrate=3000 tune=zerolatency speed-preset=5'
+    $gstlaunch -v              \
+        $SRC                  !\
+        $MIXERFORMAT", framerate=$framerate, width=$width, height=$height" !\
+        queue                 !\
+        $VIDEOCONVERT         !\
+        queue                 !\
+        x264enc $X264SETTINGS !\
+        h264parse             !\
+        rtph264pay            !\
+        queue                 !\
+        udpsink clients=192.168.0.15:4012 sync=true</code>
+
+	<p>Obviously you will have to set the IP address and port to match your requirements. If the
+	<i>clients</i> option of <i>udpsink</i> gives you any problem, then try this:</p>
+
+	<code> ... ! queue  ! udpsink host=192.168.0.15 port=4012 sync=true</code>
+
+	<p>Instead of the <i>udpsink</i> your could also replace it with a tcp server like this:</p>
+
+        <code>  ... ! queue ! tcpserversink host=0.0.0.0 port=4012 sync-method=2 recover-policy=keyframe</code>
+
+		<p>For more examples on outputting from Snowmix, please see the following scripts in the
+		$SNOWMIX/scripts directory:</p>
+
+		<table>
+			<tr><td>Script Name</td><td>Function</td></tr>
+			<tr><td>output2dummy</td>	<td>reads video frames from Snowmix and discards them.</td></tr>
+			<tr><td>output2screen</td>	<td>reads video frames from Snowmix and displays them locally on screen.</td></tr>
+			<tr><td>output2file</td>	<td>reads video frames from Snowmix, encodes them and saves encoded stream in a file.</td></tr>
+			<tr><td>output2rtp</td>	<td>reads video frames from Snowmix, encodes them and stream them as RTP packets over the network.</td></tr>
+			<tr><td>av_output2dummy</td>	<td>as output2dummy, but also reads audio from Snowmix.</td></tr>
+			<tr><td>av_output2screen</td>	<td>as output2screen, bus also reads audio and plays audio.</td></tr>
+			<tr><td>av_output2tcpserver</td><td>reads video frames and audio, encodes video and audio and makes the muxed stream available on a tcp server.</td></tr>
+		</table>
+		<div align="right"><a href="">Top</a></div>
+	</div>
+
+</div>

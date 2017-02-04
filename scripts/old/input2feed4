@@ -1,0 +1,97 @@
+#!/bin/bash
+#
+# IMPORTANT >>>>>You need to get port, ip and feed_id right<<<<<
+port=9999
+ip=127.0.0.1
+if [ $# -lt 1 ] ; then
+  echo parameter error. Usage $0 feed
+  exit 1
+fi
+feed_id=$1
+audio_feed_id=$1
+
+tmpfile=/tmp/snowmix.tmp.$$
+echo feed list verbose | nc $ip $port >$tmpfile
+rate=`echo audio feed rate | nc $ip $port | grep 'STAT: audio feed '$audio_feed_id' ' | cut -f6 -d' '`
+channels=`echo audio feed channels | nc $ip $port | grep 'STAT: audio feed '$audio_feed_id' ' | cut -f6 -d' '`
+
+get_socket()
+{
+  awk 'BEGIN { feed=-1; socket="" }
+	/^MSG\: Feed ID / { feed=$4; }
+	/^MSG\:   Socket\: / { if (feed == feed_id) socket=$3; }
+	END { printf("%s\n", socket) }
+	' feed_id=$1 <$tmpfile
+}
+get_width()
+{
+  awk 'BEGIN { feed=-1; width="" }
+	/^MSG\: Feed ID / { feed=$4; }
+	/^MSG\:   Geometry\: / { if (feed == feed_id) width=$3; }
+	END { printf("%s\n", width) }
+	' feed_id=$1 <$tmpfile
+}
+get_height()
+{
+  awk 'BEGIN { feed=-1; height="" }
+	/^MSG\: Feed ID / { feed=$4; }
+	/^MSG\:   Geometry\: / { if (feed == feed_id) height=$4; }
+	END { printf("%s\n", height) }
+	' feed_id=$1 <$tmpfile
+}
+
+CONTROL_PIPE=`get_socket $feed_id`
+WIDTH=`get_width $feed_id`
+HEIGHT=`get_height $feed_id`
+rm $tmpfile
+if [ X$CONTROL_PIPE = X -o X$WIDTH = X -o X$HEIGHT = X ] ; then
+  echo Failed to get control pipe or width or height from running snowmix
+  exit 1
+fi
+if [ X$rate = X -o X$channels = X ] ; then
+  echo Failed to get rate or channels from running snowmix
+  exit 1
+fi
+
+SRC="filesrc location=../test/LES_TDS_launch.mp4 ! decodebin2 name=decoder "
+SHMSIZE='shm-size=10000000'
+SHMOPTION="wait-for-connection=0"
+SHMSINK1="shmsink socket-path=$CONTROL_PIPE $SHMSIZE $SHMOPTION"
+SCALE='ffmpegcolorspace ! videoscale ! ffmpegcolorspace'
+AUDIOFORMAT='audio/x-raw-int, endianness=(int)1234, signed=(boolean)true, width=(int)16, depth=(int)16, rate=(int)'$rate', channels=(int)'$channels
+VIDEOFORMAT='video/x-raw-rgb, bpp=(int)32, depth=(int)32, endianness=(int)4321, red_mask=(int)65280, green_mask=(int)16711680, blue_mask=(int)-16777216, width=(int)'$WIDTH', height=(int)'$HEIGHT', framerate=(fraction)24/1, pixel-aspect-ratio=(fraction)1/1, interlaced=(boolean)false'
+
+echo $SHMSINK1
+echo Video geometry = $WIDTH x $HEIGHT
+echo Audio channels and rate = $channels $rate
+
+while true ; do
+    # Remove the named pipe if it exist
+    rm -f $CONTROL_PIPE
+    snowmix=`ps c |cut -c28-34 | grep snowmix | head -1`
+    if [ X$snowmix != X ] ; then
+    (
+	echo 'audio feed ctr isaudio '$feed_id
+	gst-launch-0.10 -q $SRC ! \
+	videorate ! $SCALE ! $VIDEOFORMAT ! $SHMSINK1 decoder. \
+	! queue ! audioconvert ! audioresample ! $AUDIOFORMAT ! fdsink fd=1 sync=true
+    ) | nc 127.0.0.1 9999
+    fi
+    sleep 2
+done
+exit
+while true ; do
+    # Remove the named pipe if it exist
+    rm -f $CONTROL_PIPE
+    snowmix=`ps c |cut -c28-34 | grep snowmix | head -1`
+    if [ X$snowmix != X ] ; then
+    (
+	echo 'audio feed ctr isaudio '$audio_feed_id
+	gst-launch-0.10 -q $SRC ! \
+	videorate ! $SCALE ! $VIDEOFORMAT ! $SHMSINK1 decoder. \
+	! queue ! audioconvert ! $AUDIOFORMAT ! fdsink fd=1 sync=true
+    ) | nc 127.0.0.1 9999
+    fi
+    sleep 2
+done
+exit

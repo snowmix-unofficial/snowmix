@@ -1,0 +1,91 @@
+#!/bin/bash
+
+# Deliver mixer1 output to stream-router in x264 encoded format on top of rtp.
+
+YUVFORMAT='video/x-raw-yuv,width=1024,height=576,format=(fourcc)YUY2,framerate=25/1'
+YUVFORMAT='video/x-raw-yuv,width=1024,height=576,framerate=25/1'
+FORMAT='video/x-raw-rgb,bpp=32,width=1024,height=576,format=(fourcc)ARGB,framerate=25/1'
+#FORMAT='video/x-raw-rgb, bpp=(int)32, width=(int)1024, height=(int)576, format=(fourcc)ARGB, framerate=(fraction)25/1, depth=(int)32, endianness=(int)4321, red_mask=(int)-16777216, green_mask=(int)16711680, blue_mask=(int)65280, alpha_mask=(int)255'
+FORMAT='video/x-raw-rgb, bpp=(int)32, width=(int)1024, height=(int)576, format=(fourcc)ARGB, framerate=(fraction)25/1, depth=(int)24, red_mask=(int)-16777216, green_mask=(int)16711680, blue_mask=(int)65280, alpha_mask=(int)255'
+FORMAT='video/x-raw-rgb, bpp=(int)32, width=(int)1024, height=(int)576, format=(fourcc)BGRA, depth=(int)32, endianness=(int)4321, framerate=(fraction)25/1, interlaced=(boolean)false, red_mask=(int)-16777216, green_mask=(int)16711680, blue_mask=(int)65280, alpha_mask=(int)255'
+
+MIXERFORMAT='video/x-raw-rgb, bpp=(int)32, depth=(int)32, endianness=(int)4321, format=(fourcc)BGRA, red_mask=(int)65280, green_mask=(int)16711680, blue_mask=(int)-16777216, width=(int)1024, height=(int)576, framerate=(fraction)24/1, pixel-aspect-ratio=(fraction)1/1, interlaced=(boolean)false'
+
+deltax=356
+gst-launch-0.10 -v shmsrc socket-path=/tmp/mixer1 do-timestamp=true is-live=true ! \
+	$MIXERFORMAT		! \
+	ffmpegcolorspace	! \
+	x264enc bitrate=3000 tune=zerolatency speed-preset=5 ! \
+	avimux ! \
+	filesink location=pmm.mp4
+
+exit
+	$YUVFORMAT ! \
+	filesink location=pmm.argb
+exit
+	ffmpegcolorspace ! \
+	xvimagesink
+
+exit 
+
+#!/bin/bash
+
+# Start stream #1 from axis1 (Raket Cam).
+rm -f /tmp/axis1.*
+#FORMAT='video/x-raw-yuv,width=704,height=576,format=(fourcc)YUY2'
+FORMAT='video/x-raw-rgb,bpp=(int)32,width=704,height=576,format=(fourcc)ARGB,depth=32,endianness=(int)4321'
+
+MIXERFORMAT='video/x-raw-rgb, bpp=(int)32, width=(int)704, height=(int)576, format=(fourcc)BGRA, depth=(int)32, endianness=(int)4321, framerate=(fraction)24/1, interlaced=(boolean)false, red_mask=(int)65280, green_mask=(int)16711680, blue_mask=(int)-16777216, alpha_mask=(int)255'
+
+MIXERFORMAT='video/x-raw-rgb, bpp=(int)32, depth=(int)32, endianness=(int)4321, red_mask=(int)65280, green_mask=(int)16711680, blue_mask=(int)-16777216, width=(int)704, height=(int)576, framerate=(fraction)24/1, pixel-aspect-ratio=(fraction)1/1, interlaced=(boolean)false'
+MIXERFORMAT='video/x-raw-rgb, bpp=(int)32, depth=(int)32, endianness=(int)4321, red_mask=(int)65280, green_mask=(int)16711680, blue_mask=(int)-16777216, width=(int)704, height=(int)576, framerate=(fraction)24/1, pixel-aspect-ratio=(fraction)1/1, interlaced=(boolean)false'
+
+SRC='v4l2src device=/dev/video1 '
+SRC="filesrc location=../test/LES_TDS_launch.mp4 ! decodebin2 "
+SOCK1=/tmp/axis1.master
+SOCK2=/tmp/axis1.mosaic
+SHMSIZE='shm-size=10000000'
+SHMOPTION="wait-for-connection=0"
+SHMSINK1="shmsink socket-path=$SOCK1 $SHMSIZE $SHMOPTION"
+
+
+while true
+do
+	# Build a pipeline for sending data to mixer:
+	gst-launch-0.10 -v 		  \
+		$SRC			! \
+		ffmpegcolorspace	! \
+		videoscale		! \
+		ffmpegcolorspace	! \
+		$MIXERFORMAT		! \
+		ffmpegcolorspace ! \
+		ximagesink
+
+#		tee name=t1		! \
+#		$SHMSINK1 t1.		! \
+#		queue leaky=2		! \
+#		$SHMSINK2 
+	sleep 2
+done
+exit 0
+
+gst-launch-0.10 -v udpsrc port=4444 caps="application/x-rtp, media=(string)video, payload=(int)96, clock-rate=(int)90000, encoding-name=(string)MP4V-ES, profile-level-id=(string)245, config=(string)000001B0F5000001B50900000100000001200088401928B02240A21F, a-framerate=(string)30.0, a-mpeg4-esid=(string)201, clock-base=(uint)1918588220, seqnum-base=(uint)40098, npt-start=(guint64)0, play-speed=(double)1, play-scale=(double)1" ! rtpmp4vdepay ! mpeg4videoparse ! ffdec_mpeg4 ! ffmpegcolorspace ! videoscale ! 'video/x-raw-yuv,width=704,height=576,format=(fourcc)YUY2' ! tee name=t1 ! shmsink socket-path=/tmp/axis1.master shm-size=10000000 wait-for-connection=0 t1. ! queue leaky=2 ! shmsink socket-path=/tmp/axis1.mosaic shm-size=10000000 wait-for-connection=0
+
+	queue ! \
+	textoverlay deltax=-164 deltay=-530 text="Sputnik Launch Pad Cam" \
+		shaded-background=FALSE font-desc="sans bold 8" ! \
+	textoverlay deltax=$deltax deltay=-530 text="Command Bridge Cam" \
+		shaded-background=FALSE font-desc="sans normal 8" ! \
+	textoverlay deltax=$deltax deltay=-338 text="Rocket Cam" \
+		shaded-background=FALSE font-desc="sans normal 8" ! \
+	textoverlay deltax=$deltax deltay=-146 text="Hand Held Cam" \
+		shaded-background=FALSE font-desc="sans normal 8" ! \
+	textoverlay deltax=-408 deltay=30 text="CSS StreamTeam" \
+		shaded-background=FALSE font-desc="sans bold 10" ! \
+	timeoverlay deltax=876 deltay=534 text=" " \
+		font-desc="sans bold 8" ! \
+	ffmpegcolorspace ! xvimagesink
+
+
+gst-launch-0.10 -v shmsrc socket-path=/tmp/mixer1 do-timestamp=true is-live=true ! 'video/x-raw-yuv,width=1024,height=576,format=(fourcc)YUY2,framerate=25/1' ! queue ! ffmpegcolorspace ! x264enc bitrate=3000 tune=zerolatency speed-preset=5 ! h264parse ! rtph264pay ! queue ! udpsink clients=192.168.254.150:4012 sync=false
+

@@ -1,0 +1,72 @@
+Script files for Snowmix
+------------------------
+
+Copyright 2013 Peter Maersk-Moller
+
+This directory contains a couple of scripts that facilitate input and output
+of audio and video streams for Snowmix. The scripts are intended as examples
+for the user on how to input and output streams to Snowmix. Hopefully the
+examples will be inspiration for the user to create his or her own special
+purpose written scripts.
+
+Most scripts require the environment variable SNOWMIX to list the installed
+Snowmix directory. Typically you will want to the following line to the
+.profile, .bashrc or .bash_profile in your home directory:
+
+  export SNOWMIX=/usr/local/lib/Snowmix-0.4.6
+
+where SOME_PATH is the path to the Snowmix directory. Most scripts will
+include the two script files gstreamer-settings and snowmix-settings. For
+more information on the specific scripts other than found in this file,
+please see the scripts them selves. Some may contain additional information.
+Most scripts will only work if you have GStreamer installed.
+
+SCRIPTS:
+---------
+
+demo: A demo script to run various Snowmix setups and snowcub.tcl management
+	panel.
+
+find_xinetd : A specialized scripts used to identify processes feeding audio
+	or video to Snowmix and started by xinetd. This is only usefull if
+	you have configured xinetd to feed streams received over the network
+	to Snowmix.
+
+gstreamer-settings : A script that sets up a number of variables depending
+	on your version of gstreamer installed.
+
+input2feed : Used for demo purpose to feed an example audio and video stream
+	into Snowmix. If you need to feed a stream to Snowmix, this is a good
+	starting point for inspiration. Requires a running Snowmix session to
+	work.
+
+output2dummy : This script will connect to a running Snowmix session and receive
+	mixed video frames as fast as possible and dump these frames. Snowmix
+	does not do any video mixing if there is no process reading the mixed
+	frames. Requires a running Snowmix session to work.
+
+output2file : This script will connect to a running Snowmix session and receive
+	mixed video frames as fast as possible, encode the frames using x264
+	and save the result in a file named snowmix-1.mp4. If the file exist
+	the file will be named snowmix-2.mp4 and so forth.  Requires a running
+	Snowmix session to work.
+
+
+output2rtp : This script will connect to a running Snowmix session and receive
+	mixed video frames as fast as possible, encode the frames using x264
+	and output h264 encoded video as udp rtp packets to an address an a
+	port specified in the script.  Requires a running Snowmix session to
+	work.
+
+output2screen : This script will connect to a running Snowmix session and
+	receive mixed video frames as fast as possible and output the frames
+	to the screen using autovideosink.  Requires a running Snowmix session
+	to work.
+
+saphire_simulation: A script to simulate input data for the Sapphire launch.
+
+snowmix-settings : This script, included in many other scripts will probe a
+	running Snowmix session for feed geometry, system geometry, system
+	video rate, audio feed and sink rate, audio feed and sink channels
+	and a few other things and make the values availble through variables.
+	Requires a running Snowmix session to work.

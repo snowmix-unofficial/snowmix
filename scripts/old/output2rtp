@@ -1,0 +1,38 @@
+#!/bin/bash
+# Deliver mixer1 output to screen.
+
+gstlaunch=`which gst-launch-1.0`
+if [ X$gstlaunch != X ] ; then
+  VIDEOCONVERT=videoconvert
+  VIDEO=video/x-raw
+  AUDIO=audio/x-raw
+  vfid=string
+  afid="format=(string)S16LE, "
+else
+  gstlaunch=`which gst-launch-0.10`
+  if [ X$gstlaunch != X ] ; then
+    VIDEOCONVERT=ffmpegcolorspace
+    VIDEO=video/x-raw-rgb
+    AUDIO=audio/x-raw-int
+    vfid=fourcc
+    afid=""
+  else
+    echo "Could not find gst-launch-1.0 or gst-launch-0.10. Stopping"
+    exit
+  fi
+fi
+
+SRC='shmsrc socket-path=/tmp/mixer1 do-timestamp=true is-live=true'
+MIXERFORMAT=$VIDEO', bpp=(int)32, depth=(int)32, endianness=(int)4321, format=('$vfid')BGRA, red_mask=(int)65280, green_mask=(int)16711680, blue_mask=(int)-16777216, width=(int)1024, height=(int)576, framerate=(fraction)24/1, pixel-aspect-ratio=(fraction)1/1, interlaced=(boolean)false'
+X264SETTINGS='bitrate=3000 tune=zerolatency speed-preset=5'
+
+$gstlaunch -v          \
+    $SRC                  ! \
+    $MIXERFORMAT          ! \
+    $VIDEOCONVERT         ! \
+    queue                 ! \
+    x264enc $X264SETTINGS ! \
+    h264parse             ! \
+    rtph264pay            ! \
+    queue                 ! \
+    udpsink clients=192.168.254.150:4012 sync=false

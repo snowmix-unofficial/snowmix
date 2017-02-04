@@ -1,0 +1,45 @@
+#!/bin/bash
+#
+# ################### Settings to be changed ####################
+#
+# Settings for Snowmix. IP and port address for running Snowmix
+if [ X$ip = X ] ; then ip=127.0.0.1 ; fi
+if [ X$port = X ] ; then port=9999 ; fi
+if [ X$audio_sink_id = X ] ; then audio_sink_id=1 ;fi
+GSTREAMER_SETTINGS=$SM/scripts/gstreamer-settings
+# ################### Settings to be changed ####################
+
+# Check that gsteramer-settings is set
+if [ X$GSTREAMER_SETTINGS_SET != Xyes ] ; then
+  . $GSTREAMER_SETTINGS
+fi
+
+frameratefraction()
+{
+  echo $1 | awk '{ rate=$1 ;
+         factor=1;
+         intrate=int(rate);
+         while (factor*rate > intrate) {
+           factor = factor * 10;
+           intrate = int(rate*factor);
+         }
+         printf("%d/%d\n",intrate,factor);
+       }'
+}
+
+rate=`echo audio sink rate | nc $ip $port | grep 'STAT: audio sink '$audio_sink_id' ' | cut -f6 -d' '`
+channels=`echo audio sink channels | nc $ip $port | grep 'STAT: audio sink '$audio_sink_id' ' | cut -f6 -d' '`
+
+tmpfile=/tmp/snowmix-settings.$$
+echo 'system info' | nc $ip $port  >$tmpfile
+geometry=`grep 'STAT:  System geometry' $tmpfile |cut -f3 -d: |cut -f2 -d' '|tr 'x' ' '`
+framerate=`grep 'STAT:  Frame rate' $tmpfile |cut -f3 -d: |cut -f2 -d' '`
+ctrsocket=`grep 'STAT:  Output ctr sock name' $tmpfile |cut -f3 -d: |cut -f2 -d' '`
+width=`echo $geometry |cut -f1 -d' '`
+height=`echo $geometry |cut -f2 -d' '`
+ratefraction=`frameratefraction $framerate`
+rm $tmpfile
+
+AUDIOFORMAT=$AUDIO', '$afid' endianness=(int)1234, signed=(boolean)true, width=(int)16, depth=(int)16, rate=(int)'$rate', channels=(int)'$channels
+
+MIXERFORMAT=$VIDEO', bpp=(int)32, depth=(int)32, endianness=(int)4321, format=('$vfid')BGRA, red_mask=(int)65280, green_mask=(int)16711680, blue_mask=(int)-16777216, width=(int)'$width', height=(int)'$height', framerate=(fraction)'$ratefraction', pixel-aspect-ratio=(fraction)1/1, interlaced=(boolean)false'

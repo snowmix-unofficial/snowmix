@@ -1,0 +1,212 @@
+#!/bin/bash
+
+# Copyright 2013-2015 - Peter Maersk-Moller
+
+if [ "X$BASH" != X ] ; then
+  echo="echo -e"
+else
+  echo=echo
+fi
+
+os=`uname`
+osvariant=""
+lsbvariant=""
+bootstrapdir=bootstrapd
+bootstrapvariant=""
+LIBTOOLIZE=libtoolize
+
+echo "If you are missing any software packages, you need access to the sudo command"
+echo "for this script to be able to fetch them and install them. If you do not have"
+echo "access to sudo or do not want to grant this script access through your passwd"
+echo "this script will fail. However if all packages are installed, then sudo access"
+echo "is not needed. Do you want to check if you have sudo access by providing"
+$echo "your password to sudo (Y/N)? \c"
+read reply
+if [ "$reply" = Y -o "$reply" = y ] ; then
+  echo "Checking for sudo access. You may be promted for password"
+  sudo -v
+  if [ $? != 0 ] ; then
+    echo "You do not have access to run the sudo command."
+    echo "You will need sudo access to install packages if needed."
+    echo "You can get access to sudo by adding your username to the sudo group in the /etc/group file. Then log out and in again."
+    echo "You do not need access to sudo if all packages are installed."
+    $echo "Press return to continue \c"
+    read reply
+  else
+    echo "You have access to run sudo."
+  fi
+else
+  echo "Skipping test for sudo access."
+fi
+
+if [ "$os" = "Linux" ] ; then
+  if [ -f /etc/os-release ] ; then
+    osvariant=`grep '^ID=' /etc/os-release | cut -f2 -d= | tr 'A-Z' 'a-z'`
+  else
+    if [ -f /etc/lsb-release ] ; then
+      osvariant=`grep '^DISTRIB_DESCRIPTION=' /etc/lsb-release | cut -f2 -d= | cut -f1 -d' ' | tr 'A-Z' 'a-z' | sed 's/\"//g'`
+    fi
+  fi
+#/etc/lsb-release:DISTRIB_DESCRIPTION="Linaro 12.11"
+  if [ -f /etc/lsb-release ] ; then
+    lsbvariant=-`grep '^DISTRIB_ID=' /etc/lsb-release | cut -f2 -d= | tr 'A-Z' 'a-z'`
+  fi
+fi
+#echo "osvariant : $osvariant"
+#echo "lsbvariant : $lsbvariant"
+echo "$os-$osvariant$lsbvariant"
+
+prefix=/usr/local
+case "$os-$osvariant$lsbvariant" in
+  Linux-ubuntu-linuxmint)
+    echo "This is Linux Mint Ubuntu variant"
+    bootstrapvariant=$bootstrapdir/bootstrap-ubuntu
+  ;;
+  Linux-linaro-ubuntu)
+    echo "This is Linux Linaro Ubuntu variant"
+    bootstrapvariant=$bootstrapdir/bootstrap-ubuntu
+  ;;
+  Linux-ubuntu | Linux-ubuntu-ubuntu)
+    echo "This is Ubuntu Linux"
+    bootstrapvariant=$bootstrapdir/bootstrap-ubuntu
+  ;;
+  Linux-debian | Linux-debian-ubuntu)
+    echo "This is Debian Linux"
+    bootstrapvariant=$bootstrapdir/bootstrap-debian
+  ;;
+  Linux-opensuse*)
+    echo "This is OpenSUSE Linux"
+    bootstrapvariant=$bootstrapdir/bootstrap-opensuse
+  ;;
+  Linux-*centos*)
+    echo "This is CentOS Linux, a Fedora variant"
+    bootstrapvariant=$bootstrapdir/bootstrap-centos
+  ;;
+  Linux-fedora*)
+    echo "This is Fedora Linux"
+    bootstrapvariant=$bootstrapdir/bootstrap-fedora
+  ;;
+  Linux-arch* | Linux-chakra*)
+    echo "This is Chakra Linux, an Arch a variant"
+    bootstrapvariant=$bootstrapdir/bootstrap-arch
+  ;;
+  Darwin*)
+    echo "This is Darwin (OS X)"
+    bootstrapvariant=$bootstrapdir/bootstrap-OSX
+    LIBTOOLIZE=glibtoolize
+    export PATH=/opt/local/bin:$PATH
+    export CPPFLAGS="-I/opt/local/include $CPPFLAGS"
+    export LDFLAGS="-L/opt/local/lib $LDFLAGS"
+    prefix=/opt/local
+  ;;
+  FreeBSD*)
+    echo "This is a FreeBSD or FreeBSD variant"
+    export CPPFLAGS="-I/usr/local/include $CPPFLAGS"
+    export LDFLAGS="-L/usr/local/lib $LDFLAGS"
+    bootstrapvariant=$bootstrapdir/bootstrap-freebsd
+  ;;
+  *)
+    echo "Unsupported OS. Selecting a generic bootstrap"
+    bootstrapvariant=$bootstrapdir/bootstrap-generic
+    if [ $? != 0 ] ; then exit ; fi
+  ;;
+esac
+
+$echo "Press return to execute $bootstrapvariant \c"
+read reply
+which bash 1>/dev/null 2>&1
+if [ $? = 0 ] ; then
+  bash ./$bootstrapvariant
+else
+  sh ./$bootstrapvariant
+fi
+if [ $? != 0 ] ; then exit ; fi
+
+# Check for build essentials
+echo
+echo "Checking for build essentials."
+for prog in aclocal autoconf $LIBTOOLIZE automake awk head pkg-config; do
+  which $prog >/dev/null 2>&1
+  if [ X$? != X0 ]
+  then
+    echo ' ERROR : '$prog' not found. Please install the program'
+    exit 1
+  else
+    echo " found $prog"
+  fi
+done
+
+# Generating configure and makefiles
+echo
+echo "Generating configure and makefiles. Please stand by"
+if [ ! -d m4 ] ; then mkdir m4 ; fi
+echo " aclocal"
+aclocal
+echo " autoconf"
+autoconf
+echo " $LIBTOOLIZE --force"
+$LIBTOOLIZE --force
+echo " automake --add-missing"
+automake --add-missing
+if [ -s VERSION ] ; then
+  head -1 VERSION | awk '{ printf("#define SNOWMIX_VERSION \"%s\"\n", $0);}' >src/version.h
+  version=`head -1 VERSION`
+fi
+
+echo
+if [ -f ./configure ] ; then
+  echo "Running ./configure --prefix=$prefix to setup compilation environment"
+  ./configure --prefix=$prefix --libdir=$prefix/lib
+  if [ $? != 0 ] ; then
+    echo 'Running ./configure failed. This needs to be resolved'
+    exit 1
+  else
+    echo "Configure was run with --prefx=$prefix"
+    echo 'You can rerun ./configure --prefix=YOUR_INSTALLATION_DIR if you need to change the installation path for Snowmix'
+    echo
+  fi
+else
+  echo 'Could not find ./configure'
+  echo 'This needs to be resolved before you can compile Snowmix'
+  exit 1
+fi
+
+echo "You can revert the bootstrap script by executing the command './strapboot'"
+
+installdir=`grep '^prefix = ' Makefile | awk '{ print $3 }'`
+
+echo
+echo ">>>>>>>>>> PLEASE NOTE <<<<<<<<<<<<"
+echo "By default the Snowmix will be installed in $installdir. If you want to"
+echo "change this, please run ./configure --prefix=YOUR_CHOICE"
+echo
+echo "If Snowmix is installed into $installdir you need to set the enviroment"
+echo "variable SNOWMIX to $installdir/lib/Snowmix-$version"
+echo
+echo "Consider adding the following to your ~/.bashrc or ~/.bash_profile"
+echo
+echo "   export SNOWMIX=$installdir/lib/Snowmix-$version"
+echo
+echo "Then after finishing this script, logout and login again to continue"
+echo
+$echo "Press return to continue \c"
+read reply
+
+echo
+echo "Now you can compile Snowmix and install snowmix using the following commands:"
+echo
+echo "  make"
+echo "  sudo make install"
+echo
+echo "After that, you can run Snowmix by executing the command"
+echo
+echo "    snowmix ini/YOUR_INI_FILE"
+echo
+echo "Or you can run the demo by executing the command 'snowmix_demo'"
+echo
+echo "For questions and help, please use the discussion forum at http://sourceforge.net/projects/snowmix/"
+echo "where you in the Wiki also can find a lot of documentation, examples and help."
+echo "See also website http://snowmix.sourceforge.net/ for ressources and documentation"
+echo
+exit 0
+

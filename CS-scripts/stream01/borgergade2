@@ -1,0 +1,67 @@
+#!/bin/bash
+
+CAPS='application/x-rtp, media=(string)video, clock-rate=(int)90000, encoding-name=(string)MP2T-ES, payload=(int)33'
+listenport=6050
+serverport=5060
+server=81.7.134.69
+
+function on_error {
+	echo "Error. Usage : $0 udp|tcp"
+	exit 1
+}
+
+if [ $# != 1 ] ; then on_error
+fi
+
+if [ $1 != udp -a $1 != tcp ] ; then on_error
+fi
+gstlaunch=`which gst-launch-1.0`
+if [ X$gstlaunch != X ] ; then
+  VIDEOCONVERT=videoconvert
+  VIDEO=video/x-raw
+  AUDIO=audio/x-raw
+  vfid=string
+  afid="format=(string)S16LE, "
+else
+  gstlaunch=`which gst-launch-0.10`
+  if [ X$gstlaunch != X ] ; then
+    VIDEOCONVERT=ffmpegcolorspace
+    VIDEO=video/x-raw-rgb
+    AUDIO=audio/x-raw-int
+    vfid=fourcc
+    afid=""
+  else
+    echo "Could not find gst-launch-1.0 or gst-launch-0.10. Stopping"
+    exit
+  fi
+fi
+
+
+while true ; do
+	if [ $1 = udp ] ; then
+		#--gst-debug=rtpmp2tdepay:5
+		echo Listen on UDP port $listenport and make available on TCP port $serverport
+		$gstlaunch -v udpsrc port=$listenport  caps="$CAPS"	! \
+			queue					! \
+			rtpmp2tdepay				! \
+			mpegtsparse				! \
+			queue					! \
+			tee name=t1				! \
+			queue					! \
+			tcpserversink port=$serverport sync-method=2 t1. ! \
+			queue					! \
+			mpegtsdemux				! \
+			'video/x-h264'				! \
+			h264parse				! \
+			rtph264pay				! \
+			udpsink host=127.0.0.1 port=9200
+
+	else
+		echo Listen on TCP port 5050 and make available on TCP port 5060
+		$gstlaunch -v tcpserversrc port=$listenport host=$server	! \
+			mpegtsparse				! \
+			queue					! \
+			tcpserversink port=$serverport sync-method=2
+	fi
+	sleep 5
+done

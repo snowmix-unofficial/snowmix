@@ -1,0 +1,15 @@
+<div class="search">
+<h3>The Swiss Army Knife of Open Source Live Video Mixing.</h3>
+<script>
+  (function() {
+    var cx = '007204516718911784955:qp5rcmqataw';
+    var gcse = document.createElement('script');
+    gcse.type = 'text/javascript';
+    gcse.async = true;
+    gcse.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') +
+        '//cse.google.com/cse.js?cx=' + cx;
+    var s = document.getElementsByTagName('script')[0];
+    s.parentNode.insertBefore(gcse, s);
+  })();
+</script>
+<gcse:search>The Swiss Army Knife of Open Source Live Video Mixing.</gcse:search></div>

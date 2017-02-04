@@ -1,0 +1,473 @@
+# Snowmix xinetd configuration
+#
+#	Port	Transport Codec   Geometry   PAR   Geometry
+#	---------------------------------------------------
+#	   4010	UDP/RTP   MPEG-4   704x576  12:11   768x576
+#	01 9000	UDP/RTP   MPEG-4   704x576  12:11   768x576
+#	02 9002	UDP/RTP   MPEG-4   704x576  12:11   768x576
+#	03 9004	UDP/RTP   MPEG-4   704x576  12:11   768x576
+#	04 9006	UDP/RTP   MPEG-4   704x576  12:11   768x576
+#	05 9008	UDP/RTP   MPEG-4   704x576  12:11   768x576
+#	06 9010	UDP/RTP   MPEG-4   704x576  12:11   768x576
+#	07 9012	UDP/RTP   MPEG-4   704x576  12:11   768x576
+#	08 9014	UDP/RTP   MPEG-4   704x576  12:11   768x576
+#	09 9016	UDP/RTP   MPEG-4   704x576  12:11   768x576
+#
+#	01 9020	UDP/RTP   H.264	  1024x576   1:1   1024x576
+#	02 9022	UDP/RTP   H.264	  1024x576   1:1   1024x576
+#	03 9024	UDP/RTP   H.264	  1024x576   1:1   1024x576
+#	04 9026	UDP/RTP   H.264   1024x576   1:1   1024x576
+#	05 9028	UDP/RTP   H.264   1024x576   1:1   1024x576
+#	06 9030	UDP/RTP   H.264   1024x576   1:1   1024x576
+#	07 9032	UDP/RTP   H.264   1024x576   1:1   1024x576
+#	08 9034	UDP/RTP   H.264   1024x576   1:1   1024x576
+#	09 9036	UDP/RTP   H.264   1280x720   1:1   1024x576
+#
+#	01 9040	UDP/RTP   H.264	  1280x720   1:1   1280x720
+#	02 9042	UDP/RTP   H.264	  1280x720   1:1   1280x720
+#	03 9044	UDP/RTP   H.264	  1280x720   1:1   1280x720
+#	04 9046	UDP/RTP   H.264   1280x720   1:1   1280x720
+#	05 9048	UDP/RTP   H.264   1280x720   1:1   1280x720
+#	06 9050	UDP/RTP   H.264   1280x720   1:1   1280x720
+#	07 9052	UDP/RTP   H.264   1280x720   1:1   1280x720
+#	08 9054	UDP/RTP   H.264   1280x720   1:1   1280x720
+#	09 9056	UDP/RTP   H.264   1280x720   1:1   1280x720
+#	10 9058	UDP/RTP   H.264   1280x720   1:1   1280x720
+#
+#
+
+# This is the udp version.
+service snowmix-video-feed-1
+{
+	disable		= no
+	type		= UNLISTED
+	id		= snowmix-video-1-stream
+	socket_type	= dgram
+	protocol	= udp
+	user		= stream
+	wait		= yes
+	instances	= 1
+	server		= /home/stream/Projects/Snowmix-0.4.1/xinetd/xinetd-video-feed
+	server_args	= 9000 udp/rtp mpeg4
+	port		= 9000
+	only_from	= 193.88.237.0/24 192.168.10.0/24 127.0.0.1/32 192.168.1.0/24
+}
+
+service snowmix-video-feed-2
+{
+	disable		= no
+	type		= UNLISTED
+	id		= snowmix-video-2-stream
+	socket_type	= dgram
+	protocol	= udp
+	user		= stream
+	wait		= yes
+	instances	= 1
+	server		= /home/stream/Projects/Snowmix-0.4.1/xinetd/xinetd-video-feed
+	server_args	= 9002 udp/rtp mpeg4
+	port		= 9002
+	only_from	= 193.88.237.0/24 192.168.10.0/24 127.0.0.1/32 192.168.1.0/24
+}
+
+service snowmix-video-feed-3
+{
+	disable		= no
+	type		= UNLISTED
+	id		= snowmix-video-3-stream
+	socket_type	= dgram
+	protocol	= udp
+	user		= stream
+	wait		= yes
+	instances	= 1
+	server		= /home/stream/Projects/Snowmix-0.4.1/xinetd/xinetd-video-feed
+	server_args	= 9004 udp/rtp mpeg4
+	port		= 9004
+	only_from	= 193.88.237.0/24 192.168.10.0/24 127.0.0.1/32 192.168.1.0/24
+}
+
+service snowmix-video-feed-4
+{
+	disable		= no
+	type		= UNLISTED
+	id		= snowmix-video-4-stream
+	socket_type	= dgram
+	protocol	= udp
+	user		= stream
+	wait		= yes
+	instances	= 1
+	server		= /home/stream/Projects/Snowmix-0.4.1/xinetd/xinetd-video-feed
+	server_args	= 9006 udp/rtp mpeg4
+	port		= 9006
+	only_from	= 193.88.237.0/24 192.168.10.0/24 127.0.0.1/32 192.168.1.0/24
+}
+
+service snowmix-video-feed-5
+{
+	disable		= no
+	type		= UNLISTED
+	id		= snowmix-video-5-stream
+	socket_type	= dgram
+	protocol	= udp
+	user		= stream
+	wait		= yes
+	instances	= 1
+	server		= /home/stream/Projects/Snowmix-0.4.1/xinetd/xinetd-video-feed
+	server_args	= 9008 udp/rtp mpeg4
+	port		= 9008
+	only_from	= 193.88.237.0/24 192.168.10.0/24 127.0.0.1/32 192.168.1.0/24
+}
+
+service snowmix-video-feed-6
+{
+	disable		= no
+	type		= UNLISTED
+	id		= snowmix-video-6-stream
+	socket_type	= dgram
+	protocol	= udp
+	user		= stream
+	wait		= yes
+	instances	= 1
+	server		= /home/stream/Projects/Snowmix-0.4.1/xinetd/xinetd-video-feed
+	server_args	= 9010 udp/rtp mpeg4
+	port		= 9010
+	only_from	= 193.88.237.0/24 192.168.10.0/24 127.0.0.1/32 192.168.1.0/24
+}
+
+service snowmix-video-feed-7
+{
+	disable		= no
+	type		= UNLISTED
+	id		= snowmix-video-7-stream
+	socket_type	= dgram
+	protocol	= udp
+	user		= stream
+	wait		= yes
+	instances	= 1
+	server		= /home/stream/Projects/Snowmix-0.4.1/xinetd/xinetd-video-feed
+	server_args	= 9012 udp/rtp mpeg4
+	port		= 9012
+	only_from	= 193.88.237.0/24 192.168.10.0/24 127.0.0.1/32 192.168.1.0/24
+}
+service snowmix-video-feed-8
+{
+	disable		= no
+	type		= UNLISTED
+	id		= snowmix-video-8-stream
+	socket_type	= dgram
+	protocol	= udp
+	user		= stream
+	wait		= yes
+	instances	= 1
+	server		= /home/stream/Projects/Snowmix-0.4.1/xinetd/xinetd-video-feed
+	server_args	= 9014 udp/rtp mpeg4
+	port		= 9014
+	only_from	= 193.88.237.0/24 192.168.10.0/24 127.0.0.1/32 192.168.1.0/24
+}
+service snowmix-video-feed-9
+{
+	disable		= no
+	type		= UNLISTED
+	id		= snowmix-video-9-stream
+	socket_type	= dgram
+	protocol	= udp
+	user		= stream
+	wait		= yes
+	instances	= 1
+	server		= /home/stream/Projects/Snowmix-0.4.1/xinetd/xinetd-video-feed
+	server_args	= 9016 udp/rtp mpeg4
+	port		= 9016
+	only_from	= 193.88.237.0/24 192.168.10.0/24 127.0.0.1/32 192.168.1.0/24
+}
+
+service snowmix-video-feed-21
+{
+	disable		= no
+	type		= UNLISTED
+	id		= snowmix-video-21-stream
+	socket_type	= dgram
+	protocol	= udp
+	user		= stream
+	wait		= yes
+	instances	= 1
+	server		= /home/stream/Projects/Snowmix-0.4.1/xinetd/xinetd-video-feed
+	server_args	= 9020 udp/rtp h264
+	port		= 9020
+	only_from	= 193.88.237.0/24 192.168.10.0/24 127.0.0.1/32 192.168.1.0/24
+}
+
+service snowmix-video-feed-22
+{
+	disable		= no
+	type		= UNLISTED
+	id		= snowmix-video-22-stream
+	socket_type	= dgram
+	protocol	= udp
+	user		= stream
+	wait		= yes
+	instances	= 1
+	server		= /home/stream/Projects/Snowmix-0.4.1/xinetd/xinetd-video-feed
+	server_args	= 9022 udp/rtp h264
+	port		= 9022
+	only_from	= 193.88.237.0/24 192.168.10.0/24 127.0.0.1/32 192.168.1.0/24
+}
+
+service snowmix-video-feed-23
+{
+	disable		= no
+	type		= UNLISTED
+	id		= snowmix-video-23-stream
+	socket_type	= dgram
+	protocol	= udp
+	user		= stream
+	wait		= yes
+	instances	= 1
+	server		= /home/stream/Projects/Snowmix-0.4.1/xinetd/xinetd-video-feed
+	server_args	= 9024 udp/rtp h264
+	port		= 9024
+	only_from	= 193.88.237.0/24 192.168.10.0/24 127.0.0.1/32 192.168.1.0/24
+}
+
+service snowmix-video-feed-24
+{
+	disable		= no
+	type		= UNLISTED
+	id		= snowmix-video-24-stream
+	socket_type	= dgram
+	protocol	= udp
+	user		= stream
+	wait		= yes
+	instances	= 1
+	server		= /home/stream/Projects/Snowmix-0.4.1/xinetd/xinetd-video-feed
+	server_args	= 9026 udp/rtp h264
+	port		= 9026
+	only_from	= 193.88.237.0/24 192.168.10.0/24 127.0.0.1/32 192.168.1.0/24
+}
+
+service snowmix-video-feed-25
+{
+	disable		= no
+	type		= UNLISTED
+	id		= snowmix-video-25-stream
+	socket_type	= dgram
+	protocol	= udp
+	user		= stream
+	wait		= yes
+	instances	= 1
+	server		= /home/stream/Projects/Snowmix-0.4.1/xinetd/xinetd-video-feed
+	server_args	= 9028 udp/rtp h264
+	port		= 9028
+	only_from	= 193.88.237.0/24 192.168.10.0/24 127.0.0.1/32 192.168.1.0/24
+}
+
+service snowmix-video-feed-26
+{
+	disable		= no
+	type		= UNLISTED
+	id		= snowmix-video-26-stream
+	socket_type	= dgram
+	protocol	= udp
+	user		= stream
+	wait		= yes
+	instances	= 1
+	server		= /home/stream/Projects/Snowmix-0.4.1/xinetd/xinetd-video-feed
+	server_args	= 9030 udp/rtp h264
+	port		= 9030
+	only_from	= 193.88.237.0/24 192.168.10.0/24 127.0.0.1/32 192.168.1.0/24
+}
+
+service snowmix-video-feed-27
+{
+	disable		= no
+	type		= UNLISTED
+	id		= snowmix-video-27-stream
+	socket_type	= dgram
+	protocol	= udp
+	user		= stream
+	wait		= yes
+	instances	= 1
+	server		= /home/stream/Projects/Snowmix-0.4.1/xinetd/xinetd-video-feed
+	server_args	= 9032 udp/rtp h264
+	port		= 9032
+	only_from	= 193.88.237.0/24 192.168.10.0/24 127.0.0.1/32 192.168.1.0/24
+}
+service snowmix-video-feed-28
+{
+	disable		= no
+	type		= UNLISTED
+	id		= snowmix-video-28-stream
+	socket_type	= dgram
+	protocol	= udp
+	user		= stream
+	wait		= yes
+	instances	= 1
+	server		= /home/stream/Projects/Snowmix-0.4.1/xinetd/xinetd-video-feed
+	server_args	= 9034 udp/rtp h264
+	port		= 9034
+	only_from	= 193.88.237.0/24 192.168.10.0/24 127.0.0.1/32 192.168.1.0/24
+}
+service snowmix-video-feed-29
+{
+	disable		= no
+	type		= UNLISTED
+	id		= snowmix-video-29-stream
+	socket_type	= dgram
+	protocol	= udp
+	user		= stream
+	wait		= yes
+	instances	= 1
+	server		= /home/stream/Projects/Snowmix-0.4.1/xinetd/xinetd-video-feed
+	server_args	= 9036 udp/rtp h264
+	port		= 9036
+	only_from	= 193.88.237.0/24 192.168.10.0/24 127.0.0.1/32 192.168.1.0/24
+}
+
+service snowmix-video-feed-40
+{
+	disable		= no
+	type		= UNLISTED
+	id		= snowmix-video-40-stream
+	socket_type	= dgram
+	protocol	= udp
+	user		= stream
+	wait		= yes
+	instances	= 1
+	server		= /home/stream/Projects/Snowmix-0.4.1/xinetd/xinetd-video-feed
+	server_args	= 9040 udp/rtp h264
+	port		= 9040
+	only_from	= 193.88.237.0/24 192.168.10.0/24 127.0.0.1/32 192.168.1.0/24
+}
+service snowmix-video-feed-42
+{
+	disable		= no
+	type		= UNLISTED
+	id		= snowmix-video-42-stream
+	socket_type	= dgram
+	protocol	= udp
+	user		= stream
+	wait		= yes
+	instances	= 1
+	server		= /home/stream/Projects/Snowmix-0.4.1/xinetd/xinetd-video-feed
+	server_args	= 9042 udp/rtp h264
+	port		= 9042
+	only_from	= 193.88.237.0/24 192.168.10.0/24 127.0.0.1/32 192.168.1.0/24
+}
+service snowmix-video-feed-44
+{
+	disable		= no
+	type		= UNLISTED
+	id		= snowmix-video-44-stream
+	socket_type	= dgram
+	protocol	= udp
+	user		= stream
+	wait		= yes
+	instances	= 1
+	server		= /home/stream/Projects/Snowmix-0.4.1/xinetd/xinetd-video-feed
+	server_args	= 9044 udp/rtp h264
+	port		= 9044
+	only_from	= 193.88.237.0/24 192.168.10.0/24 127.0.0.1/32 192.168.1.0/24
+}
+service snowmix-video-feed-46
+{
+	disable		= no
+	type		= UNLISTED
+	id		= snowmix-video-46-stream
+	socket_type	= dgram
+	protocol	= udp
+	user		= stream
+	wait		= yes
+	instances	= 1
+	server		= /home/stream/Projects/Snowmix-0.4.1/xinetd/xinetd-video-feed
+	server_args	= 9046 udp/rtp h264
+	port		= 9046
+	only_from	= 193.88.237.0/24 192.168.10.0/24 127.0.0.1/32 192.168.1.0/24
+}
+service snowmix-video-feed-48
+{
+	disable		= no
+	type		= UNLISTED
+	id		= snowmix-video-48-stream
+	socket_type	= dgram
+	protocol	= udp
+	user		= stream
+	wait		= yes
+	instances	= 1
+	server		= /home/stream/Projects/Snowmix-0.4.1/xinetd/xinetd-video-feed
+	server_args	= 9048 udp/rtp h264
+	port		= 9048
+	only_from	= 193.88.237.0/24 192.168.10.0/24 127.0.0.1/32 192.168.1.0/24
+}
+service snowmix-video-feed-50
+{
+	disable		= no
+	type		= UNLISTED
+	id		= snowmix-video-50-stream
+	socket_type	= dgram
+	protocol	= udp
+	user		= stream
+	wait		= yes
+	instances	= 1
+	server		= /home/stream/Projects/Snowmix-0.4.1/xinetd/xinetd-video-feed
+	server_args	= 9050 udp/rtp h264
+	port		= 9050
+	only_from	= 193.88.237.0/24 192.168.10.0/24 127.0.0.1/32 192.168.1.0/24
+}
+service snowmix-video-feed-52
+{
+	disable		= no
+	type		= UNLISTED
+	id		= snowmix-video-52-stream
+	socket_type	= dgram
+	protocol	= udp
+	user		= stream
+	wait		= yes
+	instances	= 1
+	server		= /home/stream/Projects/Snowmix-0.4.1/xinetd/xinetd-video-feed
+	server_args	= 9052 udp/rtp h264
+	port		= 9052
+	only_from	= 193.88.237.0/24 192.168.10.0/24 127.0.0.1/32 192.168.1.0/24
+}
+service snowmix-video-feed-54
+{
+	disable		= no
+	type		= UNLISTED
+	id		= snowmix-video-54-stream
+	socket_type	= dgram
+	protocol	= udp
+	user		= stream
+	wait		= yes
+	instances	= 1
+	server		= /home/stream/Projects/Snowmix-0.4.1/xinetd/xinetd-video-feed
+	server_args	= 9054 udp/rtp h264
+	port		= 9054
+	only_from	= 193.88.237.0/24 192.168.10.0/24 127.0.0.1/32 192.168.1.0/24
+}
+service snowmix-video-feed-56
+{
+	disable		= no
+	type		= UNLISTED
+	id		= snowmix-video-56-stream
+	socket_type	= dgram
+	protocol	= udp
+	user		= stream
+	wait		= yes
+	instances	= 1
+	server		= /home/stream/Projects/Snowmix-0.4.1/xinetd/xinetd-video-feed
+	server_args	= 9056 udp/rtp h264
+	port		= 9056
+	only_from	= 193.88.237.0/24 192.168.10.0/24 127.0.0.1/32 192.168.1.0/24
+}
+service snowmix-video-feed-58
+{
+	disable		= no
+	type		= UNLISTED
+	id		= snowmix-video-58-stream
+	socket_type	= dgram
+	protocol	= udp
+	user		= stream
+	wait		= yes
+	instances	= 1
+	server		= /home/stream/Projects/Snowmix-0.4.1/xinetd/xinetd-video-feed
+	server_args	= 9058 udp/rtp h264
+	port		= 9058
+	only_from	= 193.88.237.0/24 192.168.10.0/24 127.0.0.1/32 192.168.1.0/24
+}

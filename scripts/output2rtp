@@ -1,0 +1,87 @@
+#!/bin/bash
+# Deliver mixer1 output to rtp.
+
+# IMPORTANT >>>>>You need to get port, ip and feed_id right<<<<<
+if [ "X$SNOWMIX" = X ] ; then
+  echo "You need to set the SNOWMIX environment variable to the base of the Snowmix installed directory"
+  exit 1
+fi
+if [ "X$SNOWMIX_PORT" = X ] ; then export SNOWMIX_PORT=9999 ;fi
+if [ "X$SNOWMIX_IP" = X ] ; then export SNOWMIX_IP=127.0.0.1 ;fi
+
+# Check for the snowmix and gstreamer settings
+if [ ! -f $SNOWMIX/scripts/gstreamer-settings -o ! -f $SNOWMIX/scripts/snowmix-settings ] ; then
+  echo "Can not find the scripts/gstreamer-settings or the scripts/snowmix-settings in the directory set by the SNOWMIX environment variable"
+  exit 1
+fi
+
+# Set video feed 
+#feed_id=$1
+#audio_feed_id=$1
+
+
+# Load the Snowmix and GStreamer settings
+. $SNOWMIX/scripts/gstreamer-settings
+. $SNOWMIX/scripts/snowmix-settings
+# This will set
+# a) feed_rate
+# b) feed_channels
+# c) feed_control_pipe
+# d) feed_width
+# e) feed_height
+# f) ctrsocket
+# g) system_width
+# h) system_height
+# i) ratefraction
+# j) snowmix
+# k) channels
+# l) rate
+
+if [ X$ctrsocket = X -o X$system_width = X -o X$system_height = X ] ; then
+  echo Failed to get control pipe or width or height from running snowmix
+  exit 1
+fi
+
+VIDEOFORMAT=$VIDEOBGRA', width=(int)'$system_width', height=(int)'$system_height', framerate=(fraction)'$ratefraction
+if [ X$width != X -a X$height != X ] ; then
+  OUTPUTFORMAT=$VIDEOBGRA', width='$width', height='$height', framerate=(fraction)'$ratefraction
+else
+  OUTPUTFORMAT=$VIDEOFORMAT
+fi
+
+while true ; do
+  $gstlaunch -v shmsrc socket-path=$ctrsocket do-timestamp=true is-live=true ! \
+	queue leaky=2 max-size-buffers=2	!\
+	$VIDEOFORMAT				! \
+	videoscale				! \
+	$VIDEOCONVERT				! \
+	$OUTPUTFORMAT				! \
+	queue					! \
+    	$VIDEOCONVERT				! \
+    	x264enc bitrate=2000 tune=zerolatency speed-preset=5 ! \
+	'video/x-h264, profile=main'		! \
+	h264parse				! \
+	rtph264pay				! \
+	queue					! \
+	udpsink clients=127.0.0.1:5000 sync=false
+  sleep 2
+done
+exit 0
+
+#The following pipeline can be used to watch rtp stream
+gst-launch-0.10 -v udpsrc port=5000 caps='application/x-rtp, media=(string)video, clock-rate=(int)90000, encoding-name=(string)H264, payload=(int)96' ! decodebin2 ! autovideosink
+
+gst-launch-1.0 -v udpsrc port=5000 caps='application/x-rtp, media=(string)video, clock-rate=(int)90000, encoding-name=(string)H264, payload=(int)96' ! decodebin ! autovideosink
+
+
+
+$gstlaunch -v          \
+    $SRC                  ! \
+    $MIXERFORMAT          ! \
+    $VIDEOCONVERT         ! \
+    queue                 ! \
+    x264enc $X264SETTINGS ! \
+    h264parse             ! \
+    rtph264pay            ! \
+    queue                 ! \
+    udpsink clients=192.168.254.150:4012 sync=false

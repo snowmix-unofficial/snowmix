@@ -1,0 +1,77 @@
+# Copyright by Peter Maersk-Moller 2012 - All rights reserved
+require version 0.4.0
+
+command create DigiMeter1
+  text place 21 21 5 755 390 1.0 1.0 1.0 nw
+  text place 22 22 5 865 390 1.0 1.0 1.0 nw
+  text place 23 23 5 975 390 1.0 1.0 1.0 nw
+  text place 24 24 5 755 455 1.0 1.0 1.0 nw
+  text place 25 24 5 865 455 1.0 1.0 1.0 nw
+  text place 26 24 5 975 455 1.0 1.0 1.0 nw
+  text align 21 center top
+  text align 22 center top
+  text align 23 center top
+  text align 24 center top
+  text align 25 center top
+  text align 26 center top
+  #text backgr 21 5 5 0 0 1 0 0 0.3
+  #text backgr 22 5 5 0 0 1 0 0 0.3
+  #text backgr 23 5 5 0 0 1 0 0 0.3
+  #text backgr 24 5 5 0 0 1 0 0 0.3
+  #text backgr 25 5 5 0 0 1 0 0 0.3
+  #text backgr 26 5 5 0 0 1 0 0 0.3
+  #text backgr 27 5 5 0 0 1 0 0 0.3
+  image place 30 20 730 430 center middle
+  image place 31 20 755 430 center middle
+  image place 32 31 772 430 center middle
+  image place 33 20 789 430 center middle
+  image place 34 20 835 430 center middle
+  image place 35 20 860 430 center middle
+  image place 36 31 877 430 center middle
+  image place 37 20 894 430 center middle
+  image place 38 20 940 430 center middle
+  image place 39 20 965 430 center middle
+  image place 40 31 982 430 center middle
+  image place 41 20 999 430 center middle
+  image scale 30 0.25 0.25
+  image scale 31 0.25 0.25
+  image scale 32 0.25 0.25
+  image scale 33 0.25 0.25
+  image scale 34 0.25 0.25
+  image scale 35 0.25 0.25
+  image scale 36 0.25 0.25
+  image scale 37 0.25 0.25
+  image scale 38 0.25 0.25
+  image scale 39 0.25 0.25
+  image scale 40 0.25 0.25
+  image scale 41 0.25 0.25
+  tcl exec DigiMeterSet.tcl
+command end
+command create DigiMeterSet.tcl
+  set digimeter(1) 30
+  set digimeter(2) 34
+  set digimeter(3) 38
+  set digi(0) 20
+  set digi(1) 21
+  set digi(2) 22
+  set digi(3) 23
+  set digi(4) 24
+  set digi(5) 25
+  set digi(6) 26
+  set digi(7) 27
+  set digi(8) 28
+  set digi(9) 29
+  proc SetDigiMeter { meter value } {
+    global digimeter digi
+    set s ""
+    set val1 [expr int($value/100)]
+    set value [expr $value - 100 * $val1]
+    set val2 [expr int($value/10)]
+    set val3 [expr $value - 10 * $val2]
+    append s "image image $digimeter($meter) $digi($val1)\n"
+    append s "image image [expr $digimeter($meter) + 1] $digi($val2)\n"
+    append s "image image [expr $digimeter($meter) + 3] $digi($val3)\n"
+    return "\n$s\n"
+  }
+command end
+DigiMeter1

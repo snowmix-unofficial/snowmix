@@ -1,0 +1,143 @@
+#!/bin/bash
+
+# IMPORTANT >>>>>You need to get port, ip and feed_id right<<<<<
+if [ "X$SNOWMIX" = X ] ; then
+  echo "You need to set the SNOWMIX environment variable to the base of the Snowmix installed directory"
+  exit 1
+fi
+if [ "X$SNOWMIX_PORT" = X ] ; then export SNOWMIX_PORT=9999 ;fi
+if [ "X$SNOWMIX_IP" = X ] ; then export SNOWMIX_IP=127.0.0.1 ;fi
+
+# Check for the snowmix and gstreamer settings
+if [ ! -f $SNOWMIX/scripts/gstreamer-settings -o ! -f $SNOWMIX/scripts/snowmix-settings ] ; then
+  echo "Can not find the scripts/gstreamer-settings or the scripts/snowmix-settings in the directory set by the SNOWMIX environment variable"
+  exit 1
+fi
+
+if [ $# -lt 1 ] ; then
+  echo "Missing argument\nUsage $0 <camera id> [<audio feed id>]"
+  exit 1
+fi
+
+# Set video feed and audio feed id
+# Video feed is set to camera id
+feed_id=$1
+if [ $# -lt 2 ] ; then
+  audio_feed_id=""
+else
+  audio_feed_id=$2
+fi
+
+
+# Load the Snowmix and GStreamer settings
+. $SNOWMIX/scripts/gstreamer-settings
+. $SNOWMIX/scripts/snowmix-settings
+# This will set
+# a) feed_rate		- audio. Rate for audio feed
+# b) feed_channels	- audio. Channels for audio feed
+# c) feed_control_pipe	- video. Video feed ctr socket
+# d) feed_width		- video. Video feed width
+# e) feed_height	- video. Video feed height
+# f) ctrsocket		- video. Output ctr socket
+# g) system_width	- video. System width
+# h) system_height	- video. System height
+# i) ratefraction	- video. System frame rate
+# j) snowmix		- empty if snowmix is not running
+# k) channels		- audio. Channels for audio_sink_id
+# l) rate		- audio. Rate for audio_sink_id
+
+if [ X$feed_control_pipe = X -o X$feed_width = X -o X$feed_height = X ] ; then
+  echo Failed to get control pipe or width or height from running snowmix
+  exit 1
+fi
+
+
+case $1 in
+
+	1) rtspport=552 ; profile=profile4 ;;
+	2) rtspport=553 ; profile=profile4 ;;
+	3) rtspport=554 ; profile=profile4 ;;
+	*) echo "Illegal camera id. Use 1, 2 or 3" ; exit 1 ;;
+esac
+
+# Protocols. Only used if rtspsrc is used
+# 1 = UDP
+# 2 = UDP multicast
+# 4 = TCP
+# 7 = UDP + UDP Multicast + TCP
+protocol=4
+
+# Buffer latency. Only used for rtspsrc
+latency=1000
+# Enable debugging for rtspsrc. true or false
+debug=false
+
+# URL for video/audio stream
+location="rtspt://$SOME_SERVER:$rtspport/$profile/media.smp"
+
+SRC="rtspsrc location=$location protocols=$protocol latency=$latency ! decodebin name=decoder "
+SRC="uridecodebin uri=$location name=decoder"
+
+# Settings for shmsink
+SHMSIZE='shm-size='`echo "$feed_width * $feed_height * 4 * 20"|bc`
+SHMOPTION="wait-for-connection=0 sync=true"
+SHMSINK1="shmsink socket-path=$feed_control_pipe $SHMSIZE $SHMOPTION"
+src_type=`echo $SRC | cut -f1 -d' '`
+VIDEOFORMAT='video/x-raw,format=BGRA,pixel-aspect-ratio=1/1,interlace-mode=progressive,width='$feed_width',height='$feed_height
+AUDIOFORMAT='audio/x-raw,format=S16LE,rate='$feed_rate',channels='$feed_channels
+
+get_stream_from_camera()
+{
+  while true ; do
+	if [ -e $feed_control_pipe ] ; then rm $feed_control_pipe ; fi
+
+	if [ X$audio_feed_id != X ] ; then
+	  echo "Audio and Video. src = $src_type"
+	  echo "Video feed id $feed_id. Geometry "$feed_width"x"$feed_height 
+	  echo "Audio feed id $audio_feed_id. Rate $feed_rate channels $feed_channels"
+	  (
+	    echo 'audio feed ctr isaudio '$audio_feed_id
+ 	    /usr/local/bin/gst-launch-1.0  \
+		$SRC				!\
+		queue ! videoscale ! videoconvert !\
+		$VIDEOFORMAT			!\
+		queue ! $SHMSINK1 decoder.	!\
+		queue ! audioconvert		!\
+		audioresample ! $AUDIOFORMAT	!\
+		identity silent=false		!\
+		fdsink fd=3 sync=true 3>&1 1>&2 
+	  ) | nc $SNOWMIX_IP $SNOWMIX_PORT
+	else
+	  echo "Video only. src = $src_type"
+ 	  /usr/local/bin/gst-launch-1.0 -q \
+		$SRC		!\
+		queue ! videoscale ! videoconvert !\
+		$VIDEOFORMAT	!\
+		queue ! $SHMSINK1
+	fi
+	sleep 2
+  done
+}
+get_stream_from_camera&
+pid=$!
+sleep 5
+LOGFILE=$0-$1.log
+while true ; do
+  echo "PID $pid"
+  sleep 5
+  state=`echo 'tcl eval snowmix message [snowmix info feed status '$feed_id']' | nc -q 1 $SNOWMIX_IP $SNOWMIX_PORT | tail -1 | awk '{print $3}'`
+  if [ X$state = XRUNNING ] ; then
+    date=`date`
+    echo "pid = $pid"
+    echo "$0 $1 : Running pid $pid $date" >>$LOGFILE
+  else
+    date=`date`
+    echo "$0 $1 : STATE $state $date" >>$LOGFILE
+    echo "$0 $1 : Killing $pid $date" >>$LOGFILE
+    kill -9 $pid
+    get_stream_from_camera&
+    pid=$!
+    echo "$0 $1 : New pid $pid $date" >>$LOGFILE
+    sleep 5
+  fi
+done

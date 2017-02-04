@@ -1,0 +1,214 @@
+# Basic System Settings
+# Copyright by Peter Maersk-Moller 2014 - All rights reserved
+# verbose
+# require version 0.4.4
+require version 0.5.1
+
+command create libsystem.tcl
+
+  #
+  proc sm { args } { snowmix message $args }
+  proc smsi { args } { snowmix message [eval snowmix info $args] }
+  proc smsia { args } { snowmix message [eval snowmix info audio $args] }
+  proc smsic { args } { snowmix message [eval snowmix info command $args] }
+  proc smsif { args } { snowmix message [eval snowmix info feed $args] }
+  proc smsii { args } { snowmix message [eval snowmix info image $args] }
+  proc smsit { args } { snowmix message [eval snowmix info text $args] }
+  proc smsis { args } { snowmix message [eval snowmix info system $args] }
+
+  # This function is used to get a specific value
+  # Example : GetFromKey "system overlay" overlay_pre
+  proc GetFromKey { query key } {
+    set format [snowmix info $query format]
+    set query_list [snowmix info $query]
+    return [lindex $query_list [lsearch -exact $format $key]]
+  }
+
+  # This function is used to get a specific value for a specific id
+  # Example : GetFromKeyId "image load" geometry $image_id
+  proc GetFromKeyId { query key id} {
+    set format [snowmix info $query format]
+    set query_list [snowmix info $query $id]
+    return [lindex [lindex $query_list 0] [lsearch -exact $format $key]]
+  }
+
+  # This function will be called with order=pre at every frame before frames
+  # are mixed into the main frame. This function will be called with order=post
+  # at every frame to finish mixing the main mixer frame
+  proc Update { order } {
+    global system
+    incr system(frame_no,$order)
+    foreach command $system(update_list,$order) {
+      $command
+    }
+    return
+  }
+
+  # This command is used by other libraries to request to be called by PreUpdate
+  proc Add2Update { order command } {
+    global system
+    if { [info exist system(update_list,$order)] } {
+      lappend system(update_list,$order) $command
+      snowmix message "system.slib : Adding $command to $order update list"
+    } else {
+      snowmix message "Add2Update called with illegal order. Must be either pre or post"
+    }
+    return
+  }
+
+
+  # This function can be used to find next available item. See type for item in next line
+  # type : shape, placedshape, string, placedtext
+  proc GetNextAvail { type } {
+    global system
+    if {[string match shape $type]} {
+      set id [snowmix info shape info nextavail $system(start_shape)]
+    } elseif {[string match placedshape $type]} {
+      set id [snowmix info shape place nextavail $system(start_placedshape)]
+    } elseif {[string match placedtext $type]} {
+      set id [snowmix info text place nextavail $system(start_placedtext)]
+    } elseif {[string match string $type]} {
+      set id [snowmix info text string nextavail $system(start_string)]
+    } else {
+      set id ""
+    }
+    return [lindex $id 0]
+  }
+
+  # This function can be used to find next available item. The Item will be marked
+  # or reserved. See type for item in next line
+  # type : shape, placedshape, string, font, placedtext
+  proc ReserveNextAvail { type args } {
+    global system
+    if {[string match shape $type]} {
+      set id [snowmix info shape info nextavail $system(start_shape)]
+      if {[string is integer -strict $id] && $id > -1} {
+        snowmix parse "shape add $id Reserved"
+        set id [lindex $id 0]
+      } else {
+        set id -1
+      }
+    } elseif {[string match placedshape $type] && [llength $args] > 0} {
+      set shape_id [lindex $args 0]
+      if {![string is integer -strict $shape_id] || $shape_id < 0} { return -1 }
+      if {[llength [snowmix info shape info $shape_id]] < 1} { return -1 }
+      set id [snowmix info shape place nextavail $system(start_placedshape)]
+      if {![string is integer -strict $id] || $id < 0} { return -1 }
+      snowmix parse "shape place $id $shape_id 0 0 1 1"
+      set id [lindex $id 0]
+    } elseif {[string match placedtext $type] && [llength $args] > 1} {
+      set string_id [lindex $args 0]
+      set font_id [lindex $args 1]
+      set id [snowmix info text place nextavail $system(start_placedtext)]
+      if {![string is integer -strict $string_id] || $string_id < 0} { return -1 }
+      if {![string is integer -strict $font_id] || $font_id < 0} { return -1 }
+      if {![string is integer -strict $id] || $id < 0} { return -1 }
+      if {[llength [snowmix info text string $string_id]] < 1} { return -1 }
+      if {[llength [snowmix info text font $font_id]] < 1} { return -1 }
+      set id [lindex $id 0]
+      snowmix parse "text place $id $string_id $font_id 0 0"
+    } elseif {[string match string $type]} {
+      set id [snowmix info text string nextavail $system(start_string)]
+      if {[string is integer -strict $id] && $id > -1} {
+        if {[llength $args] > 0} {
+          set text [regsub -all "\{" $args ""]
+          set text [regsub -all "\}" $text ""]
+        } else { set text Reserved }
+        snowmix parse "text string $id $text"
+        set id [lindex $id 0]
+      } else {
+        set id -1
+      }
+    } elseif {[string match font $type]} {
+      set id [snowmix info text font nextavail $system(start_font)]
+      if {[string is integer -strict $id] && $id > -1} {
+        snowmix parse "text font $id Reserved"
+        set id [lindex $id 0]
+      } else {
+        set id -1
+      }
+    } else {
+      set id -1
+    }
+    return $id
+  }
+
+  proc SystemInit {} {
+    global system feed
+
+    snowmix message "system.slib : Initializing library"
+
+    # Max number of feeds counting from 0
+    #set feed(maxfeeds) [GetFromKey "system maxplaces" video_feeds]
+    #set feed(maxfeeds) $system(maxplaces,video_feeds)
+
+    # set maxplaces_format [snowmix info system maxplaces format]
+    # set maxplaces [snowmix info system maxplaces]
+    # set feed(maxfeeds) [lindex $maxplaces [lsearch -exact $maxplaces_format video_feeds]]
+
+    set system(start_shape) 10
+    set system(start_placedshape) 10
+    set system(start_string) 36
+    set system(start_font) 32
+    set system(start_placedtext) 20
+
+
+    # Setting pre_update_list, post_update_list to empty and frame counters to 0
+    foreach order { pre post } {
+      set system(update_list,$order) ""
+      set system(frame_no,$order) 0
+    }
+
+    # Getting maxplaces
+    set system(maxplaces,format) [snowmix info system maxplaces format]
+    set system(maxplaces) [snowmix info system maxplaces]
+    set no 0
+    foreach key $system(maxplaces,format) {
+      set system(maxplaces,$key) [lindex $system(maxplaces) $no]
+      incr no
+    }
+    #set feed(maxfeeds) $system(maxplaces,video_feeds)
+
+    # Get geometry (width and height) as well as frame rate
+    set system(info,format) [snowmix info system info format]
+    set system(info) [snowmix info system info]
+    set no 0
+    foreach key $system(info,format) {
+      set system(info,$key) [lindex $system(info) $no]
+      incr no
+    }
+    set system(width) [lindex $system(info,geometry) 0]
+    set system(height) [lindex $system(info,geometry) 1]
+    set system(frame_rate) $system(info,frame_rate)
+    set system(framerate) $system(info,frame_rate)
+    set system(version) $system(info,version)
+
+    # Add the proc Update pre to the overlay_pre command
+    set overlay_pre [GetFromKey "system overlay" overlay_pre]
+    if {[string length $overlay_pre] > 0} {
+      snowmix parse command pop $overlay_pre
+      snowmix parse command push $overlay_pre tcl eval Update pre
+      snowmix parse command push $overlay_pre loop
+    } else {
+      snowmix message "system.slib : WARNING. No overlay_pre command defined. Clock and others will not run."
+    }
+
+    # Add the proc Update post to the overlay_finish command
+    set overlay_finish [GetFromKey "system overlay" overlay_finish]
+    if {[string length $overlay_finish] > 0} {
+      snowmix parse command addatline $overlay_finish 1 tcl eval Update post
+    } else {
+      snowmix message "system.slib : WARNING. No overlay_finish command defined. Scenes and others will not be overlayed."
+    }
+    snowmix message "system.slib : Snowmix version $system(version)."
+    snowmix message "system.slib : Detected system geometry is $system(width)x$system(height)."
+    snowmix message "system.slib : Detected frame rate $system(frame_rate)fps."
+    snowmix message "system.slib : Library loaded."
+    return
+  }
+ 
+
+  SystemInit
+command end
+
+tcl exec libsystem.tcl

@@ -1,0 +1,69 @@
+#!/bin/sh
+
+pid_dir=/var/run/stream
+if [ ! -d $pid_dir -o ! -w $pid_dir ] ; then
+  echo 'Missing directory or not writable : '$pid_dir
+  exit
+fi
+basename=`basename $0`
+pid_file=$pid_dir/$basename.$$
+ppid=`ps --pid $$ fj | tail -n +2 | awk '{printf("%s", $3)}'`
+echo $$ >$pid_file
+echo $date >>$pid_file
+echo "command : $0 $*" >>$pid_file
+echo "ppid    : $ppid" >>$pid_file
+echo "kill : kill -- -$ppid" >>$pid_file
+
+LS_USER=raketvenner1
+LS_PASS=Togavinstue2152
+LS_CHANNEL=csstesta
+LS_STREAMID=test-`date +%s`
+LS_BITRATE=446
+LS_AUTOLIVE=true
+LS_AUTOVOD=true
+LS_AUTOPILOT=false
+LS_AUTORECORD=false
+LS_TITLE=Test%20Stream%201
+# Space chars in title are written as %20
+
+HOST="rtmp://publish.livestream.com"
+
+APP="mogulus/$LS_CHANNEL/username=$LS_USER/password=$LS_PASS/isAutoLive=$LS_AUTOLIVE/autoVOD=$LS_AUTOVOD/autoAutopilot=$LS_AUTOPILOT/autoRecord=$LS_AUTORECORD/iphone=true/bitRate=$LS_BITRATE/title=$LS_TITLE/aspectWidth=16/aspectHeight=9/macID=00-1f-3b-bb-df-bb"
+URL="mogulus/$LS_CHANNEL/$LS_CHANNEL-$LS_STREAMID"
+ 
+gst-launch-0.10 -v \
+   tcpclientsrc host=127.0.1 port=5010 !\
+	decodebin2 name=decoder				!\
+	audioconvert					!\
+	'audio/x-raw-int, rate=(int)44100, channels=(int)2' ! \
+	tee name=audio					!\
+	queue ! faac bitrate=96000			!\
+	'audio/mpeg,mpegversion=4,stream-format=raw'	!\
+        flvmux streamable=true name=flvmux		 \
+	decoder.					!\
+	videoscale					!\
+	ffmpegcolorspace				!\
+	'video/x-raw-yuv, framerate=(fraction)25/1, width=(int)512, height=(int)288' ! \
+	tee name=video					!\
+	queue						!\
+	videoscale					!\
+	ffmpegcolorspace				!\
+	x264enc pass=cbr threads=0 bitrate=446 tune=zerolatency ! \
+        flvmux.	flvmux.					!\
+	queue						!\
+	rtmpsink sync=false location="$HOST/${URL}_540 app=$APP" \
+	audio.						!\
+	queue						!\
+	faac bitrate=64000				!\
+	'audio/mpeg,mpegversion=4,stream-format=raw'	!\
+        flvmux streamable=true name=mobile		 \
+	video.						!\
+	queue						!\
+	videoscale					!\
+	ffmpegcolorspace				!\
+	x264enc pass=cbr threads=0 bitrate=160 tune=zerolatency ! \
+        mobile. mobile.					!\
+	queue						!\
+	rtmpsink sync=false location="$HOST/${URL}_190 app=$APP"
+
+

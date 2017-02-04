@@ -1,0 +1,37 @@
+#!/bin/bash
+ip=192.168.10.2
+GSTREAMER_SETTINGS=$SM/scripts/gstreamer-settings
+SNOWMIX_SETTINGS=$SM/scripts/snowmix-settings
+. $GSTREAMER_SETTINGS
+AUDIOFORMAT='audio/x-raw, format=(string)S16LE, endianness=(int)1234, signed=(boolean)true, width=(int)16, depth=(int)16, rate=(int)44100, channels=(int)2'
+
+host=0.0.0.0
+port=5010
+
+GST_DEBUG="--gst-debug=tcpserversink:5"
+GST_DEBUG=""
+ENCAUDIOFORMAT='audio/mpeg,mpegversion=4, stream-format=raw'
+#ENCAUDIOFORMAT='audio/mpeg,mpegversion=1'
+#echo $AUDIOFORMAT
+audio_encoder="lamemp3enc bitrate=128"
+audio_encoder="$aac_encoder bitrate=128000"
+$gstlaunch -v $GST_DEBUG			\
+	videotestsrc is-live=true		!\
+	queue leaky=2				!\
+	x264enc tune=zerolatency		!\
+	h264parse				!\
+	queue					!\
+	tsmuxer. audiotestsrc is-live=true	!\
+	queue leaky=2				!\
+	$AUDIOFORMAT				!\
+	$audio_encoder				!\
+	aacparse				!\
+	$ENCAUDIOFORMAT				!\
+	queue					!\
+	$tsmuxer name=tsmuxer			!\
+	$tsparser				!\
+	queue 					!\
+	tcpserversink host=$host port=$port sync-method=2
+
+#tcpserversink host=$host port=$port sync-method=2 recover-policy=keyframe timeout=1000000000
+#rtpmp2tpay ! udpsink host=127.0.0.1 port=8004 sync=true

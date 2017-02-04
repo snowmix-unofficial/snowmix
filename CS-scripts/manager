@@ -1,0 +1,209 @@
+#!/bin/sh
+
+PROG=$0
+DIR=/var/run/stream
+if [ ! -d $DIR ] ; then
+  echo No $DIR
+  echo Exit
+  exit 1
+fi
+
+available_processes()
+{
+  node=`uname -n`
+  if [ X$node = Xstream01 ] ; then
+    #     name : workingdir : command
+    echo "inputfeed1:$SM/scripts:nohup bash input2feed 1::"
+    echo "inputfeed2:$SM/scripts:nohup bash input2feed 2::"
+    echo "inputfeed3:$SM/scripts:nohup bash input2feed 3::"
+    echo "inputfeed4:$SM/scripts:nohup bash input2feed 4::"
+    echo "make_stream:$SM/CS-scripts/stream01:nohup bash make_stream3 you::"
+    echo "send_stream_you:$SM/CS-scripts/stream01:nohup bash send_stream3 you::"
+    echo "send_stream_ustream:$SM/CS-scripts/stream01:nohup bash send_stream3 ustream::"
+    echo "send_stream_livestream:$SM/CS-scripts/stream01:nohup ./livestreamtest2::"
+    echo "snowmix-postmix:$SM/src:nohup ./snowmix -l2 ../ini/postmix-basis:echo quit |nc 127.0.0.1 9999:"
+    return
+  fi
+  if [ X$node = Xvostok01 ] ; then
+    #     name : workingdir : command
+    echo "inputfeed1:$SM/scripts:nohup bash input2feed 1::"
+    echo "inputfeed2:$SM/scripts:nohup bash input2feed 2::"
+    echo "inputfeed3:$SM/scripts:nohup bash input2feed 3::"
+    echo "inputfeed4:$SM/scripts:nohup bash input2feed 4::"
+    echo "make_stream:$SM/CS-scripts/vostok01:nohup bash make_stream5::"
+    echo "snowmix-premix:$SM/src:nohup ./snowmix -l2 ../ini/premix-basis:echo quit |nc 127.0.0.1 9999:"
+    return
+  fi
+}
+
+start_process()
+{
+  while true ; do
+    clear
+    echo "\tStart a process\n"
+    names=`available_processes | cut -f1 -d:`
+    i=1
+    for name in $names ; do
+      echo "\t$i) $name"
+      i=`expr $i + 1`
+    done
+    echo "\n\tSpecify number to start or press return to continue \c"
+    read reply
+    if [ X$reply = X ] ; then
+      return
+    fi
+    line=`available_processes | tail -n +$reply | head -1`
+    name=`echo $line |cut -f1 -d:`
+    wd=`echo $line |cut -f2 -d:`
+    command=`echo $line |cut -f3 -d:`
+    echo "\tName      : $name"
+    echo "\tDirectory : $wd"
+    echo "\tcommand   : $command >nohup.$name"
+    echo "\n\tPress y to start or return to cancel (y/ret) : \c"
+    read reply
+    if [ X$reply = Xy -o X$reply = Y ] ; then
+      dir=`pwd` ; cd $wd
+
+      (
+        pwd
+        echo command $command
+        $command >nohup.$name </dev/null &
+        #disown
+      )
+	# </dev/null >/dev/null 2>/dev/null &
+      cd $dir
+      echo "\n\tStarted $command.\n\tPress return to exit and restart manager\c"
+      read reply
+      exit 0
+    fi
+  done
+}
+
+clean_dir()
+{
+  pids=`get_pids`
+  for pid in $pids ; do
+    #echo Checking $pid
+    running=`ps -p $pid -o comm=`
+    if [ X$running = X ] ; then
+      rm $DIR/*.$pid
+    fi
+  done
+}
+
+get_ppid()
+{
+  ps --pid $1 fj | tail -n +2 | awk '{printf("%s", $3)}'
+}
+
+get_pids()
+{
+  files=`get_files`
+  if [ "X$files" != X ] ; then
+    pids=`head -1 -q $DIR/*`
+    echo $pids
+  fi
+}
+
+get_files()
+{ files=`ls $DIR`
+  echo $files
+}
+
+kill_process()
+{
+  clear
+  pids=`get_pids`
+  if [ "X$pids" = X ] ; then
+    echo "No processes running. Press return to continue \c"
+    read reply
+    return
+  fi
+  echo "\tTerminating a process\n"
+  echo "\tProcesses : $pids\n"
+  i=0;
+  for pid in $pids ; do
+    i=`expr $i + 1`
+    command=`head -3 $DIR/*.$pid | tail -1 | cut -f2 -d:`
+    echo "\t$i) $command"
+  done
+  echo "\n\tSpecify number to terminate or press return to continue \c"
+  read reply
+  if [ X$reply = X ] ; then
+    return
+  fi
+  i=1;
+  killpid=0
+  for pid in $pids ; do
+    if [ $i -eq $reply ] ; then killpid=$pid ; break ; fi
+    i=`expr $i + 1`
+  done
+  if [ X$killpid != X ] ; then
+    ppid=`get_ppid $killpid`
+    ps  fjx |egrep '^ *[0-9]+ +[0-9]+ +'$ppid' ' |cut -c1-80
+    #ps --ppid $ppid jf | cut -c1-80 
+    echo "Do you want to terminate the process tree with ppid $ppid (y/n) ? \c"
+    read reply
+    if [ X$reply = Xy -o X$reply = XY ] ; then
+      kill -- -$ppid
+    fi
+  fi
+  clean_dir
+}
+
+list_processes()
+{
+  clear
+  clean_dir
+  pids=`get_pids`
+  if [ "X$pids" = X ] ; then
+    echo "No processes running. Press return to continue \c"
+    read reply
+    return
+  fi
+  echo "\tListing processes : $pids\n"
+  i=0;
+  for pid in $pids ; do
+    i=`expr $i + 1`
+    command=`head -3 $DIR/*.$pid | tail -1 | cut -f2 -d:`
+    name=`ls $DIR/*.$pid | awk '{printf("\t%s\n", $1);}'`
+    name=`basename $name`
+    echo "	$i) $name  ::  $command"
+  done
+  echo "\n\tPress return to continue \c"
+  read reply
+}
+
+clean_dir
+while true ; do
+  clear
+  echo "\tCommands\n"
+  echo "\tl) List Processes"
+  #echo "\td) Delete Process Tree"
+  echo "\ts) Start Process"
+  echo "\tk) Kill Process"
+  echo "\tc) Clean List"
+  echo "\ti) Input terminating tool"
+  echo "\tq) Quit"
+  echo
+  echo "\tChoice (l/d/s/c/q) : \c"
+  read reply
+  if [ X$reply = Xl -o X$reply = XL ] ; then
+    list_processes
+  fi
+  if [ X$reply = Xk -o X$reply = XK ] ; then
+    kill_process
+  fi
+  if [ X$reply = Xs -o X$reply = XS ] ; then
+    start_process
+  fi
+  if [ X$reply = Xc -o X$reply = XC ] ; then
+    clean_dir
+  fi
+  if [ X$reply = Xi -o X$reply = XI ] ; then
+    sh $SM/scripts/find_xinetd
+  fi
+  if [ X$reply = Xq -o X$reply = XQ ] ; then
+    exit 0
+  fi
+done

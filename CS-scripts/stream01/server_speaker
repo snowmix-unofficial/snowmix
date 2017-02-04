@@ -1,0 +1,60 @@
+#!/bin/bash
+inrate=44100
+outrate=44100
+channels=1
+listenport=9116
+serverport=8116
+serverport2=8117
+serverip=81.7.134.69
+
+gstlaunch=`which gst-launch-1.0`
+if [ X$gstlaunch != X ] ; then
+  VIDEOCONVERT=videoconvert
+  VIDEO=video/x-raw
+  AUDIO=audio/x-raw
+  vfid=string
+  afid="format=(string)S16LE, "
+else
+  gstlaunch=`which gst-launch-0.10`
+  if [ X$gstlaunch != X ] ; then
+    VIDEOCONVERT=ffmpegcolorspace
+    VIDEO=video/x-raw-rgb
+    AUDIO=audio/x-raw-int
+    vfid=fourcc
+    afid=""
+  else
+    echo "Could not find gst-launch-1.0 or gst-launch-0.10. Stopping"
+    exit
+  fi
+fi
+
+INAUDIOFORMAT=$AUDIO', '$afid' endianness=(int)1234, signed=(boolean)true, width=(int)16, depth=(int)16, rate=(int)'$inrate', channels=(int)'$channels
+OUTAUDIOFORMAT=$AUDIO', '$afid' endianness=(int)1234, signed=(boolean)true, width=(int)16, depth=(int)16, rate=(int)'$outrate', channels=(int)'$channels
+
+pid_file=/var/run/stream/$0.$$
+echo $$ >$pid_file
+basename=`basename $0`
+
+while true ; do
+  echo $basename listening for Speak audio on $listenport resample and make it available at port $serverport and $serverport2
+  if [ ! -f $pid_file ] ; then
+    echo "pid file removed. Stopping."
+    exit 0
+  fi
+  $gstlaunch -v tcpserversrc port=$listenport host=$serverip ! \
+	$INAUDIOFORMAT		! \
+	audioresample		! \
+	audioconvert		! \
+	$OUTAUDIOFORMAT		! \
+	tee name=t1		! \
+	queue			! \
+	tcpserversink port=$serverport host=$serverip t1. ! \
+	queue			! \
+	audioconvert		! \
+	vorbisenc		! \
+	vorbisparse		! \
+	rtpvorbispay		! \
+	tcpserversink port=$serverport2 host=$serverip sync-method=2
+  echo $0 fail
+  sleep 5
+done

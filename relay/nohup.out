@@ -1,0 +1,180 @@
+Adding controller for read 0 write -1
+relay version 0.1
+Adding controller for read 3 write -1
+MSG: receiver verbose level set to 2
+MSG: receiver 1 created name <1 - Premix >
+MSG: receiver 1 type udp 
+MSG: receiver 1 port 10040
+Buffer set to 1492 for receiver 1
+MSG: receiver 1 mtu 1492
+MSG: receiver 1 host 0.0.0.0 
+Msg: receiver 1 started
+MSG: receiver 2 created name <2 - Mosaic >
+MSG: receiver 2 type udp 
+MSG: receiver 2 port 10042
+Buffer set to 1492 for receiver 2
+MSG: receiver 2 mtu 1492
+MSG: receiver 2 host 0.0.0.0 
+Msg: receiver 2 started
+MSG: receiver 3 created name <3 - OB Cam >
+MSG: receiver 3 type udp 
+MSG: receiver 3 port 10044
+Buffer set to 1492 for receiver 3
+MSG: receiver 3 mtu 1492
+MSG: receiver 3 host 0.0.0.0 
+Msg: receiver 3 started
+MSG: receiver 4 created name <4 - Feed #4 >
+MSG: receiver 4 type udp 
+MSG: receiver 4 port 10046
+Buffer set to 1492 for receiver 4
+MSG: receiver 4 mtu 1492
+MSG: receiver 4 host 0.0.0.0 
+Msg: receiver 4 started
+MSG: receiver 5 created name <5 - Playout >
+MSG: receiver 5 type udp 
+MSG: receiver 5 port 10048
+Buffer set to 1492 for receiver 5
+MSG: receiver 5 mtu 1492
+MSG: receiver 5 host 0.0.0.0 
+Msg: receiver 5 started
+MSG: receiver 10 created name <PreMix TS >
+MSG: receiver 10 type udp 
+MSG: receiver 10 port 10074
+Buffer set to 1492 for receiver 10
+MSG: receiver 10 mtu 1492
+MSG: receiver 10 host 0.0.0.0 
+Msg: receiver 10 started
+MSG: receiver 11 created name <Mosaic TS >
+MSG: receiver 11 type udp 
+MSG: receiver 11 port 10072
+Buffer set to 1492 for receiver 11
+MSG: receiver 11 mtu 1492
+MSG: receiver 11 host 0.0.0.0 
+Msg: receiver 11 started
+MSG: receiver 12 created name <PostMix TS >
+MSG: receiver 12 type udp 
+MSG: receiver 12 port 10070
+Buffer set to 1492 for receiver 12
+MSG: receiver 12 mtu 1492
+MSG: receiver 12 host 0.0.0.0 
+Msg: receiver 12 started
+MSG: receiver 20 created name <VHF Ch. 5 >
+MSG: receiver 20 type udp 
+MSG: receiver 20 port 10110
+Buffer set to 1492 for receiver 20
+MSG: receiver 20 mtu 1492
+MSG: receiver 20 host 0.0.0.0 
+Msg: receiver 20 started
+Buffer set to 65536 for sender 1
+Buffer set to 1492 for sender 1
+Buffer set to 65536 for sender 2
+Buffer set to 1492 for sender 2
+Buffer set to 65536 for sender 3
+Buffer set to 1492 for sender 3
+Adding Queue to receiver 3
+ - Added a queue to a queue. Count 1
+Buffer set to 65536 for sender 4
+Buffer set to 1492 for sender 4
+Adding Queue to receiver 4
+ - Added a queue to a queue. Count 1
+Buffer set to 65536 for sender 5
+Buffer set to 1492 for sender 5
+Adding Queue to receiver 5
+ - Added a queue to a queue. Count 1
+Buffer set to 1500 for sender 10
+Buffer set to 1492 for sender 10
+Adding Queue to receiver 11
+ - Added a queue to a queue. Count 1
+Buffer set to 1500 for sender 11
+Buffer set to 1492 for sender 11
+Closing controller for read 0 write -1
+Adding Queue to receiver 10
+ - Added a queue to a queue. Count 1
+Buffer set to 1500 for sender 12
+Buffer set to 1492 for sender 12
+Adding Queue to receiver 12
+ - Added a queue to a queue. Count 1
+Buffer set to 1500 for sender 13
+Buffer set to 1492 for sender 13
+Adding Queue to receiver 12
+ - Added a queue to a queue. Count 2
+Buffer set to 65536 for sender 20
+Buffer set to 1492 for sender 20
+Adding Queue to receiver 10
+ - Added a queue to a queue. Count 2
+Buffer set to 65536 for sender 21
+Buffer set to 1492 for sender 21
+Buffer set to 65536 for sender 22
+Buffer set to 1492 for sender 22
+Adding Queue to receiver 11
+ - Added a queue to a queue. Count 2
+Buffer set to 65536 for sender 23
+Buffer set to 1492 for sender 23
+Buffer set to 65536 for sender 30
+Buffer set to 1492 for sender 30
+Adding Queue to receiver 20
+ - Added a queue to a queue. Count 1
+Closing controller for read 3 write -1
+Got incoming connection from 192.168.3.141
+Adding controller for read 3 write 3
+Closing controller for read 3 write 3
+Got incoming connection from 192.168.3.141
+Adding controller for read 3 write 3
+Closing controller for read 3 write 3
+Got incoming connection from 192.168.3.141
+Adding controller for read 3 write 3
+Closing controller for read 3 write 3
+Got incoming connection from 192.168.3.141
+Adding controller for read 3 write 3
+Closing controller for read 3 write 3
+Got incoming connection from 192.168.3.141
+Adding controller for read 3 write 3
+Closing controller for read 3 write 3
+Got incoming connection from 192.168.3.141
+Adding controller for read 3 write 3
+Closing controller for read 3 write 3
+Got incoming connection from 192.168.3.141
+Adding controller for read 3 write 3
+Closing controller for read 3 write 3
+Got incoming connection from 192.168.3.141
+Adding controller for read 3 write 3
+Closing controller for read 3 write 3
+Got incoming connection from 192.168.3.141
+Adding controller for read 3 write 3
+Closing controller for read 3 write 3
+Got incoming connection from 192.168.3.141
+Adding controller for read 3 write 3
+Closing controller for read 3 write 3
+Got incoming connection from 192.168.3.141
+Adding controller for read 3 write 3
+Closing controller for read 3 write 3
+Got incoming connection from 192.168.3.141
+Adding controller for read 3 write 3
+Closing controller for read 3 write 3
+Got incoming connection from 192.168.3.141
+Adding controller for read 3 write 3
+Closing controller for read 3 write 3
+Got incoming connection from 192.168.3.141
+Adding controller for read 3 write 3
+Closing controller for read 3 write 3
+Got incoming connection from 192.168.3.141
+Adding controller for read 3 write 3
+Closing controller for read 3 write 3
+Got incoming connection from 192.168.3.141
+Adding controller for read 3 write 3
+Closing controller for read 3 write 3
+Got incoming connection from 192.168.3.141
+Adding controller for read 3 write 3
+Closing controller for read 3 write 3
+Got incoming connection from 192.168.3.141
+Adding controller for read 3 write 3
+Closing controller for read 3 write 3
+Got incoming connection from 192.168.3.141
+Adding controller for read 3 write 3
+Closing controller for read 3 write 3
+Got incoming connection from 192.168.3.141
+Adding controller for read 3 write 3
+Closing controller for read 3 write 3
+Got incoming connection from 192.168.3.141
+Adding controller for read 3 write 3
+Closing controller for read 3 write 3

@@ -1,0 +1,40 @@
+		Snowmix Library Notes for Snowmix Version 0.4.4
+		Copyright 2014 - Peter Maersk-Moller
+
+Snowmix Version 0.4.4 has been released with the following Snowmix Libraries:
+
+* basic-shapes.slib : Definition of basic unit shapes such as circle, square, diamond etc.
+* clocks.slib : Basic Tcl based clock and timer library.
+* feeds.slib : Basic Setup functions for definition of video feeds.
+* graphs.slib : Basic shape based graph tool.
+* radar.slib : Shape based radar application.
+* scenes.slib : Advanced scene composition and mixing tool
+* system.slib : Basic setup required for various Snowmix Libraries
+
+
+Library : scenes.slib
+=====
+
+Scene functions:
+-----
+
+* SceneAddBackground { scene_id image_id } : Add background image to scene
+* SceneAddOverlayText { $scene_id text_id1... } : Add extra placed text to be overlayed for a given scene.
+* SceneAddFrame { scene_id frame_id xoff yoff width height } : Add a frame definition to a scene
+* SceneAddTextClock { scene_id clock_id clock_mode } : Add clock for a scene.
+* SceneCreate { name scene_id } : Create a new scene.
+* SceneFrameBack2Front { scene_id frame_id fade } : Fade/shift front source and back source up and switch source
+* SceneFrameFade { scene_id frame_id fade } : Fade up/down a frame for a scene.
+* SceneGetFadeSpeed { scene_id frame_id fade } : returns steps and delta for fade speed
+* SceneInit {} : Initializes the library. Done by the library itself.
+* SceneList { scene_id } : List info for individual scene.
+* ScenePlaceFrame { scene_id frame_id xoff yoff width height } : Place/resize added frame for a scene.
+* SceneSetFrameActive { scene_id frame_id active silent } : Set the active/passive state for a frame
+* SceneSetFrameSource { scene_id frame_id type feed_id front active args... } : Set a feed/image/graph/radar source for a frame (front or back)
+* SceneSetState { scene_id active } : Set the state of a scene as active/not active
+* SceneSetTextClock { scene_id clock_id x y } : Place/replace clock for scene.
+* ScenesList {} : List available scenes as scene IDs.
+* ScenesUpdate {} : To be called for every main mixer frame to draw active scene with frame(s)
+* SceneTextClockToggle { $scene_id clock_id } : Toggle visibility of a clock/timer for a scene.
+* Setbackground4Scene { scene_id image_id } : Set a background image for scene
+* SceneColorClock { scene_id clock_id text red green blue alpha }

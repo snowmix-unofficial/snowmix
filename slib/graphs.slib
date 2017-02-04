@@ -1,0 +1,383 @@
+# Basic Graph Settings
+# Copyright by Peter Maersk-Moller 2013 - All rights reserved
+# require version 0.4.4
+require version 0.5.1
+
+
+# GraphAddGrid { graph_id shape_id orientation count }
+# GraphAddLegend { graph_id line_id type place_id string_id font_id text }
+# GraphAddLine { name graph_id line_id shape_id scale_x scale_y}
+# GraphCreate { graph_id name width height shape_id }
+# GraphInit {}
+# GraphLineAddTo { graph_id line_id x y }
+# GraphLineScale { graph_id line_id scale_x scale_y }
+# GraphList { graph_id }
+# GraphMake { graph_id }
+# GraphOverlay { graph_id x y width height args }
+# GraphsList {} : List Ids of graphs
+
+command create libgraphs.tcl
+
+  proc GraphInit {} {
+    global graph
+
+    # List of graphs set empty
+    set graph(graphs) ""
+    set graph(background) [list 0.14509 0.11372 0.34901]
+    set graph(foreground) [list 1.0 1.0 1.0]
+    set graph(alpha) 1.0
+    set graph(vlines) 10
+    set graph(hlines) 10
+    if {[llength [info proc SceneAddFrameType]]} {
+      SceneAddFrameType graph  GraphInfo
+    } else {
+      snowmix message "feeds.slib : WARNING. Could not add feed type to scene frame types"
+    }
+    snowmix message "graphs.slib : Graphs initialized."
+    return
+  }
+  
+  # commands : exist id | geometry id | list | shape | overlay_proc
+  proc GraphInfo { command args } {
+    global graph
+    # exist <graph no>
+    if {[string match exist $command] && [llength $args] > 0} {
+      set graph_id [lindex $args 0]
+      if {![string is integer -strict $graph_id] || $graph_id < 0} { return 0 }
+      return [info exist graph(name,$graph_id)]
+    # geometry <graph no>
+    } elseif {[string match geometry $command] && [llength $args] > 0} {
+      set graph_id [lindex $args 0]
+      if {![string is integer -strict $graph_id] || $graph_id < 0} { return }
+      if {![info exist graph(width,$graph_id)]} return
+      return "$graph(width,$graph_id) $graph(height,$graph_id)"
+    } elseif {[string match list $command]} {
+      return $graph(graphs)
+    } elseif {[string match shape $command] && [llength $args] > 0} {
+      set graph_id [lindex $args 0]
+      if {![string is integer -strict $graph_id] || $graph_id < 0} { return -1 }
+      if {![info exist graph(shape_id,$graph_id)]} { return -1 }
+      return $graph(shape_id,$graph_id)
+    } elseif {[string match buttons $command]} {
+      return
+    } elseif {[string match overlay_proc $command]} {
+      return GraphOverlay
+    }
+    return 0
+  }
+
+  # List of graphs created
+  proc GraphsList {} {
+    global graph
+    snowmix message "Graphs = $graph(graphs)"
+    # return "\nmessage Graphs = $graph(graphs)\n"
+    return
+  }
+
+  proc GraphList { graph_id } {
+    global graph
+    if {![info exist graph(name,$graph_id)]} {
+      snowmix message "Invalid graph"
+      #return "\nmessage Invalid graph\n"
+      return
+    }
+    set s "\nmessage STAT: Graph $graph_id WxH $graph(width,$graph_id)x$graph(height,$graph_id) "
+    append s "fgcolor $graph(foreground,$graph_id) bgcolor $graph(background,$graph_id) "
+    append s "alpha $graph(alpha,$graph_id)\n"
+    foreach line_id $graph(lines,$graph_id) {
+      append s "message STAT:  - line $line_id shape $graph(line_shape_id,$graph_id,$line_id) scale $graph(line_scale_x,$graph_id,$line_id),$graph(line_scale_y,$graph_id,$line_id) origin $graph(line_origin_x,$graph_id,$line_id),$graph(line_origin_y,$graph_id,$line_id) name $graph(line_name,$graph_id,$line_id)\n"
+    }
+    append s "message STAT: \n"
+    snowmix parse "$s"
+    #return "$s\n"
+    return
+  }
+
+  proc GraphMake { graph_id } {
+    global graph
+    if {![info exist graph(name,$graph_id)]} {
+      snowmix message "Invalid graph"
+      #return "\nmessage Invalid graph\n"
+      return
+    }
+    set shape_id $graph(shape_id,$graph_id)
+    set s "\n\n"
+    append s "\nshape add $shape_id Graph $graph_id\n"
+    append s "shape moveto $shape_id 0 0\n"
+    append s "shape inshape $shape_id 2\n"
+    append s "shape clip $shape_id\n"
+    append s "shape source rgba $shape_id $graph(background,$graph_id) $graph(alpha,$graph_id)\n"
+    append s "shape paint $shape_id\n"
+    if { $graph(vlines,$graph_id) > 0 || $graph(hlines,$graph_id) > 0 } {
+      append s "shape newpath $shape_id\n"
+    }
+    if { $graph(vlines,$graph_id) > 0 } {
+      append s "shape recursion $shape_id [expr 1 + $graph(vlines,$graph_id)]\n"
+      append s "shape moveto $shape_id -0.5 -0.5\n"
+      append s "shape inshape $shape_id $graph(vlines,$graph_id,shape_id)\n"
+    }
+    if { $graph(hlines,$graph_id) > 0 } {
+      append s "shape recursion $shape_id [expr 1 + $graph(hlines,$graph_id)]\n"
+      append s "shape moveto $shape_id -0.5 0.5\n"
+      append s "shape inshape $shape_id $graph(hlines,$graph_id,shape_id)\n"
+    }
+    if { $graph(vlines,$graph_id) > 0 || $graph(hlines,$graph_id) > 0 } {
+      append s "shape source rgb $shape_id 1 1 1\n"
+      append s "shape line width $shape_id -1\n"
+      append s "shape stroke $shape_id\n"
+    }
+    foreach line_id $graph(lines,$graph_id) {
+      if {[info exist graph(line_shape_id,$graph_id,$line_id)]} {
+        append s "shape moveto $shape_id $graph(line_origin_x,$graph_id,$line_id) $graph(line_origin_y,$graph_id,$line_id)\n"
+        append s "shape scale $shape_id $graph(line_scale_x,$graph_id,$line_id) $graph(line_scale_y,$graph_id,$line_id)\n"
+        append s "shape line width $shape_id -3\n"
+        append s "shape inshape $shape_id $graph(line_shape_id,$graph_id,$line_id)\n"
+        append s "shape stroke preserve $shape_id\n"
+        append s "shape scale $shape_id -1 -1\n"
+        append s "shape moverel $shape_id 5 0\n"
+        append s "shape arcrel_cw $shape_id -5 0 5 0 2PI\n"
+        append s "shape line width $shape_id -1\n"
+        append s "shape stroke $shape_id\n"
+      }
+    }
+    snowmix parse "$s"
+    #return "$s\n"
+    return
+  }
+
+  proc GraphAddGrid { graph_id shape_id orientation count } {
+    global graph
+    if {![string is integer $graph_id] || $graph_id < 0 || ![info exist graph(name,$graph_id)] || ![string is integer $shape_id] || $shape_id < 0 || ![string is integer $count] || $count < 1 || !([string match "v*" $orientation] || [string match "h*" $orientation])} {
+      snowmix message "GraphAddGrid failed $graph_id $shape_id $count $orientation"
+      #return "\nmessage GraphAddGrid failed $graph_id $shape_id $count $orientation\n"
+      return
+    }
+    #set s "\n"
+    set delta [expr 1.0 / $count ]
+    if {[string match "v*" $orientation]} {
+      set orient vlines
+      append s "shape add $shape_id Graph $graph_id $orient\n"
+      append s "shape linerel $shape_id 0 1.0\n"
+      append s "shape moverel $shape_id $delta -1\n"
+    } else {
+      set orient hlines
+      append s "shape add $shape_id Graph $graph_id $orient\n"
+      append s "shape linerel $shape_id 1.0 0\n"
+      append s "shape moverel $shape_id -1.0 -$delta\n"
+    }
+    append s "shape inshape $shape_id $shape_id\n"
+    set graph($orient,$graph_id) $count
+    set graph($orient,$graph_id,shape_id) $shape_id
+    snowmix parse "$s"
+    GraphMake $graph_id
+    #return "$s\n"
+    return
+  }
+
+  proc GraphLineScale { graph_id line_id scale_x scale_y } {
+    global graph
+    if {![string is integer $graph_id] || $graph_id < 0 || ![info exist graph(name,$graph_id)] || ![string is integer $line_id] || $line_id < 1 || [info exist graph(line_name,$graph_id,$line_id]} {
+      snowmix message "GraphLineScale failed $graph_id $line_id"
+      #return "\nmessage GraphLineScale failed $graph_id $line_id \n"
+      return
+    }
+    #set s "\n"
+    set s ""
+    set graph(line_scale_x,$graph_id,$line_id) $scale_x
+    set graph(line_scale_y,$graph_id,$line_id) $scale_y
+    GraphMake $graph_id
+    if {[info exist graph(legend_text_template,y-axis,$graph_id)]} {
+      append s "text string $graph(legend_string_id,y-axis,$graph_id) [format $graph(legend_text_template,y-axis,$graph_id) [expr 0.001 / $graph(line_scale_y,$graph_id,$line_id)]]\n"
+    }
+    if {[info exist graph(legend_text_template,x-axis,$graph_id)]} {
+      append s "text string $graph(legend_string_id,x-axis,$graph_id) [format $graph(legend_text_template,x-axis,$graph_id) [expr 1.0 / (60.0 * $graph(line_scale_x,$graph_id,$line_id))]]\n"
+    }
+    if {[string length $s] > 0} {
+      snowmix parse "$s"
+    }
+    # return "$s\n"
+    return
+  }
+
+  proc GraphLineAddTo { graph_id line_id x y } {
+    global graph
+    if {![string is integer $graph_id] || $graph_id < 0 || ![info exist graph(name,$graph_id)] || ![string is integer $line_id] || $line_id < 1 || [info exist graph(line_name,$graph_id,$line_id]} {
+      snowmix message "GraphLineAddTo failed $graph_id $line_id"
+      return "\nmessage GraphLineAddTo failed $graph_id $line_id \n"
+      return
+    }
+    #set s "\n"
+    set s ""
+    set xrel [expr $x - $graph(line_x,$graph_id,$line_id)]
+    set yrel [expr $graph(line_y,$graph_id,$line_id) - $y]
+    set graph(line_x,$graph_id,$line_id) $x
+    set graph(line_y,$graph_id,$line_id) $y
+    append s "shape linerel $graph(line_shape_id,$graph_id,$line_id) $xrel $yrel\n"
+    snowmix parse "$s"
+    set scale 0
+    set scale_x $graph(line_scale_x,$graph_id,$line_id)
+    set scale_y $graph(line_scale_y,$graph_id,$line_id)
+    while { $x > [expr 0.95 / $scale_x] } {
+      set scale_x [expr $scale_x / 2.0]
+      set scale 1
+    }
+    while { $y > [expr 0.9 / $scale_y] } {
+      set scale_y [expr $scale_y / 1.8 ]
+      set scale 1
+    }
+    if {$scale} {
+      #append s [GraphLineScale $graph_id $line_id $scale_x $scale_y]
+      GraphLineScale $graph_id $line_id $scale_x $scale_y
+    }
+    #return "$s\n"
+    return
+  }
+
+  proc GraphAddLine { name graph_id line_id shape_id scale_x scale_y} {
+    global graph
+    if {![string is integer $graph_id] || $graph_id < 0 || ![info exist graph(name,$graph_id)] || ![string is integer $shape_id] || $shape_id < 0 || ![string is integer $line_id] || $line_id < 1 || [info exist graph(line_name,$graph_id,$line_id]} {
+      snowmix message "GraphAddLine failed $graph_id $line_id $shape_id"
+      #return "\nmessage GraphAddLine failed $graph_id $line_id $shape_id\n"
+      return
+    }
+    #set s "\n"
+    set s ""
+    append graph(lines,$graph_id) $line_id
+    set graph(line_name,$graph_id,$line_id) $name
+    set graph(line_shape_id,$graph_id,$line_id) $shape_id
+    set graph(line_scale_x,$graph_id,$line_id) $scale_x
+    set graph(line_scale_y,$graph_id,$line_id) $scale_y
+    set graph(line_origin_x,$graph_id,$line_id) -0.5
+    set graph(line_origin_y,$graph_id,$line_id) 0.5
+    set graph(line_x,$graph_id,$line_id) 0
+    set graph(line_y,$graph_id,$line_id) 0
+    append s "shape add $shape_id Graph $graph_id Line $line_id\n"
+    snowmix parse "$s"
+    GraphMake $graph_id
+    #return "$s\n"
+    return
+  }
+
+  proc GraphAddLegend { graph_id line_id type place_id string_id font_id text } {
+    global graph
+    if {![string is integer $graph_id] || $graph_id < 0 || ![info exist graph(name,$graph_id)] || ![string is integer $string_id] || $string_id < 0 || ![string is integer $font_id] || $font_id < 1 || ![string is integer $place_id] || $place_id < 1} {
+      snowmix message "GraphAddLegend failed $graph_id"
+      #return "\nmessage GraphAddLegend failed $graph_id\n"
+      return
+    }
+    #set s "\n"
+    set s ""
+    set graph(legend_text,$type,$graph_id) $text
+    set graph(legend_text_template,$type,$graph_id) $text
+    set graph(legend_place_id,$type,$graph_id) $place_id
+    set graph(legend_string_id,$type,$graph_id) $string_id
+    set graph(legend_font_id,$type,$graph_id) $font_id
+    append s "text string $string_id $text\n"
+    append s "text place $place_id $string_id $font_id 0 0 1 1 1 1\n"
+    append s "text backgr $place_id 5 5 2 2 $graph(background,$graph_id) 1\n"
+    if {[string match title $type]} {
+      append s "text align $place_id center top\n"
+    } elseif {[string match y-axis $type]} {
+      append s "text align $place_id left top\n"
+    } elseif {[string match x-axis $type]} {
+      append s "text align $place_id right bottom\n"
+    }
+    snowmix parse "$s"
+    if {[string match y-axis $type] && [info exist graph(line_scale_y,$graph_id,$line_id)] && $graph(line_scale_y,$graph_id,$line_id) != 0} {
+      #append s [GraphLineScale $graph_id $line_id $graph(line_scale_x,$graph_id,$line_id) $graph(line_scale_y,$graph_id,$line_id)]
+      GraphLineScale $graph_id $line_id $graph(line_scale_x,$graph_id,$line_id) $graph(line_scale_y,$graph_id,$line_id)
+    }
+    if {[string match x-axis $type] && [info exist graph(line_scale_y,$graph_id,$line_id)] && $graph(line_scale_y,$graph_id,$line_id) != 0} {
+      #append s [GraphLineScale $graph_id $line_id $graph(line_scale_x,$graph_id,$line_id) $graph(line_scale_y,$graph_id,$line_id)]
+      GraphLineScale $graph_id $line_id $graph(line_scale_x,$graph_id,$line_id) $graph(line_scale_y,$graph_id,$line_id)
+    }
+    #return "$s\n"
+    return
+  }
+
+  proc GraphOverlay { graph_id x y width height args } {
+    global graph
+    if {![string is integer $graph_id] || $graph_id < 0 || ![info exist graph(name,$graph_id)]} {
+      snowmix parse "messagec GraphUpdate failed $graph_id\n"
+      #return "\nmessagec GraphUpdate failed $graph_id\n"
+      return
+    }
+    if {[llength $args]} {
+      set alpha [lindex $args 0]
+      if {!$alpha} return
+    } else { set alpha 1 }
+    #set s "\n"
+    set s ""
+    set scale [expr sqrt($width / 832.0)]
+    if {[info exist graph(legend_place_id,title,$graph_id)]} {
+      set xoff [expr $x + $width / 2]
+      set yoff [expr $y + 5]
+      append s "text alpha $graph(legend_place_id,title,$graph_id) $alpha\n"
+      append s "text coor $graph(legend_place_id,title,$graph_id) $xoff $yoff\n"
+      append s "text scale $graph(legend_place_id,title,$graph_id) $scale $scale\n"
+      append s "text overlay $graph(legend_place_id,title,$graph_id)\n"
+    }
+    if {[info exist graph(legend_place_id,y-axis,$graph_id)]} {
+      set xoff [expr $x + 5]
+      set yoff [expr $y + 5]
+      append s "text alpha $graph(legend_place_id,y-axis,$graph_id) $alpha\n"
+      append s "text coor $graph(legend_place_id,y-axis,$graph_id) $xoff $yoff\n"
+      append s "text scale $graph(legend_place_id,y-axis,$graph_id) $scale $scale\n"
+      append s "text overlay $graph(legend_place_id,y-axis,$graph_id)\n"
+    }
+    if {[info exist graph(legend_place_id,x-axis,$graph_id)]} {
+      set xoff [expr $x + $width - 5]
+      set yoff [expr $y + $height - 5]
+      append s "text alpha $graph(legend_place_id,x-axis,$graph_id) $alpha\n"
+      append s "text coor $graph(legend_place_id,x-axis,$graph_id) $xoff $yoff\n"
+      append s "text scale $graph(legend_place_id,x-axis,$graph_id) $scale $scale\n"
+      append s "text overlay $graph(legend_place_id,x-axis,$graph_id)\n"
+    }
+    if {[string length $s] > 0} {
+      snowmix parse "$s"
+    }
+#    return "$s\n"
+    return
+  }
+
+  proc GraphCreate { graph_id name width height } {
+    global graph
+    if {![string is integer $graph_id] || $graph_id < 0 || [info exist graph(name,$graph_id)]} {
+      return "\nmessage CreateGraph failed\n"
+    }
+    #set s "\n"
+    set shape_id [ReserveNextAvail shape]
+    if {$shape_id < 0} {
+      snowmix message "No available shape id in GraphCreate"
+      return
+    }
+    append graph(graphs) $graph_id
+    set graph(name,$graph_id) $name
+    set graph(width,$graph_id) $width
+    set graph(height,$graph_id) $height
+    set graph(shape_id,$graph_id) $shape_id
+    set graph(foreground,$graph_id) $graph(foreground)
+    set graph(background,$graph_id) $graph(background)
+    set graph(alpha,$graph_id) $graph(alpha)
+    set graph(vlines,$graph_id) 0
+    set graph(hlines,$graph_id) 0
+    set graph(lines,$graph_id) ""
+    #append s [GraphMake $graph_id]
+    GraphMake $graph_id
+    #return "$s\n"
+    return
+  }
+
+  GraphInit
+  snowmix message graphs.slib : Library loaded.
+command end
+
+tcl exec libgraphs.tcl
+#tcl eval GraphCreate 1 Trajectory 320 180
+tcl eval GraphCreate 1 Trajectory 1 1
+tcl eval GraphAddGrid 1 21 vertical 10
+tcl eval GraphAddGrid 1 22 horizontal 10
+tcl eval GraphAddLine Altitude 1 1 23 0.0083333333333333333333 0.001
+tcl eval GraphAddLegend 1 1 title 30 30 9 Trajectory
+tcl eval GraphAddLegend 1 1 y-axis 31 31 6 "%.1f km"
+tcl eval GraphAddLegend 1 1 x-axis 32 32 6 "%.1f min"

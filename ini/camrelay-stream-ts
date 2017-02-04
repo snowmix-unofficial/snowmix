@@ -1,0 +1,247 @@
+system host allow 127.0.0.1 192.168.10.0/24 192.168.3.0/24
+system control port 9998
+# quit
+
+receiver verbose 2
+
+receiver add 1 1 - Premix
+receiver type 1 udp
+receiver port 1 10040
+receiver mtu 1 1492
+receiver host 1 0.0.0.0
+#receiver host allow 1 127.0.0.1
+receiver start 1
+#receiver stop 1
+
+receiver add  2 2 - Mosaic
+receiver type 2 udp
+receiver port 2 10042
+receiver mtu 2 1492
+receiver host 2 0.0.0.0
+#receiver host allow 2 127.0.0.1
+receiver start 2
+#receiver stop 2
+
+receiver add  3 3 - OB Cam
+receiver type 3 udp
+receiver port 3 10044
+receiver mtu 3 1492
+receiver host 3 0.0.0.0
+#receiver host allow 3 127.0.0.1
+receiver start 3
+#receiver stop 3
+
+receiver add  4 4 - Feed #4
+receiver type 4 udp
+receiver port 4 10046
+receiver mtu 4 1492
+receiver host 4 0.0.0.0
+#receiver host allow 4 127.0.0.1
+receiver start 4
+#receiver stop 4
+
+receiver add  5 5 - Playout
+receiver type 5 udp
+receiver port 5 10048
+receiver mtu 5 1492
+receiver host 5 0.0.0.0
+#receiver host allow 5 127.0.0.1
+receiver start 5
+#receiver stop 5
+
+receiver add  10 PreMix TS
+receiver type 10 udp
+receiver port 10 10074
+receiver mtu  10 1492
+receiver host 10 0.0.0.0
+#receiver host allow 10 127.0.0.1
+receiver start 10
+#receiver stop 10
+
+receiver add  11 Mosaic TS
+receiver type 11 udp
+receiver port 11 10072
+receiver mtu  11 1492
+receiver host 11 0.0.0.0
+#receiver host allow 11 127.0.0.1
+receiver start 11
+#receiver stop 11
+
+receiver add  12 PostMix TS
+receiver type 12 udp
+receiver port 12 10070
+receiver mtu  12 1492
+receiver host 12 0.0.0.0
+#receiver host allow 12 127.0.0.1
+receiver start 12
+#receiver stop 12
+
+receiver add  20 VHF Ch. 5
+receiver type 20 udp
+receiver port 20 10110
+receiver mtu  20 1492
+receiver host 20 0.0.0.0
+#receiver host allow 20 127.0.0.1 192.168.10.0/24
+receiver start 20
+#receiver stop 20
+
+
+sender add    1 Local Feed#1
+sender type   1 udp
+sender host   1 127.0.0.1
+sender port   1 9040
+sender mtu    1 1492
+sender source 1 receiver 1
+#sender start  1
+#sender stop  1
+
+sender add    2 Local Feed#2
+sender type   2 udp
+sender host   2 127.0.0.1
+sender port   2 9042
+sender mtu    2 1492
+sender source 2 receiver 2
+#sender start  2
+#sender stop  2
+
+sender add    3 Local Feed#3
+sender type   3 udp
+sender host   3 127.0.0.1
+sender port   3 9044
+sender mtu    3 1492
+sender source 3 receiver 3
+#sender start  3
+#sender stop  3
+
+sender add    4 Local Feed#4
+sender type   4 udp
+sender host   4 127.0.0.1
+sender port   4 9046
+sender mtu    4 1492
+sender source 4 receiver 4
+#sender start  4
+#sender stop  4
+
+sender add    5 Local Feed#5
+sender type   5 udp
+sender host   5 127.0.0.1
+sender port   5 9048
+sender mtu    5 1492
+sender source 5 receiver 5
+#sender start  5
+#sender stop  5
+
+sender add    10 Pi1
+sender type   10 udp
+sender host   10 192.168.10.80
+sender port   10 8000
+sender mtu    10 1492
+sender source 10 receiver 11
+#sender start  10
+#sender stop  10
+
+sender add    11 Pi3
+sender type   11 udp
+sender host   11 192.168.10.82
+sender port   11 8000
+sender mtu    11 1492
+sender source 11 receiver 10
+#sender start  11
+#sender stop  11
+
+sender add    12 Pi5
+sender type   12 udp
+sender host   12 192.168.10.84
+sender port   12 8000
+sender mtu    12 1492
+sender source 12 receiver 12
+#sender start  12
+#sender stop  12
+
+sender add    13 Pi6
+sender type   13 udp
+sender host   13 192.168.10.85
+sender port   13 8000
+sender mtu    13 1492
+sender source 13 receiver 12
+#sender start  13
+#sender stop  13
+
+#sender add    14 Thinkie PostMix TS
+#sender type   14 udp
+#sender host   14 192.168.10.178
+#sender port   14 8000
+#sender mtu    14 1492
+#sender source 14 receiver 12
+#sender start  14
+##sender stop  14
+
+sender add    20 Local Feed1
+sender type   20 udp
+sender host   20 127.0.0.1
+sender port   20 9080
+sender mtu    20 1492
+sender source 20 receiver 10
+#sender start 20
+#sender stop  20
+
+sender add    21 Local Feed4
+sender type   21 udp
+sender host   21 127.0.0.1
+sender port   21 9086
+sender mtu    21 1492
+sender source 21 receiver 10
+#sender start 21
+#sender stop  21
+
+sender add    22 Local Feed2
+sender type   22 udp
+sender host   22 127.0.0.1
+sender port   22 9082
+sender mtu    22 1492
+sender source 22 receiver 11
+#sender start 22
+#sender stop  22
+
+sender add    23 Local 8000
+# sender remark 23 Local Mosaic port 8000
+sender type   23 udp
+sender host   23 127.0.0.1
+sender port   23 8000
+sender mtu    23 1492
+sender source 23 receiver 11
+#sender start 23
+#sender stop  23
+
+#sender add    24 Vostok01 Mosaic TS - 1
+#sender type   24 udp
+#sender host   24 192.168.10.50
+#sender port   24 9080
+#sender mtu    24 1492
+#sender source 24 receiver 11
+#sender start 24
+#sender stop  24
+
+sender add    30 Local VHF Audio Feed 6
+sender type   30 udp
+sender host   30 127.0.0.1
+sender port   30 9110
+sender mtu    30 1492
+sender source 30 receiver 20
+#sender start 30
+#sender stop  30
+
+# recv analyzer ts 10 start
+
+analyzer add ts 1 MPEG-2 TS Analyzer
+#analyzer source 1 receiver 10
+#analyzer start 1
+#analyzer info 1
+#analyzer status 1
+
+analyzer add rtp 2 RTP Analyzer
+analyzer source 2 receiver 11
+analyzer start 2
+
+analyzer source 1 analyzer 2
+analyzer start 1

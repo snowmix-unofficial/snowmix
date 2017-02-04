@@ -1,0 +1,290 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
+"http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html>
+
+<head>
+<meta http-equiv="content-type" content="text/html; charset=iso-8859-1"/>
+<meta name="description" content="description"/>
+<meta name="keywords" content="keywords"/> 
+<meta name="author" content="author"/> 
+<link rel="stylesheet" type="text/css" href="../default.css" media="screen"/>
+<link rel="shortcut icon" href="../img/Snowmix-logo-transparent-128x101.ico">
+<title>Snowmix - The Swiss Army Knife of Open Source Live Video Mixing.</title>
+</head>
+
+<body>
+
+<div class="container">
+
+	<div class="main">
+
+		<div class="header">
+
+			<div class="title">
+
+				<a href="../index.html"><h1><img> Snowmix - Live Video Mixer</h1></a>
+				<h3>The Swiss Army Knife of Open Source Live Video Mixing.</h3>
+			</div>
+
+		</div>
+
+<div class="content">
+
+	<div class="item">
+
+		<h1>End of Life Announcement for Snowmix</h1>
+		<div class="descr">Updated for version 0.5.0</div>
+
+		<h3>Introduction</h3>
+
+		<p>End of life announcements for Snowmix are announcements to indicate the future removal of command syntax or removal of specific functionality from Snowmix. Such announcements are intended to be for future versions and not the version the announcement is made for. That said, when the functionality is actually removed, that will also be listed in the <i>End of Life Announcement</i></p>
+
+	</div>
+
+	<div class="item">
+
+		<h1>End of Life Announcement for Snowmix 0.5.0</h1>
+		<div class="descr">For Snowmix 0.5.0 released July 2015.</div>
+
+		<p>As announced earlier Snowmix no longer supports the following commands
+		listed int the table below. For each command is the replacement command
+		listed, if such a command exists:</p>
+
+		<table>
+			<tr>
+				<td>Removed command</td><td>Replacement command</td>
+			</tr>
+			<tr><td colspan=2>----------------------------------------------------------------</td></tr>
+			<tr><td>cairoverlay</td>		<td>-- no replacement --</td></tr>
+			<tr><td>image place align</td>		<td>image align</td></tr>
+			<tr><td>image place alpha</td><td>           image alpha</td></tr>
+			<tr><td>image place anchor</td><td>          image anchor</td></tr>
+			<tr><td>image place clip</td><td>            image clip</td></tr>
+			<tr><td>image place coor</td><td>            image coor</td></tr>
+			<tr><td>image place filter</td><td>          image filter</td></tr>
+			<tr><td>image place image</td><td>           image image</td></tr>
+			<tr><td>image place matrix</td><td>          image matrix</td></tr>
+			<tr><td>image place move alpha</td><td>      image move alpha</td></tr>
+			<tr><td>image place move clip</td><td>       image move clip</td></tr>
+			<tr><td>image place move coor</td><td>       image move coor</td></tr>
+			<tr><td>image place move offset</td><td>     image move offset</td></tr>
+			<tr><td>image place move rotation</td><td>   image move rotation</td></tr>
+			<tr><td>image place move scale</td><td>      image move scale</td></tr>
+			<tr><td>image place offset</td><td>          image offset</td></tr>
+			<tr><td>image place rotation</td><td>        image rotation</td></tr>
+			<tr><td>image place scale</td><td>           image scale</td></tr>
+			<tr><td>overlay feed</td>		<td>feed overlay</td></tr>
+			<tr><td>overlay image</td>		<td>image overlay</td></tr>
+			<tr><td>overlay virtual feed</td>	<td>vfeed overlay</td></tr>
+			<tr><td>overlay text</td>		<td>text overlay</td></tr>
+			<tr><td>text place align</td><td>            text align</td></tr>
+			<tr><td>text place alpha</td><td>            text alpha</td></tr>
+			<tr><td>text place anchor</td><td>           text anchor</td></tr>
+			<tr><td>text place backgr alpha</td><td>     text backgr alpha</td></tr>
+			<tr><td>text place backgr clip</td><td>      text backgr clip</td></tr>
+			<tr><td>text place backgr linpat</td><td>    text backgr linpat</td></tr>
+			<tr><td>text place backgr round</td><td>     text backgr round</td></tr>
+			<tr><td>text place backgr alpha</td><td>     text backgr alpha</td></tr>
+			<tr><td>text place backgr move alpha</td><td>text backgr move alpha</td></tr>
+			<tr><td>text place backgr move clip</td><td> text backgr move clip</td></tr>
+			<tr><td>text place backgr rgb</td><td>       text backgr rgb</td></tr>
+			<tr><td>text place backgr</td><td>           text backgr</td></tr>
+			<tr><td>text place clip</td><td>             text clip</td></tr>
+			<tr><td>text place clipabs</td><td>          text clipabs</td></tr>
+			<tr><td>text place coor</td><td>             text coor</td></tr>
+			<tr><td>text place grow</td><td>             text grow</td></tr>
+			<tr><td>text place move alpha</td><td>       text move alpha</td></tr>
+			<tr><td>text place move clip</td><td>        text move clip</td></tr>
+			<tr><td>text place move coor</td><td>        text move coor</td></tr>
+			<tr><td>text place move rotation</td><td>    text move rotation</td></tr>
+			<tr><td>text place move scale</td><td>       text move scale</td></tr>
+			<tr><td>text place offset</td><td>           text offset</td></tr>
+			<tr><td>text place repeat move</td><td>      text repeat move</td></tr>
+			<tr><td>text place rgb</td><td>              text rgb</td></tr>
+			<tr><td>text place rotation</td><td>         text rotation</td></tr>
+			<tr><td>text place scale</td><td>            text scale</td></tr>
+		</table>
+		<br/>
+
+		<p>As announced earlier, from this version, Snowmix no longer supports executing
+		strings returned by the Tcl Interpreter as Snowmix commands. The functionality
+		has been replaced by the embedded tcl command "snowmix parse".</p>
+
+		<p>See End of Life Announcements for Snowmix 0.4.4 further below on this
+		page for example on how to use command <i>snowmix parse</i> from within
+		the embedded interpreter.</p>
+	</div>
+
+
+	<div class="item">
+
+		<h1>End of Life Announcement for Snowmix 0.4.5</h1>
+		<div class="descr">For Snowmix 0.4.5 released Jan 21st 2015.</div>
+
+		<p>Snowmix will from version 0.5 no longer support execution of the following commands listed below as obsolete commands. The replacement command for each is listed in the same line. Until the release of version 0.5.0, both the obsolete and the replacement command syntax can be used interchangeable.</p>
+
+	<table>
+		<tr>
+			<td>Obsolete command</td><td>Replacement command</td>
+		</tr>
+		<tr><td colspan=2>----------------------------------------------------------------</td></tr>
+		<tr><td>image place align</td><td>           image align</td></tr>
+		<tr><td>image place alpha</td><td>           image alpha</td></tr>
+		<tr><td>image place anchor</td><td>          image anchor</td></tr>
+		<tr><td>image place clip</td><td>            image clip</td></tr>
+		<tr><td>image place coor</td><td>            image coor</td></tr>
+		<tr><td>image place filter</td><td>          image filter</td></tr>
+		<tr><td>image place image</td><td>           image image</td></tr>
+		<tr><td>image place matrix</td><td>          image matrix</td></tr>
+		<tr><td>image place move alpha</td><td>      image move alpha</td></tr>
+		<tr><td>image place move clip</td><td>       image move clip</td></tr>
+		<tr><td>image place move coor</td><td>       image move coor</td></tr>
+		<tr><td>image place move offset</td><td>     image move offset</td></tr>
+		<tr><td>image place move rotation</td><td>   image move rotation</td></tr>
+		<tr><td>image place move scale</td><td>      image move scale</td></tr>
+		<tr><td>image place offset</td><td>          image offset</td></tr>
+		<tr><td>image place rotation</td><td>        image rotation</td></tr>
+		<tr><td>image place scale</td><td>           image scale</td></tr>
+		<tr><td>text place align</td><td>            text align</td></tr>
+		<tr><td>text place alpha</td><td>            text alpha</td></tr>
+		<tr><td>text place anchor</td><td>           text anchor</td></tr>
+		<tr><td>text place backgr alpha</td><td>     text backgr alpha</td></tr>
+		<tr><td>text place backgr clip</td><td>      text backgr clip</td></tr>
+		<tr><td>text place backgr linpat</td><td>    text backgr linpat</td></tr>
+		<tr><td>text place backgr round</td><td>     text backgr round</td></tr>
+		<tr><td>text place backgr alpha</td><td>     text backgr alpha</td></tr>
+		<tr><td>text place backgr move alpha</td><td>text backgr move alpha</td></tr>
+		<tr><td>text place backgr move clip</td><td> text backgr move clip</td></tr>
+		<tr><td>text place backgr rgb</td><td>       text backgr rgb</td></tr>
+		<tr><td>text place backgr</td><td>           text backgr</td></tr>
+		<tr><td>text place clip</td><td>             text clip</td></tr>
+		<tr><td>text place clipabs</td><td>          text clipabs</td></tr>
+		<tr><td>text place coor</td><td>             text coor</td></tr>
+		<tr><td>text place grow</td><td>             text grow</td></tr>
+		<tr><td>text place move alpha</td><td>       text move alpha</td></tr>
+		<tr><td>text place move clip</td><td>        text move clip</td></tr>
+		<tr><td>text place move coor</td><td>        text move coor</td></tr>
+		<tr><td>text place move rotation</td><td>    text move rotation</td></tr>
+		<tr><td>text place move scale</td><td>       text move scale</td></tr>
+		<tr><td>text place offset</td><td>           text offset</td></tr>
+		<tr><td>text place repeat move</td><td>      text repeat move</td></tr>
+		<tr><td>text place rgb</td><td>              text rgb</td></tr>
+		<tr><td>text place rotation</td><td>         text rotation</td></tr>
+		<tr><td>text place scale</td><td>            text scale</td></tr>
+</table>
+
+	</div>
+
+	<div class="item">
+
+		<h1>End of Life Announcement for Snowmix 0.4.4</h1>
+		<div class="descr">For Snowmix 0.4.4 released Sep 3rd 2014.</div>
+
+		<p>Snowmix will from version 0.5 no longer support execution of the following commands:</p>
+<code>
+        overlay feed ...
+        overlay image ...
+        overlay virtual feed ...
+</code>
+
+		<p>The commands are still available in Snowmix 0.4.x. The commands has been replaced in Snowmix version 0.4.4 by the following commands:</p>
+
+<code>
+        feed overlay ...
+        image overlay ...
+        virtual feed ...
+</code>
+
+		<p>The command <i>feed overlay</i> is an addition to the *stack* command providing control for when a feed is overlayed/mixed. The <i>overlay feed</i> command was never made public prior to version 0.4.4 and take in version 0.4.3 a different sets of arguments compared to the <i>feed overlay</i> command as of version 0.4.4. because it was not made public, Snowmix will for the version after 0.4.3 only update its minor version number. More information is available in the <a href="changelog">ChangeLog</a>.</p>
+
+		<p>The command <i>shape overlay</i> has been added the identical command <i>shape place overlay</i>.  The latter form is recommended from version 0.4.4 an onwards as the form <i>shape overlay</i> will be removed from version 0.5.x</p>
+
+		<p>Snowmix will from version 0.5 no longer support execution of snowmix commands through returned strings from the Tcl Interpreter. Until then the follwoing is still supported although no longer recommended:</p>
+
+<code>
+        command create example.tcl
+          proc my_example {} {
+            set s "\ntext string 1 This is an example\n"
+            return $s
+          }
+        command end
+        tcl exec example.tcl
+        tcl eval my_example
+</code>
+
+		<p>The above example is setting the text string from within the Tcl Interpreter. From version 0.5.x this has to be implemented as shown below</p>
+
+<code>
+        command create example.tcl
+          proc my_example {} {
+            set s "text string 1 This is an example"
+            snowmix parse $s
+          }
+        command end
+        tcl exec example.tcl
+        tcl eval my_example
+</code>
+
+		<p>The above example is supported and recommended from Snowmix version 0.4.4. The Tcl interpreter command <i>snowmix parse</i> was introduced for Snowmix version 0.4.4.</p>
+
+	</div>
+</div>
+
+		<div class="sidenav">
+
+			<h1>Intro</h1>
+			<div class="sidenavintro">
+			<ul>
+				<li><a href="../Intro/about.html">About</a></li>
+				<li><a href="../Intro/news.html">News</a></li>
+				<li><a href="../Intro/faq.html">FAQ</a></li>
+				<li><a href="../Intro/screenshots.html">Screenshots</a></li>
+				<li><a href="../Intro/downloads.html">Downloads</a></li>
+				<li><a href="../Intro/requirements.html">Requirements</a></li>
+				<li><a href="../Intro/compileandinstall.html">Compile &amp; Install</a></li>
+				<li><a href="../Intro/support.html">Support &amp; Forum</a></li>
+			</ul>
+			</div>
+
+			<h1>Documentation</h1>
+			<ul>
+				<li><a href="../Documentation/reserved.html">Reserved Commands</a></li>
+				<li><a href="../Documentation/reference.html">Reference Manuals</a></li>
+				<li><a href="../Documentation/guides.html">Snowmix Guides</a></li>
+				<li><a href="../Documentation/releasenotes.html">Release Notes</a></li>
+				<li><a href="../Documentation/changelog.html">ChangeLog</a></li>
+				<li><a href="../Documentation/developmentplans.html">Development Plans</a></li>
+				<li><a href="../Documentation/endoflife.html">End of Life</a></li>
+			</ul>
+
+			<h1>Examples</h1>
+			<ul>
+				<li><a href="../Examples/index.html">Basic Configurations</a></li>
+				<li><a href="../Examples/index.html">Input with GStreamer</a></li>
+				<li><a href="../Examples/index.html">Output with Gstreamer</a></li>
+				<li><a href="../Examples/index.html">Basic Scripting</a></li>
+			</ul>
+
+			<h1>Advanced Topics</h1>
+			<ul>
+				<li><a href="../AdvancedTopics/index.html">Advanced Scripting</a></li>
+				<li><a href="../AdvancedTopics/index.html">Snowmix Libraries</a></li>
+			</ul>
+
+			<h1>Search</h1>
+			<form action="index.html">
+			<div>
+				<input type="text" name="search" class="styled" /> <input type="submit" value="" class="button" />
+			</div>
+			</form>
+
+		</div>
+	
+		<div class="clearer"><span></span></div>
+
+	</div>
+	<div class="footer">Copyright &copy; 2012-2015 Peter Maersk-Moller. - Inital weblayout &copy; 2006 <a href="index.html">Website.com</a>. Valid <a href="http://jigsaw.w3.org/css-validator/check/referer">CSS</a> &amp; <a href="http://validator.w3.org/check?uri=referer">XHTML</a>. Template design by <a href="http://templates.arcsin.se">Arcsin</a>
+	</div>
+</div>
+</body>
+</html>

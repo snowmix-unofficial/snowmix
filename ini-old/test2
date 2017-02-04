@@ -1,0 +1,62 @@
+verbose
+system control port 9999
+system geometry 720 480 ARGB
+system frame rate 30
+system output buffers 30
+system socket /tmp/mixer1
+
+
+
+# feed No.1
+feed add 1 camara 1
+feed geometry 1 720 480
+feed live 1
+feed idle 1 100 ../frames/dead-720x480.bgra
+feed cutout 1 0 0 100 100
+feed shift 1 640 0
+feed scale 1 1 1
+feed socket 1 /tmp/feed1-control-pipe
+
+# feed No.2
+feed add 2 Camera 2
+feed geometry 2 720 480
+feed live 2
+feed idle 2 100 ../frames/dead-720x480.bgra
+feed cutout 2 0 0 720 480
+feed shift 2 0 0
+feed scale 2 1 1
+stack 0 1 2
+feed socket 2 /tmp/feed2-control-pipe
+
+######## Audios ########
+
+audio feed add 1 mic1
+audio feed channels 1 1
+audio feed rate 1 44100
+audio feed format 1 16 signed
+audio feed mute off 1
+audio feed volume 1 10
+
+audio mixer add 1 mixer
+audio mixer channels 1 1
+audio mixer rate 1 44100
+audio mixer mute off 1
+audio mixer source feed 1 1
+
+audio sink add 0 dummy audio
+audio sink channels 0 1
+audio sink rate 0 44100
+audio sink format 0 16 signed
+audio sink mute on 0
+audio sink source mixer 0 1
+audio sink start 0
+
+audio sink add 1 Line-out
+audio sink channels 1 1
+audio sink rate 1 44100
+audio sink format 1 16 signed
+audio sink mute off 1
+audio sink volume 1 50
+audio sink source mixer 1 1
+
+audio mixer start 1

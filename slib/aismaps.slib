@@ -1,0 +1,455 @@
+# AIS Maps  Settings
+# Copyright by Peter Maersk-Moller 2015 - All rights reserved
+# verbose
+require version 0.5.1
+
+# Functions provided in this Snowmix Library
+# AISMapInit {} : Intializes this library when including library.
+# AISMapList {} : Prints a single line with numbers of defined aismaps
+
+command create aismaps.tcl
+
+  # List AISMaps created
+  proc AISMapList { } {
+    global aismap
+    snowmix message $aismap(aismaps)
+    return
+  }
+
+  # Create AISMap
+  proc AISMapCreate { aismap_id name } {
+    global aismap system
+
+    if {![string is integer $aismap_id] || $aismap_id < 0 || $name == ""} {
+      snowmix message "AISMapCreate failed to create aismap <$aismap_id> name <$name>"
+      return
+    }
+
+    # Get shapes for holding aismap and its vessel list
+    foreach shape_id_name { shape_id vessel_shape_id } {
+      if {![info exist aismap($shape_id_name,aismap,$aismap_id)]} {
+        set shape_id [GetNextAvail shape]
+        if { $shape_id < 0 } {
+          snowmix message "AISMapCreate failed. No shape available for $shape_id_name."
+          return
+        }
+        set aismap($shape_id_name,aismap,$aismap_id) $shape_id
+      }
+      # This either creates or delete/creates the shape
+      snowmix parse "shape add $aismap(shape_id,aismap,$aismap_id) AISMap $name - aismap $aismap_id"
+    }
+    # Font set to static 4. Needs checking. FIXME
+    set aismap(font_id,aismap,$aismap_id) 4
+    foreach text_set { {text_id string_id} {vessel_text_id vessel_string_id} } {
+      set text_id_name [lindex $text_set 0]
+      set string_id_name [lindex $text_set 1]
+      set string_id [ReserveNextAvail string "AISMap $aismap_id"]
+      if {![string is integer -strict $string_id]} {
+        snowmix message "Failed to reserve text string for AISMapCreate. Ignoring, but fix it."
+      }
+      set aismap($string_id_name,aismap,$aismap_id) $string_id
+      set text_id [ReserveNextAvail placedtext $string_id $aismap(font_id,aismap,$aismap_id)]
+      if {![string is integer -strict $text_id]} {
+        snowmix message "Failed to reserve placed text for AISMapCreate. Ignoring, but fix it."
+      }
+      set aismap($text_id_name,aismap,$aismap_id) $text_id
+      snowmix parse "text align $text_id right top\ntext rgb $text_id 1 1 1\n"
+    }
+    snowmix parse "text align $aismap(vessel_text_id,aismap,$aismap_id) left center\n"
+    snowmix parse "text scale $aismap(vessel_text_id,aismap,$aismap_id) 0.5 0.5\n"
+ 
+    if {[lsearch $aismap(aismaps) $aismap_id] < 0} { lappend aismap(aismaps) $aismap_id }
+    set aismap(name,aismap,$aismap_id) $name
+    set aismap(width,aismap,$aismap_id) 1
+    set aismap(height,aismap,$aismap_id) 1
+    set aismap(vessel_list,aismap,$aismap_id) ""
+    set aismap(vessel_size,aismap,aismap_id) $aismap(vessel_size)
+    set aismap(map,aismap,$aismap_id) -1
+    return
+  }
+
+  proc AISMapCreateMap { map_id name image_load_id long1 lat1 long2 lat2 } {
+    global aismap
+
+    if {![string is integer $map_id] || $map_id < 0 || $name == "" || ![string is integer $image_load_id] || $image_load_id < 1} {
+      snowmix message "AISMapCreateMap failed to create map"
+      return
+    }
+    if {![ImageInfo exist $image_load_id]} {
+      snowmix message "AISMapCreateMap failed. image load $image_load_id does not exist."
+      return
+    }
+    set geometry [ImageInfo geometry $image_load_id]
+    set width [lindex $geometry 0]
+    set height [lindex $geometry 1]
+    set aismap(name,map,$map_id) $name
+    set aismap(image_id,map,$map_id) $image_load_id
+    set aismap(width,map,$map_id) $width
+    set aismap(height,map,$map_id) $height
+    set aismap(vessels,map,$map_id) ""
+
+    if { $long1 < 0 } { set long1 [expr -$long1] }
+    if { $long2 < 0 } { set long2 [expr -$long2] }
+    if { $lat1 < 0 } { set lat1 [expr -$lat1] }
+    if { $lat2 < 0 } { set lat2 [expr -$lat2] }
+    if { $long1 > $long2 } { set tmp $long1 ; set long1 $long2 ; set long2 $tmp }
+    if { $lat1 > $lat2 } { set tmp $lat1 ; set lat1 $lat2 ; set lat2 $tmp }
+    # long and lat are now positive and long1/lat1 are less than long2/lat2
+    set aismap(long1,map,$map_id) $long1
+    set aismap(long2,map,$map_id) $long2
+    set aismap(deltalong,map,$map_id) [expr ($long2 - $long1) / $width]
+    set aismap(lat1,map,$map_id) $lat1
+    set aismap(lat2,map,$map_id) $lat2
+    set aismap(deltalat,map,$map_id) [expr ($lat2 - $lat1) / $height]
+    set aismap(rect,map,$map_id) "[expr -5.0/$width] [expr -5.0/$height] [expr 10.0/$width] [expr 10.0/$height]"
+    if {[lsearch $aismap(maps) $map_id] < 0} { lappend aismap(maps) $map_id }
+  }
+
+  proc AISMapDelVessel4Map { map_id mmsi } {
+    global aismap
+
+    set n [lsearch $aismap(vessels,map,$map_id) $mmsi]
+    if {$n < 0} {
+      puts "AISMapDelVessel4Map vessel $aismap(vessel,name,$mmsi) was not present on map $map_id"
+      return
+    }
+    # Now delete vessel on vessel shape list
+    foreach aismap_id $aismap(aismaps) {
+      if {$aismap(map,aismap,$aismap_id) != $map_id} continue
+      set i [expr 1 + $n * 3]
+      set s "shape moveentry $aismap(vessel_shape_id,aismap,$aismap_id) $i\n"
+      append s "shape moveentry $aismap(vessel_shape_id,aismap,$aismap_id) $i\n"
+      append s "shape moveentry $aismap(vessel_shape_id,aismap,$aismap_id) $i\n"
+      snowmix parse $s
+    }
+    # Remove vessel from map list
+    set aismap(vessels,map,$map_id) [lreplace $aismap(vessels,map,$map_id) $n $n]
+    return
+  }
+
+  proc AISMapAddVessel2Map { map_id mmsi } {
+    global aismap
+
+    if {[lsearch $aismap(vessels,map,$map_id) $mmsi] > -1} {
+      puts "AISMapAddVessel2Map vessel $aismap(vessel,name,$mmsi) was already added to map $map_id"
+      return
+    }
+    lappend aismap(vessels,map,$map_id) $mmsi
+    set aismap(vessel,map,coor,$map_id,$mmsi) [AISMapCalculateCoors $map_id $mmsi 10 10]
+puts "Adding $aismap(vessel,name,$mmsi) to map $map_id coors $aismap(vessel,map,coor,$map_id,$mmsi) $aismap(vessel,long,$mmsi) $aismap(vessel,lat,$mmsi)"
+    foreach aismap_id $aismap(aismaps) {
+      if {$aismap(map,aismap,$aismap_id) != $map_id} continue
+      set shape_id $aismap(vessel_shape_id,aismap,$aismap_id)
+      set s "shape moveto $shape_id $aismap(vessel,map,coor,$map_id,$mmsi)\n"
+      append s "shape inshape $shape_id 4\n"
+      append s "shape fill $shape_id\n"
+      snowmix parse $s
+    }
+    return
+  }
+
+  proc AISMapCalculateCoors { map_id mmsi scale_long scale_lat } {
+    global aismap
+
+    set x [expr ($aismap(vessel,long,$mmsi) - $aismap(long1,map,$map_id)) / ($scale_long * $aismap(deltalong,map,$map_id))]
+    set y [expr ($aismap(lat2,map,$map_id) - $aismap(vessel,lat,$mmsi)) / ($scale_lat * $aismap(deltalat,map,$map_id))]
+    return "$x $y"
+  }
+
+  # 12.583523 55.708709 13.009077 55.573542
+  proc AISMapOnMap { map_id long lat } {
+    global aismap
+
+    if {![info exist aismap(name,map,$map_id)]} { return 0 }
+    if {$long < $aismap(long1,map,$map_id) || $long > $aismap(long2,map,$map_id) || $lat < $aismap(lat1,map,$map_id) || $lat > $aismap(lat2,map,$map_id)} { return 0 }
+    return 1
+  }
+
+  proc AISMapAddMap2AISMap { aismap_id map_id } {
+    global aismap
+
+    if {![info exist aismap(name,aismap,$aismap_id)] || ![info exist aismap(name,map,$map_id)]} {
+      snowmix message "AISMapAddMap2AISMap failed. aismap $aismap_id or map $map_id does not exist."
+      return
+    }
+    set aismap(map,aismap,$aismap_id) $map_id
+    set width $aismap(width,aismap,$aismap_id)
+    set height $aismap(height,aismap,$aismap_id)
+    set scale_x [expr -double($width) / $aismap(width,map,$map_id)]
+    set scale_y [expr -double($height) / $aismap(height,map,$map_id)]
+    set xoff [expr -$aismap(width,map,$map_id)/2.0]
+    set yoff [expr -$aismap(height,map,$map_id)/2.0]
+
+    set shape_id $aismap(shape_id,aismap,$aismap_id)
+    set vessel_shape_id $aismap(vessel_shape_id,aismap,$aismap_id)
+    set vessel_size $aismap(vessel_size,aismap,aismap_id)
+    # This either creates or delete/creates the shape
+    set s "shape add $shape_id AISMap $aismap(name,map,$map_id) - aismap $aismap_id\n"
+    set s "shape add $vessel_shape_id AISMap $aismap(name,map,$map_id) Vessel List - aismap $aismap_id\n"
+    append s "shape moveto $shape_id 0 0\n"
+    append s "shape inshape $shape_id 2\n"
+    append s "shape clip $shape_id\n"
+    append s "shape newpath $shape_id\n"
+    append s "shape image $shape_id $aismap(image_id,map,$map_id) $xoff $yoff $scale_x $scale_y\n"
+    append s "shape paint $shape_id 1\n"
+    append s "shape source rgb $shape_id 1 1 0\n"
+    append s "shape translate $shape_id -0.5 -0.5\n"
+    append s "shape scale $shape_id [expr $vessel_size/$aismap(width,map,$map_id)] [expr $vessel_size/$aismap(height,map,$map_id)]\n"
+    append s "shape inshape $shape_id $vessel_shape_id\n"
+
+    append s "shape source rgb $shape_id 0.2 0.2 1.0\n"
+    append s "shape moveto $shape_id 0 36\n"
+    append s "shape inshape $shape_id 4\n"
+    append s "shape fill $shape_id\n"
+
+    append s "shape moveto $shape_id 32 36\n"
+    append s "shape inshape $shape_id 4\n"
+    append s "shape fill $shape_id\n"
+#    append s "shape scale $shape_id [expr 1280/10.0] [expr 720/10.0]\n"
+
+    append s "shape moveto $shape_id 64 0\n"
+    append s "shape inshape $shape_id 4\n"
+    append s "shape fill $shape_id\n"
+    append s "shape moveto $shape_id 64 18\n"
+    append s "shape inshape $shape_id 4\n"
+    append s "shape fill $shape_id\n"
+    append s "shape moveto $shape_id 64 36\n"
+    append s "shape inshape $shape_id 4\n"
+    append s "shape fill $shape_id\n"
+    append s "shape moveto $shape_id 64 56\n"
+    append s "shape inshape $shape_id 4\n"
+    append s "shape fill $shape_id\n"
+    append s "shape moveto $shape_id 64 72\n"
+    append s "shape inshape $shape_id 4\n"
+    append s "shape fill $shape_id\n"
+
+    append s "shape moveto $shape_id 96 36\n"
+    append s "shape inshape $shape_id 4\n"
+    append s "shape fill $shape_id\n"
+
+    append s "shape moveto $shape_id 128 36\n"
+    append s "shape inshape $shape_id 4\n"
+    append s "shape fill $shape_id\n"
+#    append s "shape moveto $shape_id -0.4 0\n"
+#    append s "shape scale $shape_id [expr 15.0/1280] [expr 15.0/720]\n"
+#    append s "shape inshape $shape_id 4\n"
+#    append s "shape fill $shape_id\n"
+#    append s "shape scale $shape_id [expr 1280/15.0] [expr 720/15.0]\n"
+
+#    append s "shape translate $shape_id 0 0\n"
+#    append s "shape rectangle $shape_id $aismap(rect,map,$map_id)\n"
+#    append s "shape fill $shape_id\n"
+#    append s "shape translate $shape_id 0 0\n"
+    snowmix parse $s
+    return
+  }
+
+  proc AISMapVesselName { mmsi name args } {
+    global aismap
+
+    if {![info exist aismap(vessel,$mmsi)]} {
+#      puts "Skipping vessel $name"
+      return
+    }
+    if {![info exist aismap(vessel,name,$mmsi)]} {
+      puts "Learned vessel name $name"
+      set aismap(vessel,name,$mmsi) $name
+      return
+    }
+    if { $name != $aismap(vessel,name,$mmsi) } {
+      puts "Vessel changed name from $aismap(vessel,name,$mmsi) to $name"
+      set aismap(vessel,name,$mmsi) $name
+    } else {
+      #puts "Already knew vessel $name"
+    }
+    return
+  }
+  
+
+  # print "%-12d  %12.7f  %12.7f %3d  %3d" % (mmsi, blon, blat, speed, heading)
+  proc AISMapVesselCoor { mmsi long lat speed heading } {
+    global aismap
+
+    set time_now [clock seconds]
+    set on_map_list ""
+    foreach map_id $aismap(maps) {
+      if {[AISMapOnMap $map_id $long $lat]} { lappend on_map_list $map_id }
+    }
+    if { $on_map_list == "" } {
+      if {[info exist aismap(vessel,$mmsi)]} {
+        foreach map_id $aismap(maps) {
+          AISMapDelVessel4Map $map_id $mmsi
+        }
+        puts "Vessel $aismap(vessel,name,$mmsi) left map/maps"
+        unset -nocomplain aismap(vessel,$mmsi) aismap(vessel,long,$mmsi) aismap(vessel,lat,$mmsi) aismap(vessel,head,$mmsi) aismap(vessel,name,$mmsi)
+        incr aismap(vessel_count) -1
+set aismap_id 1
+        snowmix parse "text string $aismap(string_id,aismap,$aismap_id) Vessels Displayed : $aismap(vessel_count)"
+      }
+      return
+    }
+    
+    if {[info exist aismap(vessel,$mmsi)]} {
+      # puts "Known vessel $aismap(vessel,name,$mmsi) : Vessels = $aismap(vessel_count)"
+      if { $long != $aismap(vessel,long,$mmsi) || $lat != $aismap(vessel,lat,$mmsi) || $heading != $aismap(vessel,head,$mmsi) } {
+        if { $long != $aismap(vessel,long,$mmsi) || $lat != $aismap(vessel,lat,$mmsi) } { puts "Vessel $aismap(vessel,name,$mmsi) changed state" }
+        set delta_long [expr $aismap(equatorial,1deg) * ($aismap(vessel,long,$mmsi) - $long)]
+        set delta_lat [expr $aismap(meridinal,1deg) * ($aismap(vessel,lat,$mmsi) - $lat)]
+        set distance [expr 3600 * sqrt($delta_long * $delta_long + $delta_lat * $delta_lat)]
+        set delta_time [expr ($time_now - $aismap(vessel,last_time,$mmsi))]
+#puts "distance $distance time $delta_time"
+        if {$delta_time > 0} {
+          set aismap(vessel,speed,$mmsi) [format "%.1f" [expr $distance / (1.852 * $delta_time)]]
+          if { $aismap(vessel,speed,$mmsi) < 0.1 } { set aismap(vessel,speed,$mmsi) 0 }
+        } else {
+          set aismap(vessel,speed,$mmsi) 0
+        }
+        set aismap(vessel,long,$mmsi) $long
+        set aismap(vessel,lat,$mmsi) $lat
+        set aismap(vessel,head,$mmsi) $heading
+        set aismap(vessel,speed2,$mmsi) $speed
+        foreach map_id $on_map_list {
+          AISMapDelVessel4Map $map_id $mmsi
+          AISMapAddVessel2Map $map_id $mmsi
+        }
+      }
+#puts "Speed $aismap(vessel,speed,$mmsi)"
+      set aismap(vessel,last_time,$mmsi) $time_now
+    } else {
+      # Vessel does not exist in lists
+      # puts "New vessel id $mmsi : Vessels = [expr $aismap(vessel_count) + 1]"
+      set aismap(vessel,$mmsi) $mmsi
+      set aismap(vessel,long,$mmsi) $long
+      set aismap(vessel,lat,$mmsi) $lat
+      set aismap(vessel,head,$mmsi) $heading
+      set aismap(vessel,name,$mmsi) $mmsi
+      set aismap(vessel,last_time,$mmsi) $time_now
+      set aismap(vessel,speed,$mmsi) 0
+      set aismap(vessel,speed2,$mmsi) $speed
+
+      incr aismap(vessel_count)
+set aismap_id 1
+      snowmix parse "text string $aismap(string_id,aismap,$aismap_id) Vessels Displayed : $aismap(vessel_count)"
+      foreach map_id $on_map_list {
+        AISMapAddVessel2Map $map_id $mmsi
+      }
+    }
+    #set aismap(vessel_list,aismap,$aismap_id) ""
+    return
+  }
+
+  proc AISMapInit {} {
+    global aismap system
+
+    # List of aismaps and maps created
+    set aismap(aismaps) ""
+    set aismap(maps) ""
+    set aismap(vessel_count) 0
+    set aismap(vessel_size) 10.0
+    set aismap(equatorial,diameter) 40075.017
+    set aismap(meridinal,diameter) 40007.86
+    set aismap(equatorial,1deg) [expr $aismap(equatorial,diameter) / 360]
+    set aismap(meridinal,1deg) [expr $aismap(meridinal,diameter) / 360]
+
+    if {[llength [info proc SceneAddFrameType]]} {
+      SceneAddFrameType aismap  AISMapInfo
+    } else {
+      snowmix message "aismaps.slib : WARNING. Could not add aismap type to scene frame types"
+    }
+
+    #set feed(buttons) {{FeedDisplayName binary {Show Name} {Hide Name}}}
+    #lappend feed(buttons) {FeedDisplayTime binary {Show Time} {Hide Time}}
+    set aismap(buttons) ""
+
+    snowmix message "aismaps.slib\ : AISMaps initialized."
+    return
+  }
+
+  # commands : overlay_proc | exist id | geometry id | list | shape
+  proc AISMapInfo { command args } {
+    global aismap
+
+    # overlay_proc
+    if {[string match overlay_proc $command]} {
+      # Return overlay function for AISMap
+      return AISMapOverlay
+
+    # exist <aismap id>
+    } elseif {[string match exist $command] && [llength $args] > 0} {
+      set id [lindex $args 0]
+      if {![string is integer -strict $id] || $id < 0} { return 0 }
+      if {[info exist aismap(name,aismap,$id)]} { return 1 } else { return 0 }
+    } elseif {[string match geometry $command] && [llength $args] > 0} {
+      set id [lindex $args 0]
+      if {![string is integer -strict $id] || $id < 0 || ![info exist aismap(name,aismap,$id)]} { return }
+      return "$aismap(width,aismap,$id) $aismap(height,aismap,$id)"
+    } elseif {[string match list $command]} {
+      # return list of maps identified by their ID
+      return $aismap(aismaps)
+    } elseif {[string match shape $command] && [llength $args] > 0} {
+      set id [lindex $args 0]
+      if {[info exist aismap(shape_id,aismap,$id)]} { return $aismap(shape_id,aismap,$id) }
+      return -1
+    } elseif {[string match buttons $command]} {
+      # Return list of buttons if any
+      return $aismap(buttons)
+    }
+    return 0
+  }
+
+  # Overlay AISMap
+  proc AISMapOverlay { aismap_id x y width height args } {
+    global aismap
+
+    set map_id $aismap(map,aismap,$aismap_id)
+    if {$args != ""} { set alpha [lindex $args 0] } else { set alpha 1 }
+
+#puts "AISMAP UPDATE"
+#puts " $aismap(text_id,aismap,$aismap_id)"
+    snowmix parse "text align $aismap(text_id,aismap,$aismap_id) right top\ntext coor $aismap(text_id,aismap,$aismap_id) [expr $x + $width - 5] [expr $y + 5]\ntext overlay $aismap(text_id,aismap,$aismap_id)"
+
+    set string_id $aismap(vessel_string_id,aismap,$aismap_id)
+    set text_id $aismap(vessel_text_id,aismap,$aismap_id)
+    set alphatext ""
+    if { $width != 1280 } { set scale_x [expr 10 * $width / 1280.0] } else { set scale_x 10 }
+    if { $height != 720 } { set scale_y [expr 10 * $height / 720.0] } else { set scale_y 10 }
+    snowmix parse "text clipabs $text_id $x $y $width $height\n"
+    foreach mmsi $aismap(vessels,map,$map_id) {
+      if { $aismap(vessel,speed,$mmsi) < 0.2 } {
+        set text "$aismap(vessel,name,$mmsi) \\nH: $aismap(vessel,head,$mmsi)°"
+      } else {
+        set text "$aismap(vessel,name,$mmsi)\\nH: $aismap(vessel,head,$mmsi)° at $aismap(vessel,speed2,$mmsi) kn"
+      }
+      snowmix parse "text string $string_id $text"
+      set coors $aismap(vessel,map,coor,$map_id,$mmsi)
+      set text_x [expr $x + round($scale_x * [lindex $coors 0])]
+      set text_y [expr $y + round($scale_y * [lindex $coors 1])]
+      #puts "text coor $text_id $text_x $text_y \ntext overlay $text_id"
+      if { $alpha < 1 } { set $alphatext "\ntext alpha $text_id $alpha\n" } 
+      snowmix parse "text coor $text_id $text_x $text_y\ntext overlay $text_id $alphatext"
+    }
+
+    if {$map_id < 0} return
+    return
+
+    set tmp $aismap(vessels,map,$map_id)
+    set aismap(vessels,map,$map_id) ""
+    snowmix parse "shape add $aismap(vessel_shape_id,aismap,$aismap_id) AISMap Vessels - aismap $aismap_id"
+    foreach mmsi $tmp {
+      AISMapAddVessel2Map $map_id $mmsi
+    }
+#puts "OVERLAY $aismap_id $map_id"
+    return
+  }
+
+  AISMapInit
+  snowmix message "aismaps.slib : Library loaded."
+command end
+
+tcl exec aismaps.tcl
+tcl eval AISMapCreate 1 "Map 1"
+tcl eval AISMapCreate 2 "Map 2"
+tcl eval AISMapCreateMap 1 "Copenhagen" 24 12.583523 55.708709 13.009077 55.573542
+#tcl eval AISMapCreateMap 2 "Bornholm" 3 -12.583523 55.708709 -13.009077 55.573542
+tcl eval AISMapAddMap2AISMap 1 1
+#tcl eval AISMapAddMap2AISMap 2 2

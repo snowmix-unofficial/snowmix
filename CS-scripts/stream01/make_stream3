@@ -1,0 +1,296 @@
+#!/bin/bash
+#
+# ################### Settings to be changed ####################
+#
+# Settings for Snowmix. IP and port address for running Snowmix
+ip=127.0.0.1
+port=9999
+
+# Audio feed id for audio in Snowmix
+audio_sink_id=1
+
+# Script with gstreamer version dependent settings
+GSTREAMER_SETTINGS=$SM/scripts/gstreamer-settings
+SNOWMIX_SETTINGS=$SM/scripts/snowmix-settings
+# ################### Settings to be changed ####################
+
+date=`date`
+
+if [ $# != 1 ] ; then
+  echo "Parameter error $# : $0 $*"
+  echo "Usage : $0 you | ustream"
+  exit
+fi
+
+pid_dir=/var/run/stream
+if [ ! -d $pid_dir -o ! -w $pid_dir ] ; then
+  echo 'Missing directory or not writable : '$pid_dir
+  exit
+fi
+
+basename=`basename $0`
+pid_file=$pid_dir/$basename.$$
+ppid=`ps --pid $$ fj | tail -n +2 | awk '{printf("%s", $3)}'`
+echo $$ >$pid_file
+echo $date >>$pid_file
+echo "command : $0 $*" >>$pid_file
+echo "ppid    : $ppid" >>$pid_file
+echo "kill : kill -- -$ppid" >>$pid_file
+
+# Load Gstreamer version dependent settings
+if [ ! -f $GSTREAMER_SETTINGS ] ; then
+  echo 'Can not find gstreamer-settings'
+  exit 1
+else
+  . $GSTREAMER_SETTINGS
+fi
+
+# Load Snowmix dependent settings
+if [ ! -f $SNOWMIX_SETTINGS ] ; then
+  echo 'Can not find snowmix-settings'
+  exit 1
+else
+  . $SNOWMIX_SETTINGS
+fi
+
+##################################################################################
+export VIDEOSRC='shmsrc socket-path='$ctrsocket' do-timestamp=true is-live=true'
+export X264SETTINGS='bitrate=4000 tune=zerolatency speed-preset=5'
+
+DATE=`date '+%y%m%d'`
+RECORD=/var/www/recordings/$DATE
+DATETIME=$DATE-`date '+%H:%M:%S.%N' | cut -c1-12`
+if [ ! -d $RECORD ] ; then
+  mkdir $RECORD
+  if [ ! -d $RECORD ] ; then
+    echo "$$ : Failed to create record directory $RECORD"
+    exit 1
+  fi
+fi
+RECORDFILE=$RECORD/video-out-$DATETIME
+
+if [ X$aac_encoder = Xfaac ] ; then
+  audioencoder="faac bitrate=128000 profile=LC outputformat=0"
+else
+  if [ X$aac_encoder = Xfaac ] ; then
+    audioencoder="avenc_aac bitrate=128000"
+  else
+    audioencoder=""
+  fi
+fi
+
+case $1 in
+  you|youtube)
+	datarate=`cat $SM/CS-scripts/stream01/datarate_youtube`
+	if [ X$datarate = X ] ; then datarate=4128 ; fi
+	# First Camera
+	auth='copsub.5zuw-3vx2-gs8a-ekt5'
+	# Second Camera
+	auth2='copsub.ps50-ssk8-5egv-aem5'
+	app='live2'
+	serverurl='rtmp://a.rtmp.youtube.com/'$app
+	flashver='FME/3.0%20(compatible;%20FMSc%201.0)'
+	backup=rtmp://b.rtmp.youtube.com/live2?backup=1
+	#GST_DEBUG="--gst-debug=flvmux:4,rtmpsink:4"
+	framerate='24/1'
+	vbitrate=4000
+	abitrate=128000
+	datarate=`echo "$vbitrate + $abitrate / 1000" |bc`
+	echo $datarate >$SM/CS-scripts/stream01/datarate_youtube
+	ENCAUDIOFORMAT='audio/mpeg,mpegversion=4, stream-format=raw'
+	videoencoder="x264enc pass=cbr threads=0 bitrate=$vbitrate bframes=0 byte-stream=false aud=true tune=zerolatency key-int-max=0 speed-preset=6"
+	#videoencoder="x264enc bitrate=$vbitrate bframes=0 byte-stream=false aud=true tune=zerolatency"
+	videomode='video/x-h264, level=(string)4.1, profile=main'
+	location=$serverurl'/x/'$auth'?videoKeyframeFrequency=1&totalDatarate='$datarate' app='$app' flashVer='$flashver' swfUrl='$serverurl
+
+	;;
+  ustream)
+	GST_DEBUG=""
+	width=1024
+	height=576
+	framerate='25/1'
+	videoencoder="x264enc bitrate=500 bframes=0"
+	videomode='queue'
+	ENCAUDIOFORMAT='audio/mpeg'
+	audioencoder="lame mode=3 bitrate=64"
+	audioencoder="lamemp3enc bitrate=64"
+	location="rtmp://1.11788764.fme.ustream.tv/ustreamVideo/11788764/HyYgjUqdwAeY4vFJVrMC4wyAQPxJ6f4t live=1 flashver=FME/3.0\20(compatible;\20FMSc\201.0)"
+	;;
+  *)	echo 'Use youtube or ustream'
+	exit
+esac
+
+gstreamer_pipelines2()
+{
+  ( echo 'audio sink ctr isaudio 1' ; sleep 100000000 ) | \
+    /bin/nc 127.0.0.1 9999	| \
+     (head -1
+      $gstlaunch -v -e $GST_DEBUG		 \
+	$VIDEOSRC				!\
+	$MIXERFORMAT				!\
+	queue max-size-buffers=50 max-size-bytes=0 max-size-time=0 	!\
+	$VIDEOCONVERT				!\
+	$videoencoder				!\
+	queue					!\
+	tee name=vid 				!\
+	"$videomode"				!\
+	queue					!\
+	mux. fdsrc fd=0				!\
+	$AUDIOFORMAT				!\
+	queue 					!\
+	tee name=rawaudio			!\
+	queue 					!\
+	$audioencoder				!\
+	$ENCAUDIOFORMAT				!\
+	tee name=aud				!\
+	queue					!\
+	flvmux streamable=true name=mux		!\
+	queue name=flvqueue			!\
+	tcpserversink port=5011	name=flvserver sync-method=2 aud.		!\
+	queue					!\
+	tsmuxer. vid.				!\
+	queue					!\
+	h264parse				!\
+	mpegtsmux name=tsmuxer			!\
+	mpegtsparse				!\
+	tee name=avts				!\
+	queue 					!\
+	tcpserversink port=5010 sync-method=2 avts. !\
+	queue 					!\
+	filesink location=$RECORDFILE.ts rawaudio. !\
+	queue 					!\
+	lamemp3enc bitrate=64			!\
+	queue 					!\
+	'audio/mpeg'				!\
+	flvmux streamable=true name=ustreammux	!\
+	queue 					!\
+	tcpserversink port=5012	name=ustreamflvserver sync-method=2 vid. !\
+	h264parse				!\
+	ustreammux.
+
+      )
+}
+gstreamer_pipelines3()
+{
+  ( echo 'audio sink ctr isaudio 1' ; sleep 100000000 ) | \
+    /bin/nc 127.0.0.1 9999	| \
+     (head -1
+      $gstlaunch -v -e $GST_DEBUG		 \
+	$VIDEOSRC				!\
+	$MIXERFORMAT				!\
+	queue leaky=2 max-size-buffers=60 max-size-bytes=0 max-size-time=0 	!\
+	$VIDEOCONVERT				!\
+	$videoencoder				!\
+	queue					!\
+	tee name=vid 				!\
+	"$videomode"				!\
+	queue					!\
+	mux. fdsrc fd=0 do-timestamp=false	!\
+	$AUDIOFORMAT				!\
+	queue leaky=2				!\
+	tee name=rawaudio			!\
+	queue 					!\
+	$audioencoder				!\
+	$ENCAUDIOFORMAT				!\
+	tee name=aud				!\
+	queue					!\
+	flvmux streamable=true name=mux		!\
+	queue leaky=2				!\
+	tcpserversink port=5011	name=flvserver sync-method=2 aud.		!\
+	queue					!\
+	tsmuxer. vid.				!\
+	queue					!\
+	h264parse				!\
+	mpegtsmux name=tsmuxer			!\
+	mpegtsparse				!\
+	tee name=avts				!\
+	queue 					!\
+	tcpserversink port=5010 sync-method=2 avts. !\
+	queue leaky=2				!\
+	filesink location=$RECORDFILE.ts rawaudio. !\
+	queue 					!\
+	lamemp3enc bitrate=64			!\
+	queue 					!\
+	'audio/mpeg'				!\
+	flvmux streamable=true name=ustreammux	!\
+	queue leaky=2 				!\
+	tcpserversink port=5012	name=ustreamflvserver sync-method=2 vid. !\
+	h264parse				!\
+	ustreammux.
+
+      )
+}
+gstreamer_pipelines4()
+{
+  ( echo 'audio sink ctr isaudio 1' ; sleep 100000000 ) | \
+    /bin/nc 127.0.0.1 9999	| \
+     (head -1
+      $gstlaunch -v -e $GST_DEBUG		 \
+	$VIDEOSRC				!\
+	$MIXERFORMAT				!\
+	queue leaky=2 max-size-buffers=50 max-size-bytes=0 max-size-time=0 	!\
+	$VIDEOCONVERT				!\
+	$videoencoder				!\
+	tee name=vid 				!\
+	"$videomode"				!\
+	muxer. fdsrc fd=0 do-timestamp=false	!\
+	$AUDIOFORMAT				!\
+	tee name=rawaudio			!\
+	queue leaky=2 				!\
+	$audioencoder				!\
+	$ENCAUDIOFORMAT				!\
+	tee name=aud				!\
+	queue					!\
+	mpegtsmux name=tsmuxer			!\
+	mpegtsparse				!\
+	tcpserversink port=5010 sync-method=2 vid. !\
+	queue					!\
+	h264parse				!\
+	tsmuxer. 				\
+	queue name=muxer			!\
+	filesink location=/dev/null
+exit
+	
+
+
+	flvmux streamable=true name=mux		!\
+	queue leaky=2				!\
+	tcpserversink port=5011	name=flvserver sync-method=2 aud.		!\
+	queue					!\
+	tsmuxer. vid.				!\
+	queue					!\
+	h264parse				!\
+	mpegtsmux name=tsmuxer			!\
+	mpegtsparse				!\
+	tee name=avts				!\
+	queue 					!\
+	tcpserversink port=5010 sync-method=2 avts. !\
+	queue leaky=2				!\
+	filesink location=$RECORDFILE.ts rawaudio. !\
+	queue 					!\
+	lamemp3enc bitrate=64			!\
+	queue 					!\
+	'audio/mpeg'				!\
+	flvmux streamable=true name=ustreammux	!\
+	queue leaky=2 				!\
+	tcpserversink port=5012	name=ustreamflvserver sync-method=2 vid. !\
+	h264parse				!\
+	ustreammux.
+
+      )
+}
+
+while true ; do
+  snowmix=`netstat -na |grep ':9999 ' |grep LISTEN |cut -c1-3`
+ # snowmix=`ps a |cut -c28-37 | grep snowmix | head -1`
+  if [ X$snowmix = X ] ; then
+    echo "$$ : Snowmix is not running. Sleeping"
+    sleep 2
+    continue
+  fi
+  break
+done
+
+gstreamer_pipelines3
+
+exit

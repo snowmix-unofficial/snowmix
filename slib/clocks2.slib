@@ -1,0 +1,775 @@
+# Text Clock22 Settings
+# Copyright by Peter Maersk-Moller 2012-2014 - All rights reserved
+# verbose
+#require version 0.4.4
+require version 0.5.1
+
+###################################
+# Global variables : clock2()
+# Requirement	: system.slib
+#
+# Functions for TextClock2
+# TextClock2Init {} : Initializes the TextClock2
+# TextClock2CalculateGeometry { clock_id } : Calculate the geometry of clock. Auto executed
+# TextClock2CleanUp { clock_id } : Clean up and delete a clock
+# TextClock2Create { name clock_id font_id } : Create a clock2. Uses 6 strings and 6 placed texts
+# TextClock2Info { command args } : Return info for clock
+# TextClock2RGB { clock_id red green blue } : Set the color for text clock2
+# TextClock2Alpha { clock_id alpha } : Set the alpha level for text clock2
+# TextClock2Place { clock_id x y } : Placing/moving the clock2
+# TextClock2FrameRate {} : Called by the overlay pre at frame rate
+# TextClock2Spacing { clock_id space1 space2 } : Set spacing after label and between colons
+# TextClock2Padding { clock_id left right top bottom } : Sets padding left, right, top, bottom
+# TextClock2BackgroundRGBA { clock_id red green blue alpha } : Set background color and alpha
+# TextClock2Run { clock_id run } : Counter Start/stop the clock2. run=0 Stop, run=1 Run
+# TextClock2Dir { clock_id dir } : Counter direction. dir=1 Up, dir=0 Down.
+# TextClock2Localtime { clock_id localtime } : Show localtime localtime=1 or counter localtime=0
+# TextClock2Overlay { clock_id x y width height args } : Overlay functions called by Scenes
+# TextClock2SetCounter { clock_id hours mins seconds } : Set the counter hour, minute and second values
+
+# toggle : Togglefunction toggle Text0 Text1
+# buttonname type
+
+# These functions are not to be used
+#
+# TextClock2Font { clock_id font_id } : Change text font for a clock2
+# TextClock2Background { clock_id red green blue alpha } : Set the color/alpha for background
+# TextClock2ChangeLabel { clock_id text } : Set the label text
+# TextClock2AddLabel { clock_id text } : Add/Change the label
+# TextClock2Second {} : Called every second to count
+# TextClock2Dim {clock_id dim } : Dim the clock2 DIm/hide dim=1 or Undim/Show dim=0
+# TextClock2Clip { clock_id clip } : Clip the clock2. Clip/hide clip=1 Unclip/Show clip=0
+# TextClock2sUpdate {} : Show/overlay the text clock2
+#############################################################
+command create libclock2.tcl
+
+  proc TextClock2Init {} {
+    global clock2 system
+    if {[info exist clock2(clocks)]} {
+      snowmix message Error : TextClock2Init called more than once.
+      return "\nTextClock2Init error\n"
+    }
+    set clock2(clocks) ""
+    set clock2(stringnames) "label hour colon1 minute colon2 second"
+    set clock2(stringlist) "L- 00 : 00 : 00"
+    set clock2(ratecounter) 0
+    set clock2(buttons) {{TextClock2Localtime binary {LocalTime/Counter} { Counter/LocalTime}}}
+    lappend clock2(buttons) {TextClock2Dir binary {Count Up/Down} {Count Down/Up}}
+    lappend clock2(buttons) {TextClock2Run binary {Start/Stop Counter} {Stop/Start Counter}}
+    lappend clock2(buttons) {TextClock2SetCounter time {Set}}
+    if {[info exist system(frame_rate)]} {
+      set clock2(framerate) [expr int($system(frame_rate))]
+    } else {
+      snowmix message "clocks2.slib : ERROR. system(framerate) is not set. Defaulting to 25"
+      set clock2(framerate) 25
+    }
+    Add2Update pre TextClock2FrameRate
+    if {[llength [info proc SceneAddFrameType]]} {
+      SceneAddFrameType clock2  TextClock2Info
+    } else {
+      snowmix message "clocks2.slib : WARNING. Could not add clock2 type to scene frame types"
+    }
+    return
+  }
+
+  proc TextClock2CleanUp { clock_id } {
+    if {![info exist clock2(name,$clock_id)]} return
+    unset clock2(name,$clock_id)
+    unset clock2(x,$clock_id)
+    unset clock2(y,$clock_id)
+    unset clock2(width,$clock_id)
+    unset clock2(height,$clock_id)
+    unset clock2(scale_x,$clock_id)
+    unset clock2(scale_y,$clock_id)
+    unset clock2(font_id,$clock_id)
+    unset clock2(shape_id,$clock_id)
+    unset clock2(textsizefind,$clock_id)
+
+    unset clock2(second,$clock_id)
+    unset clock2(minute,$clock_id)
+    unset clock2(hour,$clock_id)
+    unset clock2(countup,$clock_id)
+    unset clock2(run,$clock_id)
+    unset clock2(localtime,$clock_id)
+    unset clock2(tminus,$clock_id)
+    unset clock2(rgb,$clock_id)
+    unset clock2(rgb_back,$clock_id)
+    unset clock2(alpha,$clock_id)
+    unset clock2(alpha_back,$clock_id)
+    unset clock2(pad,$clock_id)
+    unset clock2(spacing,$clock_id)
+    foreach name $clock2(stringnames) {
+      unset clock2(geometry,$name,$clock_id)
+      unset clock2(offset,$name,$clock_id)
+      snowmix parse "text string $clock2(string_id,$name,$clock_id)"
+      unset clock2(string_id,$name,$clock_id)
+      snowmix parse "text place $clock2(place_id,$name,$clock_id)"
+      unset clock2(place_id,$name,$clock_id)
+    }
+    # more clean up
+  }
+
+  # label space2 hour space1 : space1 minute space1 : space1 second
+  # 123456789012345
+  # --------+-------
+  # L- 00 : 00 : 00
+  # calculates width and heights as well as offset of texts
+  proc TextClock2CalculateGeometry { clock_id } {
+    global clock2
+    set width 0
+    set height 0
+    set space1 [lindex $clock2(spacing,$clock_id) 0]
+    set space2 [lindex $clock2(spacing,$clock_id) 1]
+    set pad_left [lindex $clock2(pad,$clock_id) 0]
+    set pad_right [lindex $clock2(pad,$clock_id) 1]
+    set pad_top [lindex $clock2(pad,$clock_id) 2]
+    set pad_bot [lindex $clock2(pad,$clock_id) 2]
+
+    foreach name $clock2(stringnames) {
+      set width [expr $width + [lindex $clock2(geometry,$name,$clock_id) 0]]
+      set h [lindex $clock2(geometry,$name,$clock_id) 1]
+      if { $h > $height } { set height $h }
+    }
+    if {$width > 0 && $height > 0} {
+      set spaces "$space2 $space1 $space1 $space1 $space1 0"
+      set yoff [expr $pad_top + $height / 2]
+      set w [expr $pad_left + $pad_right + 4 * $space1 + $space2]
+      set h [expr $pad_top + $pad_bot]
+      set clock2(width,$clock_id) [expr $width + $w]
+      set clock2(height,$clock_id) [expr $height + $h]
+      set xoff $pad_left
+      set i 0
+      foreach name $clock2(stringnames) {
+        set w [lindex $clock2(geometry,$name,$clock_id) 0]
+        set clock2(offset,$name,$clock_id) "[expr $xoff + $w / 2] $yoff"
+        set xoff [expr $xoff + $w + [lindex $spaces $i]]
+        incr i
+      }
+      puts "clocks2.slib :  clock $clock_id geometry $clock2(width,$clock_id)x$clock2(height,$clock_id)"
+      # Find left padding and width of first text placed
+      #set pad_left [lindex $clock2(pad,$clock_id) 0]
+      set name [lindex $clock2(stringnames) 0]
+      set stringw [lindex $clock2(geometry,$name,$clock_id) 0]
+      set pad_right [expr $clock2(width,$clock_id) - $pad_left - $stringw]
+      #set pad_top [lindex $clock2(pad,$clock_id) 2]
+      #set pad_bot [lindex $clock2(pad,$clock_id) 3]
+      
+      snowmix parse "text backgr $clock2(place_id,$name,$clock_id) $pad_left $pad_right $pad_top $pad_bot "
+
+      # Trigger a new placement
+puts "CLOCK at $clock2(x,$clock_id) $clock2(y,$clock_id)"
+      TextClock2Place $clock_id $clock2(x,$clock_id) $clock2(y,$clock_id)
+    }
+    return
+  }
+
+  # commands : exist id | geometry id | list | shape | overlay_proc
+  proc TextClock2Info { command args } {
+    global clock2
+    # exist <clock2 no>
+    if {[string match exist $command] && [llength $args] > 0} {
+      set clock_id [lindex $args 0]
+      if {![string is integer -strict $clock_id] || $clock_id < 0} { return 0 }
+      return [info exist clock2(name,$clock_id)]
+    # geometry <clock2 no>
+    } elseif {[string match geometry $command] && [llength $args] > 0} {
+      set clock_id [lindex $args 0]
+      if {![string is integer -strict $clock_id] || $clock_id < 0} { return }
+      if {![info exist clock2(width,$clock_id)]} return
+      return "$clock2(width,$clock_id) $clock2(height,$clock_id)"
+    } elseif {[string match list $command]} {
+      return $clock2(clocks)
+    } elseif {[string match shape $command] && [llength $args] > 0} {
+      set clock_id [lindex $args 0]
+      if {![string is integer -strict $clock_id] || $clock_id < 0} { return -1 }
+      if {![info exist clock2(shape_id,$clock_id)]} { return -1 }
+      return $clock2(shape_id,$clock_id)
+    } elseif {[string match buttons $command]} {
+      return $clock2(buttons)
+    } elseif {[string match overlay_proc $command]} {
+      return TextClock2Overlay
+    }
+    return 0
+  }
+
+  proc TextClock2Create { clock_name clock_id font_id } {
+    global clock2
+    if {[info exist clock2(name,$clock_id)]} {
+      snowmix message "TextClock2Create failed. Clock already created"
+      return
+    }
+    set clock2(name,$clock_id) $clock_name
+    set clock2(x,$clock_id) 0
+    set clock2(y,$clock_id) 0
+    set clock2(width,$clock_id) 1
+    set clock2(height,$clock_id) 1
+    set clock2(scale_x,$clock_id) 1
+    set clock2(scale_y,$clock_id) 1
+    set clock2(font_id,$clock_id) $font_id
+    set clock2(shape_id,$clock_id) -1
+    set clock2(textsizefind,$clock_id) ""
+
+    set clock2(second,$clock_id) 99
+    set clock2(minute,$clock_id) 99
+    set clock2(hour,$clock_id) 99
+    set clock2(countup,$clock_id) 0
+    set clock2(run,$clock_id) 0
+    set clock2(localtime,$clock_id) 1
+    set clock2(tminus,$clock_id) 1
+    set clock2(rgb,$clock_id) "1 1 1"
+    set clock2(rgb_back,$clock_id) "0 0 0"
+    set clock2(alpha,$clock_id) "1"
+    set clock2(alpha_back,$clock_id) "1"
+    set clock2(pad,$clock_id) "10 10 5 5"
+    set clock2(spacing,$clock_id) "2 10"
+
+    set fail 0
+    set i 0
+    foreach name $clock2(stringnames) {
+      set clock2(offset,$name,$clock_id) "0 0"
+      set clock2(geometry,$name,$clock_id) "0 0"
+      set clock2(string_id,$name,$clock_id) [ReserveNextAvail string [lindex $clock2(stringlist) $i]]
+      if {$clock2(string_id,$name,$clock_id) < 0} {
+        set fail 1
+        set clock2(place_id,$name,$clock_id) -1
+      } else {
+        set clock2(place_id,$name,$clock_id) [ReserveNextAvail placedtext $clock2(string_id,$name,$clock_id) $clock2(font_id,$clock_id)]
+        if {$clock2(place_id,$name,$clock_id) < 0} {
+          set fail 1
+        } else {
+          lappend clock2(textsizefind,$clock_id) [TextSizeFind [lindex $clock2(stringlist) $i] $clock2(font_id,$clock_id)]
+          snowmix parse "text align $clock2(place_id,$name,$clock_id) center middle"
+          snowmix parse "text rgb $clock2(place_id,$name,$clock_id) $clock2(rgb,$clock_id)"
+          # snowmix parse "text alpha $clock2(place_id,$name,$clock_id) $clock2(alpha,$clock_id)"
+          # snowmix parse "text backgr $clock2(place_id,$name,$clock_id) $clock2(pad,$clock_id) $clock2(rgb,$clock_id) $clock2(alpha,$clock_id)"
+        }
+      }
+      incr i
+    }
+    if { $fail } {
+      snowmix message "clocks2.slib : WARNING. Failed to get all clocks"
+      TextClock2CleanUp $clock_id
+    }
+
+    lappend clock2(clocks) $clock_id
+    return
+  }
+
+  proc TextClock2Place { clock_id x y } {
+    global clock2
+    if {![info exist clock2(name,$clock_id)] || ![string is integer -strict $x] || ![string is integer -strict $y]} {
+      snowmix message "TextClock2Place failed"
+      return
+    }
+    set clock2(x,$clock_id) $x
+    set clock2(y,$clock_id) $y
+#puts "TextClock2Place from $clock2(x,$clock_id),$clock2(y,$clock_id) to $x,$y"
+    foreach name $clock2(stringnames) {
+      set xpos [expr $x + [lindex $clock2(offset,$name,$clock_id) 0]]
+      set ypos [expr $y + [lindex $clock2(offset,$name,$clock_id) 1]]
+#puts "Text place coor $clock2(place_id,$name,$clock_id) $xpos $ypos"
+      snowmix parse "text coor $clock2(place_id,$name,$clock_id) $xpos $ypos"
+    }
+    return
+  }
+
+  # Set the alpha value for the clock2
+  proc TextClock2Alpha { clock_id alpha } {
+    global clock2
+    if {![info exist clock2(name,$clock_id)] || ![string is double -strict $alpha]} {
+      snowmix message "TextClock2Alpha failed"
+      return
+    }
+    if { $alpha > 1 } {
+      set alpha 1
+    } elseif { $alpha < 0 } {
+      set alpha 0
+    }
+    set clock2(alpha,$clock_id) $alpha
+    foreach name $clock2(stringnames) {
+      snowmix parse "text alpha $clock2(place_id,$name,$clock_id) $alpha"
+    }
+    return
+  }
+
+  # Set the the padding
+  proc TextClock2Padding { clock_id left right top bottom } {
+    global clock2
+    if {![info exist clock2(name,$clock_id)] || ![string is integer -strict $left] || ![string is integer -strict $right] || ![string is integer -strict $top] || ![string is integer -strict $bottom]} {
+      snowmix message "TextClock2Padding failed"
+      return
+    }
+    set clock2(pad,$clock_id) "$left $right $top $bottom"
+
+    # Check to see if we await finding the text size
+    if {![llength $clock2(textsizefind,$clock_id)]} {
+      # We are not awating text size finding so we can now calculate geometry and place text
+puts "Trigging Geometry calculation"
+      TextClock2CalculateGeometry $clock_id
+    }
+
+    return
+  }
+
+  # Set the the text spacing
+  # label space2 hour space1 : space1 minute space1 : space1 second
+  proc TextClock2Spacing { clock_id space1 space2 } {
+    global clock2
+    if {![info exist clock2(name,$clock_id)] || ![string is integer -strict $space1] || ![string is integer -strict $space2]} {
+      snowmix message "TextClock2Spacing failed"
+      return
+    }
+    set clock2(spacing,$clock_id) "$space1 $space2"
+
+    # Check to see if we await finding the text size
+    if {![llength $clock2(textsizefind,$clock_id)]} {
+      # We are not awating text size finding so we can now calculate geometry and place text
+puts "Trigging Geometry calculation"
+      TextClock2CalculateGeometry $clock_id
+    }
+
+    return
+  }
+
+
+  # Set the rgb value for the clock2
+  proc TextClock2RGB { clock_id red green blue} {
+    global clock2
+    if {![info exist clock2(name,$clock_id)] || ![string is double -strict $red]  || ![string is double -strict $blue] || ![string is double -strict $green]} {
+      snowmix message "TextClock2RGB failed"
+      return
+    }
+    if { $red > 1 } { set red 1 } elseif { $red < 0 } { set red 0 }
+    if { $green > 1 } { set green 1 } elseif { $green < 0 } { set green 0 }
+    if { $blue > 1 } { set blue 1 } elseif { $blue < 0 } { set blue 0 }
+    set clock2(rgb,$clock_id) "$red $green $blue"
+    foreach name $clock2(stringnames) {
+      snowmix parse "text rgb $clock2(place_id,$name,$clock_id) $clock2(rgb,$clock_id)"
+    }
+    return
+  }
+
+  proc TextClock2FrameRate {} {
+    global system clock2
+    incr clock2(ratecounter)
+
+    #set framerate [expr int($system(frame_rate))]
+    if { $clock2(ratecounter) >= $clock2(framerate) } {
+      set clock2(ratecounter) 0
+      set s ""
+      foreach clock_id $clock2(clocks) {
+        #append s [TextClock2SecondUpdate $clock_id]
+        TextClock2SecondUpdate $clock_id
+        # Check if text size find is awaiting
+        if {[llength $clock2(textsizefind,$clock_id)]} {
+          set i 0
+          set newlist ""
+          foreach seq_no $clock2(textsizefind,$clock_id) {
+            set name [lindex $clock2(stringnames) $i]
+            set geometry [TextSizeFound $seq_no]
+            if {[llength $geometry] > 1} {
+              # Geometry found
+              set clock2(geometry,$name,$clock_id) $geometry
+              #puts "$i name $name geometry $clock2(geometry,$name,$clock_id)"
+            } else {
+              lappend newlist $seq_no
+            }
+            incr i
+          }
+          set clock2(textsizefind,$clock_id) $newlist
+          if {![llength $newlist]} {
+            TextClock2CalculateGeometry $clock_id
+          }
+        }
+      }
+      # return "$s\n"
+      if {[string length $s] > 0} {
+        snowmix parse "$s"
+      }
+    }
+    return
+  }
+
+  # TextClock2Run clock_id [ run ]
+  proc TextClock2Run { clock_id args } {
+    global clock2
+    if {![info exist clock2(name,$clock_id)]} {
+      snowmix message "TextClock2Run failed"
+      return
+    }
+    if {[llength $args] == 0} {
+      return $clock2(run,$clock_id)
+    }
+    set run [lindex $args 0]
+    if {$run != 0} { set run 1 }
+    set clock2(run,$clock_id) $run
+    return
+  }
+
+  # TextClock2Localtime clock_id [ localtime ]
+  proc TextClock2Localtime { clock_id args } {
+    global clock2
+    if {![info exist clock2(name,$clock_id)]} {
+      snowmix message "TextClock2LocalTime failed"
+      return
+    }
+    if {[llength $args] == 0} {
+      return $clock2(localtime,$clock_id)
+    }
+    set localtime [lindex $args 0]
+    if {$localtime != 0} { set localtime 1 }
+    if {$localtime == $clock2(localtime,$clock_id)} return
+    set clock2(localtime,$clock_id) $localtime
+    if {$localtime} { set label "L-" } else {
+      if {$clock2(tminus,$clock_id)} { set label "T-" } else { set label "T+" }
+    }
+    snowmix parse "text string $clock2(string_id,label,$clock_id) $label"
+    if {!$localtime} {
+      TextClock2SetCounter $clock_id $clock2(hour,$clock_id) $clock2(minute,$clock_id) $clock2(second,$clock_id) 
+    }
+    return
+  }
+
+  # TextClock2Dir clock_id [ dir ]
+  proc TextClock2Dir { clock_id args } {
+    global clock2
+    if {![info exist clock2(name,$clock_id)]} {
+      snowmix message "TextClock2Dir failed"
+      return
+    }
+    if {[llength $args] == 0} {
+      return $clock2(countup,$clock_id)
+    }
+    set dir [lindex $args 0]
+    if {$dir != 0} { set dir 1 }
+    set clock2(countup,$clock_id) $dir
+    return
+  }
+
+  proc TextClock2BackgroundRGBA { clock_id red green blue alpha } {
+    global clock2
+    if {![info exist clock2(name,$clock_id)] || ![string is double -strict $red]  || ![string is double -strict $blue] || ![string is double -strict $green] || ![string is double -strict $alpha]} {
+      snowmix message "TextClock2BackgroundRGBA failed"
+      return
+    }
+    if { $red > 1 } { set red 1 } elseif { $red < 0 } { set red 0 }
+    if { $green > 1 } { set green 1 } elseif { $green < 0 } { set green 0 }
+    if { $blue > 1 } { set blue 1 } elseif { $blue < 0 } { set blue 0 }
+    if { $alpha > 1 } { set alpha 1 } elseif { $alpha < 0 } { set alpha 0 }
+    set clock2(rgb_back,$clock_id) "$red $green $blue"
+    set clock2(alpha_back,$clock_id) "$alpha"
+
+    # Find left padding and width of first text placed
+    #set pad_left [lindex $clock2(pad,$clock_id) 0]
+    set name [lindex $clock2(stringnames) 0]
+    #set stringw [lindex $clock2(geometry,$name,$clock_id) 0]
+    #set pad_right [expr $clock2(width,$clock_id) - $pad_left - $stringw]
+    #set pad_top [lindex $clock2(pad,$clock_id) 2]
+    #set pad_bot [lindex $clock2(pad,$clock_id) 3]
+    
+    snowmix parse "text backgr rgb $clock2(place_id,$name,$clock_id) $clock2(rgb_back,$clock_id) $clock2(alpha_back,$clock_id)"
+
+    return
+  }
+
+  proc TextClock2Overlay { clock_id x y width height args } {
+    global clock2
+    if {[llength $args]} {
+      set alpha [lindex $args 0]
+      if {!$alpha} return
+    } else { set alpha 1 }
+    if {![info exist clock2(name,$clock_id)]} return
+    if {$x != $clock2(x,$clock_id) || $y != $clock2(y,$clock_id)} {
+#puts "$x != $clock2(x,$clock_id) || $y != $clock2(y,$clock_id)"
+      TextClock2Place $clock_id $x $y
+    }
+    if {$clock2(width,$clock_id) < 2 && $clock2(height,$clock_id) < 2} return
+    set place_id_list ""
+    set commands ""
+    foreach name $clock2(stringnames) {
+      lappend place_id_list $clock2(place_id,$name,$clock_id)
+      append commands "text alpha $clock2(place_id,$name,$clock_id) $alpha\n"
+    }
+    append commands "text overlay $place_id_list\n"
+    snowmix parse $commands
+    return
+  }
+
+  # Set counter hour, minute and second
+  # TextClock2SetCounter { clock_id hours mins seconds }
+  proc TextClock2SetCounter { clock_id args } {
+    global clock2
+    if {![info exist clock2(name,$clock_id)]} {
+      snowmix message "TextClock2SetCounter failed"
+      return
+    }
+    if {[llength $args] == 3} {
+      set hours [lindex $args 0]
+      set mins [lindex $args 1]
+      set seconds [lindex $args 2]
+      if {![string is integer $hours] || ![string is integer $mins] || ![string is integer $seconds]} return
+      if {$hours < 0 || $mins < 0 || $seconds < 0} return
+    } else {
+      return "$clock2(hour,$clock_id) $clock2(minute,$clock_id) $clock2(second,$clock_id)"
+    }
+    if { $seconds > 59 } { set seconds 59
+    } elseif { $seconds < 0 } { set seconds 0 }
+    if { $mins > 59 } { set mins 59
+    } elseif { $mins < 0 } { set mins 0 }
+    if { $hours > 99 } { set hours 99
+    } elseif { $hours < 0 } { set hours 0 }
+    set clock2(second,$clock_id) $seconds
+    set clock2(minute,$clock_id) $mins
+    set clock2(hour,$clock_id) $hours
+    set s "text string $clock2(string_id,hour,$clock_id) [format "%02d" $hours]\n"
+    append s "text string $clock2(string_id,minute,$clock_id) [format "%02d" $mins]\n"
+    append s "text string $clock2(string_id,second,$clock_id) [format "%02d" $seconds]\n"
+    snowmix parse "$s"
+    return
+  }
+  
+
+####################################################
+
+  proc TextClock2ChangeLabel { clock_id text } {
+    global clock2
+    if {![info exist clock2(name,$clock_id)]} {
+      snowmix message "message TextClock2ChangeLabel failed"
+      #return "\nmessage TextClock2ChangeLabel failed\n"
+      return
+    }
+    # set s "\n"
+    if {[info exist clock2(label,string_id,$clock_id)]} {
+      # append s "text string $clock2(label,string_id,$clock_id) $text"
+      snowmix parse "text string $clock2(label,string_id,$clock_id) $text"
+    }
+    #return "$s\n"
+    return
+  }
+
+  proc TextClock2AddLabel { clock_id text } {
+    global clock2
+    if {![info exist clock2(name,$clock_id)]} {
+      snowmix message "message TextClock2AddLabel failed"
+      return
+    }
+    set string_id [GetNextAvail string]
+    if {![string is integer -strict $string_id]} {
+      snowmix message "WARNING: No available string id in TextClock2AddLabel"
+      return
+    }
+    set place_id [GetNextAvail placedtext]
+    if {![string is integer -strict $place_id]} {
+      snowmix message "WARNING: No available placed text id in TextClock2AddLabel"
+      return
+    }
+    set clock2(label,string_id,$clock_id) $string_id
+    set clock2(label,place_id,$clock_id) $place_id
+    set clock2(label,font_id,$clock_id) $clock2(font_id,$clock_id)
+    set y [expr round($clock2(y,$clock_id) - ($clock2(scale,$clock_id)+0.3)*$clock2(heightdigits))]
+    snowmix parse "text string $string_id $text"
+    snowmix parse "text place $place_id $string_id $clock2(font_id,$clock_id) $clock2(x,$clock_id) $y 1 1 1"
+    snowmix parse "text align $place_id right middle"
+    return
+  }
+
+  proc TextClock2SecondUpdate { clock_id } {
+    global clock2
+    if {![info exist clock2(name,$clock_id)]} {
+      snowmix message "TextClock2Second failed"
+      return
+    }
+    if {$clock2(run,$clock_id) != 1} {
+      return
+    }
+    set s ""
+    if {$clock2(localtime,$clock_id)} {
+      set a [clock format [clock seconds] -format "%H %M %S"]
+      set i 0
+      foreach name { hour minute second } {
+        #set clock2($name,$clock_id) [lindex $a $i]
+        #snowmix parse "text string $clock2(string_id,$name,$clock_id) $clock2($name,$clock_id)"
+        snowmix parse "text string $clock2(string_id,$name,$clock_id) [lindex $a $i]"
+        incr i
+      }
+    }
+    if {$clock2(countup,$clock_id) == 1 } {
+      # Count up
+      if {$clock2(second,$clock_id) < 59} {
+        incr clock2(second,$clock_id)
+      } else {
+        set clock2(second,$clock_id) 0
+        if {$clock2(minute,$clock_id) < 59} {
+          incr clock2(minute,$clock_id)
+        } else {
+          set clock2(minute,$clock_id) 0
+          if {$clock2(hour,$clock_id) < 99} {
+            incr clock2(hour,$clock_id)
+          } else {
+            set clock2(hour,$clock_id) 0
+          }
+          if { !$clock2(localtime,$clock_id) } {
+            snowmix parse "text string $clock2(string_id,hour,$clock_id) [format "%02d" $clock2(hour,$clock_id)]"
+          }
+        }
+        if { !$clock2(localtime,$clock_id) } {
+          snowmix parse "text string $clock2(string_id,minute,$clock_id) [format "%02d" $clock2(minute,$clock_id)]"
+        }
+      }
+    } else {
+      # Count down
+      if {$clock2(second,$clock_id) > 0} {
+        incr clock2(second,$clock_id) -1
+      } else {
+        set clock2(second,$clock_id) 59
+        if {$clock2(minute,$clock_id) > 0} {
+          incr clock2(minute,$clock_id) -1
+        } else {
+          set clock2(minute,$clock_id) 59
+          if {$clock2(hour,$clock_id) > 0} {
+            incr clock2(hour,$clock_id) -1
+          } else {
+            if {$clock2(tminus,$clock_id)} {
+              set clock2(tminus,$clock_id) 0
+              TextClock2Dir $clock_id 1
+              TextClock2SetCounter $clock_id 0 0 1
+              snowmix parse "text string $clock2(string_id,label,$clock_id) T+"
+              #TextClock2CalculateGeometry $clock_id
+            } else {
+              set clock2(hour,$clock_id) 99
+            }
+          }
+          if { !$clock2(localtime,$clock_id) } {
+            snowmix parse "text string $clock2(string_id,hour,$clock_id) [format "%02d" $clock2(hour,$clock_id)]"
+          }
+        }
+        if { !$clock2(localtime,$clock_id) } {
+          snowmix parse "text string $clock2(string_id,minute,$clock_id) [format "%02d" $clock2(minute,$clock_id)]"
+        }
+      }
+    }
+    if { !$clock2(localtime,$clock_id) } {
+      snowmix parse "text string $clock2(string_id,second,$clock_id) [format "%02d" $clock2(second,$clock_id)]"
+    }
+    return
+  }
+
+  proc TextClock2Font { clock_id font_id } {
+    global clock2
+    if {![info exist clock2(name,$clock_id)] || ![string is integer $font_id]} {
+      snowmix message "TextClock2Font failed"
+      return
+    }
+    set clock2(font_id,$clock_id) $font_id
+    set clock2(label,font_id,$clock_id) $clock2(font_id,$clock_id)
+    return
+  }
+
+
+  proc TextClock2Dim {clock_id dim } {
+    global clock2
+    if {![info exist clock2(name,$clock_id)]} {
+      snowmix message "TextClock2Dim failed"
+      #return "\nmessage TextClock2Dim failed\n"
+      return
+    }
+    set steps 40
+    if {$dim == 1} { set delta [expr -1.0/$steps]
+    } else { set delta [expr 1.0/$steps] }
+    #set s "\n"
+    set s ""
+    append s "text backgr move alpha $clock2(hourplace,$clock_id) $delta $steps\n"
+    append s "text backgr move alpha $clock2(colon1place,$clock_id) $delta $steps\n"
+    append s "text backgr move alpha $clock2(minuteplace,$clock_id) $delta $steps\n"
+    append s "text backgr move alpha $clock2(colon2place,$clock_id) $delta $steps\n"
+    append s "text backgr move alpha $clock2(secondplace,$clock_id) $delta $steps\n"
+    append s "text move alpha $clock2(hourplace,$clock_id) $delta $steps\n"
+    append s "text move alpha $clock2(colon1place,$clock_id) $delta $steps\n"
+    append s "text move alpha $clock2(minuteplace,$clock_id) $delta $steps\n"
+    append s "text move alpha $clock2(colon2place,$clock_id) $delta $steps\n"
+    append s "text move alpha $clock2(secondplace,$clock_id) $delta $steps\n"
+    if {[info exist clock2(label,place_id,$clock_id)]} {
+      append s "text move alpha $clock2(label,place_id,$clock_id) $delta $steps\n"
+    }
+    snowmix parse "$s"
+    #return "$s\n"
+    return
+  }
+
+  proc TextClock2Clip { clock_id clip } {
+    global clock2
+    if {![info exist clock2(name,$clock_id)]} {
+      snowmix message "TextClock2Clip failed"
+      #return "\nmessage TextClock2Clip failed\n"
+      return
+    }
+    set steps 32
+    if {!$clip} { set delta [expr -1.0/$steps]
+    } else { set delta [expr 1.0/$steps] }
+    #set s "\n"
+    set s ""
+    foreach varname $clock2(varnames,$clock_id) {
+      set varname [format "%splace" $varname]
+      append s "text backgr move clip $clock2($varname,$clock_id) 0 0 $delta 0 0 0 $steps 0\n"
+      append s "text move clip $clock2($varname,$clock_id) 0 0 $delta 0 0 0 $steps 0\n"
+    }
+    if {[info exist clock2(label,place_id,$clock_id)]} {
+      append s "text move clip $clock2(label,place_id,$clock_id) 0 0 $delta 0 0 0 $steps 0\n"
+    }
+    if {[string length $s] > 0} {
+      snowmix parse "$s"
+    }
+    #return "$s\n"
+    return
+  }
+
+  proc TextClock2Update {clock_id} {
+    global clock2
+    if {![info exist clock2(name,$clock_id)]} {
+      return
+    }
+    #set s "\n"
+    set s ""
+    set text_ids ""
+    foreach varname $clock2(varnames,$clock_id) {
+    set varname [format "%splace" $varname]
+      append text_ids "$clock2($varname,$clock_id) "
+    }
+    if {[info exist clock2(label,place_id,$clock_id)]} {
+      append text_ids $clock2(label,place_id,$clock_id)
+    }
+    append s "text overlay $text_ids\n"
+    #puts stderr "text overlay $text_ids\n"
+    snowmix parse "$s"
+    # return "$s\n"
+    return
+  }
+
+  proc TextClock2sUpdate {} {
+    global clock2
+    #set s "\n"
+    set s ""
+    foreach clock_id $clock2(clocks) {
+      set text_ids ""
+      foreach varname $clock2(varnames,$clock_id) {
+        set varname [format "%splace" $varname]
+        append text_ids "$clock2($varname,$clock_id) "
+      }
+      if {[info exist clock2(label,place_id,$clock_id)]} {
+        append text_ids $clock2(label,place_id,$clock_id)
+      }
+      append s "text overlay $text_ids\n"
+    }
+    if {[string length $s] > 0} {
+      snowmix parse "$s"
+    }
+    # return "$s\n"
+    return
+  }
+
+
+  TextClock2Init
+  snowmix message "clocks.slib : Library loaded."
+command end
+
+tcl exec libclock2.tcl

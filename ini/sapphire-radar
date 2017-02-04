@@ -1,0 +1,20 @@
+# Radar Settings for Sapphire
+# Copyright by Peter Maersk-Moller 2013 - All rights reserved
+#require version 0.4.4
+require version 0.5.0
+
+tcl eval CreateRadarCircleShape 3
+# 1 "Sputnik Radar"    3         27         28          16    9
+# id fullname          circle_id vessels_id vessels2_id width height } {
+tcl eval RadarCreate 1 "Sputnik Radar" 3 27 28 16 9
+tcl eval RadarSetSpeed 1 80
+tcl eval RadarAddVessel 1 Vostok 75 5 1 1 0 24 24
+tcl eval RadarAddVessel 1 Hjortoe 77 5 0 1 1 26 26
+tcl eval RadarAddVessel 1 BlueRIB 76 7 0 0 1 25 25
+tcl eval RadarSetVesselScale 1 12
+tcl eval RadarSetVesselPosition 1 75 -500 500
+tcl eval RadarSetVesselPosition 1 76 300 999
+tcl eval RadarSetVesselPosition 1 77 1500 -1099
+tcl eval RadarSetRange 1 1400
+
+#shape place 50 25 400 350 640 360

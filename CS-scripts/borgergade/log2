@@ -1,0 +1,10 @@
+/GstPipeline:pipeline0/GstX264Enc:x264enc0.GstPad:src: caps = video/x-h264, width=(int)1280, height=(int)720, framerate=(fraction)30/1, pixel-aspect-ratio=(fraction)1/1, stream-format=(string)byte-stream, alignment=(string)au, level=(string)4.1, profile=(string)high
+
+/GstPipeline:pipeline0/MpegTsMux:tsmuxer.GstPad:sink_65: caps = video/x-h264, width=(int)1280, height=(int)720, framerate=(fraction)30/1, pixel-aspect-ratio=(fraction)1/1, stream-format=(string)byte-stream, alignment=(string)au, level=(string)4.1, profile=(string)high
+
+/GstPipeline:pipeline0/GstH264Parse:h264parse0.GstPad:src: caps = video/x-h264, width=(int)1280, height=(int)720, framerate=(fraction)30/1, pixel-aspect-ratio=(fraction)1/1, stream-format=(string)avc, alignment=(string)au, level=(string)4.1, profile=(string)high, parsed=(boolean)true, codec_data=(buffer)01640029ffe1001867640029acb200a00b760220000003002000000791e3064901000568ebccb22c
+
+/GstPipeline:pipeline0/GstCapsFilter:capsfilter1.GstPad:src: caps = video/x-h264, width=(int)1280, height=(int)720, framerate=(fraction)30/1, pixel-aspect-ratio=(fraction)1/1, stream-format=(string)avc, alignment=(string)au, level=(string)4.1, profile=(string)high, parsed=(boolean)true, codec_data=(buffer)01640029ffe1001867640029acb200a00b760220000003002000000791e3064901000568ebccb22c
+/GstPipeline:pipeline0/GstCapsFilter:capsfilter1.GstPad:sink: caps = video/x-h264, width=(int)1280, height=(int)720, framerate=(fraction)30/1, pixel-aspect-ratio=(fraction)1/1, stream-format=(string)avc, alignment=(string)au, level=(string)4.1, profile=(string)high, parsed=(boolean)true, codec_data=(buffer)01640029ffe1001867640029acb200a00b760220000003002000000791e3064901000568ebccb22c
+
+/GstPipeline:pipeline0/GstFlvMux:mux.GstPad:video: caps = video/x-h264, width=(int)1280, height=(int)720, framerate=(fraction)30/1, pixel-aspect-ratio=(fraction)1/1, stream-format=(string)avc, alignment=(string)au, level=(string)4.1, profile=(string)high, parsed=(boolean)true, codec_data=(buffer)01640029ffe1001867640029acb200a00b760220000003002000000791e3064901000568ebccb22c

@@ -1,0 +1,146 @@
+#!/bin/bash
+
+date=`date`
+basename=`basename $0`
+pid_dir=/var/run/stream
+pid_file=$pid_dir/$basename.$$
+echo $$ >$pid_file
+echo $date >>$pid_file
+echo "command : $0 $*" >>$pid_file
+
+gstlaunch=`which gst-launch-1.0`
+if [ X$gstlaunch != X ] ; then
+  VIDEOCONVERT=videoconvert
+  VIDEO=video/x-raw
+  AUDIO=audio/x-raw
+  vfid=string
+  afid="format=(string)S16LE, "
+else
+  gstlaunch=`which gst-launch-0.10`
+  if [ X$gstlaunch != X ] ; then
+    VIDEOCONVERT=ffmpegcolorspace
+    VIDEO=video/x-raw-rgb
+    AUDIO=audio/x-raw-int
+    vfid=fourcc
+    afid=""
+  else
+    echo "Could not find gst-launch-1.0 or gst-launch-0.10. Stopping"
+    exit
+  fi
+fi
+
+export SNOWMIXPORT=9999
+export sink_id=2
+rate=`echo 'audio sink info ' | nc 127.0.0.1 $SNOWMIXPORT | grep ' - audio sink '$sink_id |tr ',' ' ' |cut -f10 -d' '`
+channels=`echo 'audio sink info ' | nc 127.0.0.1 $SNOWMIXPORT | grep ' - audio sink '$sink_id |tr ',' ' ' |cut -f12 -d' '`
+echo 'audio sink info ' | nc 127.0.0.1 $SNOWMIXPORT | grep ' - audio sink $sink_id' |tr ',' ' ' |cut -f10 -d' '
+AUDIOFORMAT=$AUDIO', '$afid' endianness=(int)1234, signed=(boolean)true, width=(int)16, depth=(int)16, rate=(int)'$rate', channels=(int)'$channels
+
+ (echo 'audio sink ctr isaudio '$sink_id ; cat >/dev/null ) | \
+  /bin/nc 127.0.0.1 9999	| \
+     (head -1
+      $gstlaunch -v -e \
+	fdsrc fd=0		! \
+	$AUDIOFORMAT		! \
+	queue			! \
+	audioconvert		! \
+	vorbisenc		! \
+	vorbisparse		! \
+	rtpvorbispay		! \
+	queue			! \
+	tee name=t0		! \
+	queue			! \
+	tcpserversink port=5000 t0. !\
+	queue			! \
+	udpsink host=81.7.134.69 port=4003
+	)
+
+exit
+
+
+tmpfile=/tmp/output2screen.tmp.$$
+echo 'system info' | nc 127.0.0.1 9999 >$tmpfile
+geometry=`grep 'STAT:  System geometry' $tmpfile |cut -f3 -d: |cut -f2 -d' '|tr 'x' ' '`
+framerate=`grep 'STAT:  Frame rate' $tmpfile |cut -f3 -d: |cut -f2 -d' '`
+rm $tmpfile
+#echo "Framerate $framerate"
+width=`echo $geometry |cut -f1 -d' '`
+height=`echo $geometry |cut -f2 -d' '`
+
+export AUDIOFORMAT='audio/x-raw-int, endianness=(int)1234, signed=(boolean)true, width=(int)16, depth=(int)16, rate=(int)44100, channels=(int)2'
+export MIXERFORMAT='video/x-raw-rgb, bpp=(int)32, depth=(int)32, endianness=(int)4321, format=(fourcc)BGRA, red_mask=(int)65280, green_mask=(int)16711680, blue_mask=(int)-16777216, width=(int)'$width', height=(int)'$height', framerate=(fraction)24/1, pixel-aspect-ratio=(fraction)1/1, interlaced=(boolean)false'
+export SRC='shmsrc socket-path=/tmp/mixer1 do-timestamp=true is-live=true'
+export X264SETTINGS='bitrate=3000 tune=zerolatency speed-preset=5'
+
+DATE=`date '+%y%m%d'`
+RECORD=/var/www/recordings/$DATE
+DATETIME=$DATE-`date '+%H:%M:%S.%N' | cut -c1-12`
+if [ ! -d $RECORD ] ; then
+  mkdir $RECORD
+  if [ ! -d $RECORD ] ; then
+    echo "Failed to create record directory $RECORD" >>$LOGFILE
+    exit 1
+  fi
+fi
+RECORDFILE=$RECORD/video-out-$DATETIME
+
+
+gstreamer_pipelines()
+{
+  ( echo 'audio sink ctr isaudio 1' ; cat >/dev/null ) | \
+    /bin/nc 127.0.0.1 9999	| \
+     (head -1
+      $gstlaunch -v -e \
+	mpegtsmux name=muxer	! \
+	mpegtsparse		! \
+	tee name=t1		! \
+	queue 			! \
+	tee name=t4		!\
+	queue 		! \
+	rtpmp2tpay		!\
+	udpsink host=81.7.134.69 port=5050 t4. ! \
+	queue 			! \
+	tcpserversink port=5010 sync-method=2 t1. !\
+	queue leaky=2			! \
+	filesink location=$RECORDFILE.ts  \
+	$SRC			! \
+	$MIXERFORMAT		! \
+	queue leaky=2		! \
+	ffmpegcolorspace	! \
+	queue			! \
+	x264enc $X264SETTINGS	! \
+	'video/x-h264, framerate=(fraction)24/1' ! \
+	h264parse		! \
+	tee name=t2		! \
+	queue			! \
+	mpegtsmux 		! \
+	mpegtsparse		! \
+	queue 		! \
+	tcpserversink port=5020 t2. ! \
+	queue			! \
+	muxer.			  \
+	fdsrc fd=0		! \
+	queue leaky=2		! \
+	$AUDIOFORMAT		! \
+	lamemp3enc		! \
+	tee name=t3		! \
+	queue leaky=2		! \
+	mpegtsmux 		! \
+	mpegtsparse		! \
+	tcpserversink port=5030 t3. ! \
+	queue			! \
+	muxer.
+      )
+}
+
+while true ; do
+  snowmix=`ps a |cut -c28-37 | grep snowmix | head -1`
+  if [ X$snowmix = X ] ; then
+    echo 'Snowmix is not running. Sleeping'
+    sleep 2
+    continue
+  fi
+  break
+done
+
+gstreamer_pipelines 

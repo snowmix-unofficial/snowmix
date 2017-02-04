@@ -1,0 +1,121 @@
+#!/bin/bash
+
+if [ $# != 1 ] ; then
+  echo "Parameter error"
+  echo "Usage : $0 you | ustream"
+  exit
+fi
+
+gstlaunch=`which gst-launch-1.1`
+if [ X$gstlaunch != X ] ; then
+  VIDEOCONVERT=videoconvert
+  VIDEO=video/x-raw
+  AUDIO=audio/x-raw
+  # VIDEO=video/x-raw-yuv
+  vfid=string
+  afid="format=(string)S16LE, "
+	audioencoder="avenc_aac bitrate=128000"
+else
+  gstlaunch=`which gst-launch-0.10`
+  if [ X$gstlaunch != X ] ; then
+    VIDEOCONVERT=ffmpegcolorspace
+    VIDEO=video/x-raw-rgb
+    VIDEO=video/x-raw-yuv
+    AUDIO=audio/x-raw-int
+	audioencoder="faac bitrate=128000 profile=LC"
+    vfid=fourcc
+    afid=""
+  else
+    echo "Could not find gst-launch-1.0 or gst-launch-0.10. Stopping"
+    exit
+  fi
+fi
+
+rate=44100
+channels=2
+AUDIOFORMAT=$AUDIO', '$afid' endianness=(int)1234, signed=(boolean)true, width=(int)16, depth=(int)16, rate=(int)'$rate', channels=(int)'$channels
+
+case $1 in
+  you|youtube)
+	# First Camera
+	auth='copsub.ueu6-1eh6-5wzv-8tp8'
+	# Second Camera
+	auth2=''
+	#auth=$auth2
+	app='live2'
+	serverurl='rtmp://a.rtmp.youtube.com/'$app
+	flashver='FME/3.0%20(compatible;%20FMSc%201.0)'
+	GST_DEBUG="--gst-debug=flvmux:4,rtmpsink:4"
+	width=1280
+	height=720
+	framerate='25/1'
+	vbitrate=4000
+	abitrate=128000
+	ENCAUDIOFORMAT='audio/mpeg,mpegversion=4, stream-format=raw'
+	videoencoder="x264enc bitrate=$vbitrate bframes=0 byte-stream=false aud=true tune=zerolatency"
+	#videomode='video/x-h264, width=(int)1280, height=(int)720, framerate=(fraction)30/1, pixel-aspect-ratio=(fraction)1/1, profile=(string)main'
+	videomode='video/x-h264, level=(string)4.1, profile=high'
+	#audioencoder="faac bitrate=64000 profile=LC"
+	#audioencoder="avenc_aac bitrate=64000"
+	location='rtmp://a.rtmp.youtube.com/live2/copsub.fat0-kwkv-8vs6-errs live=1 flashver=FME/3.0\20(compatible;\20FMSc\201.0)'
+	location='rtmp://a.rtmp.youtube.com/live2/x/'$auth'?videoKeyframeFrequency=1&totalDatarate=528 app=live2 flashVer=FME/3.0%20(compatible;%20FMSc%201.0) swfUrl=rtmp://a.rtmp.youtube.com/live2'
+	location=$serverurl'/x/'$auth'?videoKeyframeFrequency=1&totalDatarate=4128 app='$app' flashVer='$flashver' swfUrl='$serverurl
+
+	;;
+  ustream)
+	GST_DEBUG=""
+	width=1024
+	height=576
+	framerate='25/1'
+	videoencoder="x264enc bitrate=500 bframes=0"
+	videomode='queue'
+	ENCAUDIOFORMAT='audio/mpeg'
+	audioencoder="lame mode=3 bitrate=64"
+	audioencoder="lamemp3enc bitrate=64"
+	location="rtmp://1.11788764.fme.ustream.tv/ustreamVideo/11788764/HyYgjUqdwAeY4vFJVrMC4wyAQPxJ6f4t live=1 flashver=FME/3.0\20(compatible;\20FMSc\201.0)"
+	;;
+  *)	echo 'Use youtube or ustream'
+	exit
+esac
+
+VIDEOFORMAT=$VIDEO', framerate='$framerate', width='$width', height='$height
+
+echo $VIDEOFORMAT
+echo $AUDIOFORMAT
+echo $VIDEOCONVERT
+echo "$videomode"
+echo 
+
+$gstlaunch -v $GST_DEBUG		 \
+	videotestsrc pattern=0		!\
+	timeoverlay halignment=left valignment=bottom text="Stream time:" shaded-background=true !\
+	$VIDEOFORMAT			!\
+	queue				!\
+	$VIDEOCONVERT			!\
+	$videoencoder			!\
+	"$videomode"			!\
+	queue				!\
+	mux. audiotestsrc		!\
+	$AUDIOFORMAT			!\
+	queue				!\
+	$audioencoder			!\
+	$ENCAUDIOFORMAT			!\
+	queue				!\
+	flvmux streamable=true name=mux	!\
+	queue				!\
+	rtmpsink location="$location"
+exit
+$gstlaunch -v $GST_DEBUG		 \
+	audiotestsrc			!\
+	queue				!\
+	$AUDIOFORMAT			!\
+	$audioencoder			!\
+	queue				!\
+	flvmux streamable=true name=mux	!\
+	queue				!\
+	fakesink sync=true
+
+exit
+
+
+exit

@@ -1,0 +1,60 @@
+		<div class="sidenav">
+
+			<h1>Intro</h1>
+			<div class="sidenavintro">
+			<ul>
+				<li><a href="[HOME]Intro/about.html">About</a></li>
+				<li><a href="[HOME]Intro/news.html">News</a></li>
+				<li><a href="[HOME]Intro/faq.html">FAQ</a></li>
+				<li><a href="[HOME]Intro/screenshots.html">Screenshots</a></li>
+				<li><a href="[HOME]Intro/downloads.html">Downloads</a></li>
+				<li><a href="[HOME]Intro/requirements.html">Requirements</a></li>
+				<li><a href="[HOME]Intro/compileandinstall.html">Compile &amp; Install</a></li>
+				<li><a href="[HOME]Intro/support.html">Support &amp; Forum</a></li>
+			</ul>
+			</div>
+
+			<h1>Documentation</h1>
+			<ul>
+				<li><a href="[HOME]Documentation/reserved.html">Reserved Commands</a></li>
+				<li><a href="[HOME]Documentation/reference.html">Reference Manuals</a></li>
+				<li><a href="[HOME]Documentation/guides.html">Snowmix Guides</a></li>
+				<li><a href="[HOME]Documentation/releasenotes.html">Release Notes</a></li>
+				<li><a href="[HOME]Documentation/changelog.html">ChangeLog</a></li>
+				<li><a href="[HOME]Documentation/developmentplans.html">Development Plans</a></li>
+				<li><a href="[HOME]Documentation/endoflife.html">End of Life</a></li>
+			</ul>
+
+			<h1>Examples</h1>
+			<ul>
+				<li><a href="[HOME]Examples/basic.html">Basic Configurations</a></li>
+				<li><a href="[HOME]Examples/input.html">Input with GStreamer</a></li>
+				<li><a href="[HOME]Examples/output.html">Output with Gstreamer</a></li>
+				<li><a href="[HOME]Examples/scripting.html">Basic Scripting</a></li>
+			</ul>
+
+			<h1>Advanced Topics</h1>
+			<ul>
+				<li><a href="[HOME]Advanced/scripting.html">Advanced Scripting</a></li>
+				<li><a href="[HOME]Advanced/libraries.html">Snowmix Libraries</a></li>
+			</ul>
+
+			<h1>Search</h1>
+			<div>
+			<!--
+			<form action="index.html">
+				<input type="text" name="search" class="styled" disabled /> <input type="submit" value="" class="button" />
+			</form> -->
+			&nbsp;&nbsp;Search is disabled for now.
+			<form name="cse" id="searchbox_demo" action="https://www.google.com/cse">
+  <input type="hidden" name="cref" value="" />
+  <input type="hidden" name="ie" value="utf-8" />
+  <input type="hidden" name="hl" value="" />
+  <input name="q" type="text" size="22" disabled />
+  <input type="submit" name="sa" value="Search" />
+</form>
+<script type="text/javascript" src="https%3A%2F%2Fcse.google.com%2Fcse/tools/onthefly?form=searchbox_demo&amp;lang="></script>
+			</div>
+
+		</div>
+	

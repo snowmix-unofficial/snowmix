@@ -1,0 +1,268 @@
+<div class="content">
+
+	<div class="item">
+
+		<h1>Basic Snowmix Scripting</h1>
+		<div class="descr">Updated for Snowmix 0.5.0</div>
+		<br/>
+
+		<p>Snowmix offers both basic scripting and
+		<a href="[HOME]Advanced/scripting.html">advanced scripting</a>.
+		This page will present how to do basic scripting and it is recommended that the
+		concepts for basic scripting is well understood before advanced scripting is undertaken.</p>
+
+		<h3>Script Examples.</h3>
+		<ul>
+			<li>Basic scripting example <a href="https://sourceforge.net/p/snowmix/wiki/Script%20Example%20Digital%20Counter">Digital Counter</a></li>
+			<li>Advanced scripting example <a href="https://sourceforge.net/p/snowmix/wiki/Script%20Example%20Anlogue%20Clock">Analogue Swiss Clock</a></li>
+		</ul>
+	</div>
+
+	<div class="item">
+
+		<h3>Command macros.</h3>
+		<br/>
+
+			<p>The fundamental concept behind the basic scripting is the definition and use
+			of command macros. For additional reading on command macros beyond this page,
+			please see the reference manual on command macro related commands listed on the
+			<a href="[HOME]Documentation/reference.html">Reference Manual</a> page.</p>
+
+			<p>Command macros are defined using the Snowmix command:</p>
+
+			<code>command create &lt;command macro name></code>
+
+			<p>with a name of the macro intended to create as argument. Every line of commands
+			following the command <i>command create</i>, is added to the command macro created
+			rather than executed until the command <i>command end</i> is given. If the command
+			<i>command create</i> is given again with an already existing command macro name,
+			command lines until the command <i>command end</i> are added to the specified
+			command macro. The following example creates a single command macro named MyFirstCommand:</p>
+
+			<code>    command create MyFirstCommand
+      text string Hello my friend
+      loop
+    command end</code>
+
+		<p>Now the first thing to understand is that every command macro has an individual execution
+		pointer that points to the line to be executed the next time the command macro is executed.</p>
+
+		<p>The next thing to understand is that when executing a command macro all lines in a macro is
+		executed in line order from the line pointed to by the execution pointer until there is a
+		line with the keywords <i>next</i> or <i>loop</i> or the execution pointer has reached the
+		end of the command macro.</p>
+
+		<p>The third thing to understand is that when executing a command macro containing another
+		macro name as a command, that other macro is executed according to the same 3 conditions
+		listed here and then the execution of the macro referencing the other macro is continued
+		until execution reach end of the macro or one of the two keywords <i>next</i> or <i>loop</i>.</p>
+
+		<p>So execution of a command macro line by line continues including execution of command
+		macros referenced within the command macro until there are no more lines to execute or the
+		execution reaches one of the two keywords <i>next</i> and <i>loop</i>.</p>
+		<div align="right"><a href="">Top</a></div>
+	</div>
+
+	<div class="item">
+
+		<h3>Next, loop and the execution pointer..</h3>
+		<br/>
+
+		<p>When the <i>next</i> statement is identified while executing a command macro line by
+		line, execution of the macro is suspended and the execution pointer of the macro is advanced
+		to the line after the keyword <i>next</i>. Next time the command macro is executed, execution
+		will continue from where the macros execution pointer points. If the <i>next</i> statement is
+		followed by a positive integer N in the same line, the <i>next N</i> statement is treated as
+		if there were a N number of lines with the next statement.</p>
+
+		<p>When the <i>loop</i> statement is identified while executing a command macro line by line,
+		execution of the macro is suspended and the execution pointer of the macro is reset to point
+		at the first line of the macro. Next time the command macro is executed, execution will
+		continue from the beginning of the macro. If a macro does not end with a <i>loop</i> statement,
+		the macro's execution pointer will eventually point beyond the last line. When that happends,
+		additional calls to the macro, effectively executing the macro, will have no effect. If the
+		<i>loop</i> statement is followed by a positive integer N in the same line, the loop statement
+		reset the command pointer to the first line N number of times. The next time the loop statement
+		is reached after being reached N times, the loop statement is treated as if it was a <i>next</i>
+		statement. Using that it is possible to loop for N times the macro is called and then after that
+		continue in the macro in lines below if any.</p>
+
+		<p>The execution pointer can be reset to point at the first line of a macro using the command
+		<i>command restart</i> as shown below:</p>
+
+		<code>command restart SomeMacroName</code>
+
+		<p>The command <i>command restart</i> will also reset any counters, if any, for <i>next</i>
+		and <i>loop</i> commands possibly part of the macro being 'restarted'.</p>
+
+		<p>To see which line the execution pointer for a macro is currently at, the following
+		command can be used:</p>
+
+		<code>command pointer atline SomeMacroName</code>
+
+		<p>To set the command line pointer at a specific line or after the last line, the following
+		two commands can be used:</p>
+
+		<code>command pointer atline SomeMacroName 3
+command afterend SomeMacroName</code>
+		<div align="right"><a href="">Top</a></div>
+	</div>
+
+	<div class="item">
+
+		<h3>Execution flow.</h3>
+		<br/>
+
+		<p>The following example deletes first the previous created command macro and then creates
+		the 3 new command macros MyFirstCommand, MySecondmacro and MyThirdExample:</p>
+
+		<code>command delete MyFirstCommand
+command create MyFirstCommand
+  text string 1 Hello my friend
+  next
+  MySecondmacro
+  next
+  MyThirdExample
+  loop
+command end
+command create MySecondmacro
+  text string 1 How is your day
+  text string 2 My day is fine
+  loop
+command end
+command create MyThirdExample
+  text string 1 What a wonderful weather
+  next
+  text string 2 Will it rain?
+  loop
+command</code>
+ 
+		<p>Initilly, the execution pointer for all 3 macros points at the first line of the macro.
+		When the first command macro is executed, the following lines are executed:</p>
+
+		<code>MyFirstCommand
+  text string Hello my friend
+  next</code>
+
+		<p>Now execution of the macro MyFirstCommand reaches the statement <i>next</i> in its second
+		line the execution is suspended while its execution pointer is set to point to the third line.
+		The result is that text string 1 is set to 'Hello my friend'.</p>
+
+		<p>The next time the command macro MyFirstCommand is executed, execution happens from
+		line 3 in the macro as shown below:</p>
+
+		<code>MyFirstCommand
+  MySecondmacro
+    text string 1 How is your day
+    text string 2 My day is fine
+    loop
+  next</code>
+
+		<p>Now text string 1 is set to 'How is your day' and text string 2 is set to
+		'My day is fine'. Further more execution of macro MySecondmacro reaches a loop statement
+		in its third line, so execution of that macro is suspended and its execution pointer is set
+		to point to the first line of that macro. After that execution of the macro MyFirstCommand
+		continues, but here the statement <i>next</i> is reached in its 4th line. Execution is now
+		suspended and the execution pointer is set to line 5.</p>
+
+		<p>The next time the command macro MyFirstCommand is executed, execution happens from line 5
+		in the macro as shown below:</p>
+
+		<code>MyFirstCommand
+  MyThirdExample
+    text string 1 What a wonderful weather
+    next
+  loop</code>
+
+		<p>The 5th line of MyFirstCommand is a call to macro MyThirdExample so that macro gets executed.
+		Doing so, the text string 1 is now set to 'What a wonderful weather' before reaching the
+		<i>next</i> statement in the second line of MyThirdExample. This suspends the execution of
+		macro MyThirdExample and the 6th line of the macro MyFirstCommand is executed. Here we reach
+		a <i>loop</i> statement so execution of macro MyFirstCommand is suspended while its execution
+		pointer is set to point at the first line of the macro.</p>
+
+		<p>The next time MyFirstCommand is called, line 1 and 2 of the macro is executed. The next time
+		the macro is called, line 4 and 5 of the macro is executed. Executing line 4 will now result in
+		executing line 1, 2 and 3 of the macro MySecondmacro and so on.</p>
+		<div align="right"><a href="">Top</a></div>
+	</div>
+
+	<div class="item">
+
+		<h3>Creating a macro within a macro.</h3>
+		<br/>
+
+		<p>Snowmix does not support creating a macro within a macro as this would require the following
+		to be valid:</p>
+
+		<code># NOTE : INVALID SYNTAX
+command create MyFirstMacro
+  command create MySecondMacro
+    text string 1 some text
+  command end
+command</code>
+
+		<p>However when the first <i>command end</i> is detected, this signals the end of the definition
+		of the macro MyFirstMacro and not the macro MySecondMacro that doesn't exist at this points.
+		The second <i>command end</i> will result in a syntax error message safely to ignore. The result
+		is the macro MyFirstMacro with the following content:</p>
+
+		<code>command create MySecondMacro
+  text string 1 some text</code>
+
+		<p>However, even though this is not recommended, there is a workaround around this. Using
+		the command <i>command addatline</i>, it is possible to add the necessary <i>command end</i>
+		as shown here:</p>
+
+		<code>command addatline MyFirstMacro 1 command end</code>
+
+		<p>will result in in the macro MyFirstMacro containing the commands</p>
+
+		<code>command create MySecondMacro
+  text string 1 some text
+command end</code>
+
+		<p>and when the macro is called, it will create the macro MySecondMacro containing the
+		line 'text string 1 some text'.</p>
+		<div align="right"><a href="">Top</a></div>
+	</div>
+
+	<div class="item">
+
+		<h3>COnditional execution.</h3>
+		<br/>
+
+		<p>Please see the <i>if, else, endif</i> section in the reference manual for commands
+		<a href="[HOME]Documentation/reference.html">Reference Manual</a> page for details on
+		conditional execution.</p>
+
+		<p>The following example shows a conditional execution where the state of feed is is
+		shown as text and updated every 10 frames.</p>
+
+		<code>command create DisplayState4Feed1
+  text string 0 Running
+  text string 1 Disconnected
+  text string 2 Stalled
+  text font 0 Sans Bold 12
+  if feedstate(1,STALLED)
+    text place 0 2 0 100 100 0 0 0 1.0
+  else
+    if feedstate(1,RUNNING)
+      text place 0 0 0 100 100 0 0 0 1.0
+    else
+      if feedstate(1,DISCONNECTED)
+        text place 0 1 0 100 100 0 0 0 1.0
+      endif
+    endif
+  endif
+  next 10
+  loop
+command end</code>
+
+		<p>Obviously, the command macro DisplayState4Feed1 needs to be included in the
+		command macro set with the command <i>overlay pre</i> or <i>overlay finish</i> to ensure
+		the script is called at framerate.</p>
+		<div align="right"><a href="">Top</a></div>
+	</div>
+</div>
+

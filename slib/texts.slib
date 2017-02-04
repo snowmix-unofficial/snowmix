@@ -1,0 +1,98 @@
+# Basic Text Settings
+# Copyright by Peter Maersk-Moller 2013-2014 - All rights reserved
+# verbose
+# require version 0.4.4
+require version 0.5.1
+
+# Functions provided in this Snowmix Library
+# TextInit {} : Intializes this library and is run automatically
+# TextSizeFinder {} :
+# TextSizeFound { seq_no } :
+# TextSizeFind { tstring font_id } :
+
+command create libtexts.tcl
+
+  proc TextSizeFinder {} {
+    global text
+    foreach seq_no $text(sizefinder,list) {
+      set font_id $text(sizefinder,font,$seq_no)
+      snowmix parse "text string $text(sizefinder,string_id) $text(sizefinder,list,$seq_no)"
+      snowmix parse "text place $text(sizefinder,place_id) $text(sizefinder,string_id) $font_id 0 -1000"
+      snowmix parse "text overlay $text(sizefinder,place_id)"
+      set text(sizefinder,geometry,$seq_no) [GetFromKeyId "text place" geometry $text(sizefinder,place_id)]
+#puts "TextSizeFinder <$text(sizefinder,list,$seq_no)> <$seq_no> geometry $text(sizefinder,geometry,$seq_no)"
+      unset text(sizefinder,list,$seq_no)
+      unset text(sizefinder,font,$seq_no)
+    }
+    set text(sizefinder,list) ""
+    return
+  }
+
+  proc TextSizeFound { seq_no } {
+    global text
+    if {[info exist text(sizefinder,geometry,$seq_no)]} {
+      set geometry $text(sizefinder,geometry,$seq_no)
+      unset text(sizefinder,geometry,$seq_no)
+      return $geometry
+    }
+    return
+  }
+
+  proc TextSizeFind { tstring font_id } {
+    global text
+    if {$text(sizefinder,string_id) < 0 || $text(sizefinder,place_id) < 0} { return -1 }
+    incr text(sizefinder,seq_no)
+    lappend text(sizefinder,list) $text(sizefinder,seq_no)
+    set text(sizefinder,list,$text(sizefinder,seq_no)) $tstring
+    set text(sizefinder,font,$text(sizefinder,seq_no)) $font_id
+    return $text(sizefinder,seq_no)
+  }
+
+
+  proc TextInit {} {
+    global text
+
+    set text(sizefinder,string_id) -1
+    set text(sizefinder,place_id) -1
+    set text(sizefinder,list) ""
+    set text(sizefinder,seq_no) 0
+    # Get a font_id and a string_id and a placedtext_id for geometry estimation
+    # Get any font id
+    set font_ids [snowmix info text font ids]
+    if {[llength $font_ids] > 0} {
+      set font_id [lindex $font_ids 0]
+      set remove_font -1
+    } else {
+      # No font. We create one temporarily
+      set font_id 0
+      set remove_font 0
+      snowmix parse "text font 0 Sans Bold 12"
+    }
+    if {[llength [info proc Add2Update]]} {
+      set string_id [ReserveNextAvail string Reserved]
+      if {$string_id < 0} {
+        snowmix message "texts.slib : WARNING. Could not get a string_id"
+      } else {
+        set place_id [ReserveNextAvail placedtext $string_id $font_id]
+        if {$place_id < 0} {
+          snowmix message "texts.slib : WARNING. Could not get a text place_id"
+        } else {
+          set text(sizefinder,string_id) $string_id
+          set text(sizefinder,place_id) $place_id
+          Add2Update post TextSizeFinder
+        }
+      }
+    } else {
+      snowmix message "texts.slib\ \ : WARNING. system.slib was not loaded succesfully before this library"
+    }
+    if {$remove_font > -1} { snowmix parse "text font $remove_font" }
+    
+    snowmix message "texts.slib\ \  : Texts initialized."
+    return
+  }
+
+  TextInit
+  snowmix message "texts.slib\ \ : Library loaded."
+command end
+
+tcl exec libtexts.tcl

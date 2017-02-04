@@ -1,0 +1,44 @@
+# Basic Feeds Settings
+# Copyright by Peter Maersk-Moller 2012-2013 - All rights reserved
+# verbose
+require version 0.4.1
+
+text string 0 CS StreamTeam
+text string 1 Copenhagen Suborbitals
+text string 2 The Open Source, non-profit and volunteer based space initiative
+text string 3 Welcome to Copenhagen Suborbital's Sapphire Launch Event. The launch is taking place in the area ES-D139 situated 35 km east of Space Port Nexoe on the island Bornholm in the Baltic Sea.
+text string 4 T-minus
+
+text font 0 Eurostile Normal 10
+text font 1 Eurostile Bold 10
+text font 2 Eurostile Bold 12
+text font 3 Eurostile Bold 14
+text font 4 Eurostile Bold 16
+text font 5 Eurostile Normal 19
+text font 6 Eurostile Bold 19
+text font 7 Eurostile Bold 20
+text font 8 Eurostile Bold 22
+text font 9 Eurostile Bold 24
+text font 10 Eurostile Bold 28
+text font 11 Eurostile Bold 32
+text font 19 Eurostile Normal 48
+
+text place 1 1 6 15 -57 1 1 1 1 sw
+text align 1 left bottom
+text backgr 1 15 80 10 10 0 0 0 0.27
+text clipabs 1 0 500 334 200
+#text backgr linpat 1 0.00 0.00 0.00 0.00 1 h
+#text backgr linpat 1 0.95 0.00 0.00 0.00 1 h
+#text backgr linpat 1 1.00 0.00 0.00 0.00 0 h
+
+text place 2 2 5 0 -57 1 1 1 1 se
+text place 2 2 5 346 -57 1 1 1 1 sw
+text align 2 left bottom
+text backgr 2 3000 3000 10 10 0 0 0 0.55
+#text repeat move 2 -2 0 -2000 0
+text clipabs 2 334 500 1280 200
+
+text place 3 3 5 0 -10 1 1 1 1 se
+text align 3 left bottom
+text backgr 3 2000 2000 10 10 0 0 0 0.75
+text repeat move 3 -3 0 -3500 0

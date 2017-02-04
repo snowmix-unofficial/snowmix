@@ -1,0 +1,85 @@
+#!/bin/bash
+if [ "X$SNOWMIX" = X ] ; then
+  echo "You need to set the environment variable SNOWMIX to the full path to the Snowmix installed directory"
+  exit
+fi
+
+# AAC Encoders to search for
+aac_encoders="faac avenc_aac faac"
+aac_encoder=''
+
+get_aac_encoder()
+{
+  for encoder in $aac_encoders ; do
+    $gstinspect $encoder >/dev/null 2>&1
+    if [ $? -eq 0 ] ; then
+      echo $encoder
+      return
+    fi
+  done
+}
+
+gstlaunch=`which gst-launch-1.0`
+if [ X$gstlaunch != X ] ; then
+  version=`$gstlaunch --version | grep gst-launch | cut -f3 -d' '`
+  major=`echo $version | tr '.' ' ' | cut -f2 -d' '`
+  minor=`echo $version | tr '.' ' ' | cut -f3 -d' '`
+  if [ $major -eq 2 -a $minor -lt 2 ] ; then
+    unset gstlaunch
+  fi
+fi
+
+SNOWMIXVIDEOSRC=shmsrc
+SNOWMIXVIDEOSINK=shmsink
+#gstlaunch=''
+gstinspect=`which gst-inspect-1.0`
+echo $gstlaunch
+if [ X$gstlaunch != X ] ; then
+  VIDEOCONVERT=videoconvert
+  VIDEO=video/x-raw
+  VIDEOBGRA=$VIDEO',format=BGRA,pixel-aspect-ratio=1/1,interlace-mode=progressive'
+  VIDEOI420=$VIDEO',format=I420,pixel-aspect-ratio=1/1,interlaced-mode=progressive'
+  AUDIO=audio/x-raw
+  AUDIOS16LE=$AUDIO',format=S16LE,layout=interleaved'
+  vfid=string
+  afid="format=S16LE, "
+  aac_encoder=`get_aac_encoder`
+  tsmuxer=mpegtsmux
+  tsparser=tsparse
+  decodebin=decodebin
+  gst-inspect-1.0 snowmix 1>/dev/null 2>&1
+  if [ $? = 0 ] ; then
+    SNOWMIXVIDEOSRC=snowmixvideosrc
+    SNOWMIXVIDEOSINK=snowmixvideosink
+  fi
+else
+  gstlaunch=`which gst-launch-0.10`
+  gstinspect=`which gst-inspect-0.10`
+  if [ X$gstlaunch != X ] ; then
+    aac_encoder=`get_aac_encoder`
+    VIDEOCONVERT=ffmpegcolorspace
+    VIDEO=video/x-raw-rgb
+    VIDEORAWRGB=video/x-raw-rgb
+    VIDEORAWYUV=video/x-raw-yuv
+    VIDEOBGRA=$VIDEORAWRGB',bpp=32,depth=32,endianness=4321,red_mask=65280,green_mask=16711680,blue_mask=-16777216,pixel-aspect-ratio=1/1,interlaced=false'
+    VIDEOI420=$VIDEORAWYUV', format=I420,pixel-aspect-ratio=1/1,interlaced=false'
+    AUDIO=audio/x-raw-int
+    AUDIOS16LE=$AUDIO',endianness=1234,signed=true,width=16,depth=16'
+    vfid=fourcc
+    afid=""
+    tsmuxer=mpegtsmux
+    tsparser=mpegtsparse
+    decodebin=decodebin2
+  else
+    echo "Could not find gst-launch-1.0 or gst-launch-0.10. Stopping"
+    exit
+  fi
+fi
+if [ "X$aac_encoder" = X ] ; then
+  echo "Warning : no aac encoder found"
+fi
+if [ "X$gstlaunch" = X ] ; then
+  echo "Error : no gst-launch found"
+  exit 1
+fi
+GSTREAMER_SETTINGS_SET=yes

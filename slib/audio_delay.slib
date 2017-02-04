@@ -1,0 +1,41 @@
+# Audio Delay Settings
+# Copyright by Peter Maersk-Moller 2014 - All rights reserved
+# verbose
+require version 0.5.1
+
+command create libaudiodelay.tcl
+
+puts stderr PMM1
+  proc AudioDelayInit {} {
+    global audiodelay
+puts stderr PMM2A
+    set audiodelay(listenfeeds) ""
+puts stderr PMM2B
+    Add2Update pre AudioDelayUpdate
+puts stderr PMM2C
+  }
+puts stderr PMM2
+
+  proc AudioDelayUpdate {} {
+    global audiodelay
+puts stderr PMM0
+    foreach feed_id $audiodelay(listenfeeds) {
+      set rmslist [lindex [snomwix info audio feed extended $feed_id] 6]
+      set len [llength $rmslist]
+      if {!len} continue
+      set rms 0
+      foreach value $rmslist {
+        set rms [expr $rms + $value]
+      }
+      if {len > 1} { set rms [expr double($rms) / $len ] }
+      puts stderr "RMS $rms"
+    }
+  }
+
+puts stderr PMM3
+  #AudioDelayInit
+puts stderr PMM4
+  snowmix message "audiodelay.slib : Library loaded."
+command end
+
+tcl exec libaudiodelay.tcl

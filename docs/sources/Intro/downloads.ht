@@ -1,0 +1,20 @@
+<div class="content">
+
+	<div class="item">
+
+		<h1>Snowmix Downloads</h1>
+		<div class="descr">Updated for Snowmix 0.5.1</div>
+
+		<p>Latest version of the Snowmix source code is as always
+		<a href="https://sourceforge.net/projects/snowmix/files/latest/download">available for downloads here</a>.</p>
+
+		<p>Source code for older versions can be <a href="https://sourceforge.net/projects/snowmix/files/?source=navbar">found here</a>.</p>
+
+		<p>List of <a href="[HOME]Intro/requirements.html">Requirements for compiling</a> Snowmix is also available as are instructions for <a href="[HOME]Intro/compileandinstall.html">compiling and installing</a> Snowmix.</p>
+
+		<p>If you are updating from an older version of Snowmix, make sure you have at least skimmed the
+		<a href="[HOME]Documentation/releasenotes.html">Release Notes</a> for this for you new version. Details
+		of the release is available in the <a href="[HOME]Documentation/changelog.html">ChangeLog</a>.</p>
+	</div>
+
+</div>

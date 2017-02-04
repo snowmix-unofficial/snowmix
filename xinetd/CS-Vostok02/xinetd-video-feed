@@ -1,0 +1,249 @@
+#!/bin/bash
+#
+# This is being called by snowmix-video config file intended for configuring
+# xinetd. The config file must contain the absolute path to this file
+
+# args = port transport codec
+# example : 9004 udp/rtp h.264
+LOGFILE=/tmp/video-1.log
+
+# Check arguments
+if [ $# -ne 3 ] ; then
+  echo "argument error. usage : $0 port transport h.264" >>$LOGFILE
+  exit 1
+fi
+
+# Setup arguments
+port=$1
+transport=$2
+codec=$3
+
+# Check that Snowmix is running
+snowmix=`ps c |cut -c28-34 | grep snowmix | head -1`
+snowmix=`netstat -na |grep ':9998 ' |grep LISTEN |cut -c1-3`
+if [ X$snowmix = X ] ; then
+  echo snowmix is not running >>$LOGFILE
+  sleep 5
+  exit 1
+else
+  echo snowmix is running >>$LOGFILE
+fi
+
+# map port to feed
+case $port in
+  9000|9020|9040) feed=1;;
+  9002|9022|9042) feed=2;;
+  9004|9024|9044) feed=3;;
+  9006|9026|9046) feed=4;;
+  9008|9028|9048) feed=5;;
+  9010|9030|9050) feed=6;;
+  9012|9032|9052) feed=7;;
+  9014|9034|9054) feed=8;;
+  9016|9036|9056) feed=9;;
+  9018|9038|9058) feed=10;;
+  *   ) echo port number error >>$LOGFILE
+	exit 1
+	;;
+esac
+
+# You'll need to get this port right
+SNOWMIX_PORT=9998
+TMPFILE=/tmp/snowmix.tmp.$$
+
+get_socket()
+{
+  awk 'BEGIN { feed=-1; socket="" }
+        /^MSG\: Feed ID / { feed=$4; }
+        /^MSG\:   Socket\: / { if (feed == feed_id) socket=$3; }
+        END { printf("%s\n", socket) }
+        ' feed_id=$1 <$TMPFILE
+}
+get_width()
+{
+  awk 'BEGIN { feed=-1; width="" }
+        /^MSG\: Feed ID / { feed=$4; }
+        /^MSG\:   Geometry\: / { if (feed == feed_id) width=$3; }
+        END { printf("%s\n", width) }
+        ' feed_id=$1 <$TMPFILE
+}
+get_height()
+{
+  awk 'BEGIN { feed=-1; height="" }
+        /^MSG\: Feed ID / { feed=$4; }
+        /^MSG\:   Geometry\: / { if (feed == feed_id) height=$4; }
+        END { printf("%s\n", height) }
+        ' feed_id=$1 <$TMPFILE
+}
+
+echo feed list verbose | nc 127.0.0.1 $SNOWMIX_PORT >$TMPFILE
+CONTROL_PIPE=`get_socket $feed`
+WIDTH=`get_width $feed`
+HEIGHT=`get_height $feed`
+rm $TMPFILE
+if [ X$CONTROL_PIPE = X -o X$WIDTH = X -o X$HEIGHT = X ] ; then
+  echo "ERROR. Feed $feed is not fully configured in snowmix" >>$LOGFILE
+  exit 1
+fi
+
+MIXERFORMAT='video/x-raw-rgb, bpp=(int)32, depth=(int)32, endianness=(int)4321, red_mask=(int)65280, green_mask=(int)16711680, blue_mask=(int)-16777216, width=(int)'$width', height=(int)576, framerate=(fraction)24/1, pixel-aspect-ratio=(fraction)1/1, interlaced=(boolean)false'
+MIXERFORMAT2='video/x-raw-rgb, bpp=(int)32, depth=(int)32, endianness=(int)4321, red_mask=(int)65280, green_mask=(int)16711680, blue_mask=(int)-16777216, width=(int)'$WIDTH', height=(int)'$HEIGHT', pixel-aspect-ratio=(fraction)1/1, interlaced=(boolean)false'
+#CONTROL_PIPE=/tmp/feed$feed-control-pipe
+SHMSIZE='shm-size=10000000'
+SHMOPTION="wait-for-connection=0 sync=false"
+SHMSINK1="shmsink socket-path=$CONTROL_PIPE $SHMSIZE $SHMOPTION"
+SCALE='ffmpegcolorspace ! videoscale ! ffmpegcolorspace'
+
+# Remove the named pipe if it exist
+rm -f $CONTROL_PIPE
+DATE=`date '+%y%m%d'`
+RECORD=/var/www/recordings/$DATE
+DATETIME=$DATE-`date '+%H:%M:%S.%N' | cut -c1-12`
+if [ ! -d $RECORD ] ; then
+  mkdir $RECORD
+  if [ ! -d $RECORD ] ; then
+    echo "Failed to create record directory $RECORD" >>$LOGFILE
+    exit 1
+  fi
+fi
+RECORDFILE=$RECORD/video-$feed-$DATETIME
+
+echo "Starting for feed $feed" >>$LOGFILE
+pid=$$
+(
+  touch $RECORDFILE.touch
+  sleep 5
+  if [ ! -f $RECORDFILE.ts ] ; then
+    echo "Record file $RECORDFILE.ts does not exist. Exiting" >>$LOGFILE
+    exit 1
+  fi
+  while true ; do
+    echo "Testing file for process pid $pid"
+    if [ $RECORDFILE.touch -nt $RECORDFILE.ts ] ; then
+      echo "Touch file $RECORDFILE.touch is newer than $RECORDFILE.ts. Exiting" >>$LOGFILE
+      rm $RECORDFILE.touch
+      time2=`date '+%H:%M:%S.%N' |cut -c-12`
+      mv $RECORDFILE.ts $RECORDFILE-$time2.ts
+      echo "Video stopping for port $port" >>$LOGFILE
+      kill -- -$pid
+      exit 1
+    fi
+    touch $RECORDFILE.touch
+    sleep 10
+  done
+) 2>&1 >>$LOGFILE &
+
+MESSAGE="Feed $feed with wxh = $WIDTH x $HEIGHT and control $CONTROL_PIPE"
+
+case $port in
+
+	# MPEG-4 Video from Axis units
+	9000|9002|9004|9006|9008|9010|9012|9014|9016|9018)
+		echo "Starting MPEG-4 Feed. "$MESSAGE >>$LOGFILE
+		gst-launch udpsrc sockfd=0	 \
+			caps='application/x-rtp, media=(string)video, payload=(int)96, clock-rate=(int)90000, encoding-name=(string)MP4V-ES, profile-level-id=(string)245, config=(string)000001B0F5000001B50900000100000001200088401928B02240A21F, a-mpeg4-iod=(string)\"\\ \\\"data:application/mpeg4-iod\\;base64\\,AoDUAE8BAf/1AQOAbwABQFBkYXRhOmFwcGxpY2F0aW9uL21wZWc0LW9kLWF1O2Jhc2U2NCxBUjBCR3dVZkF4Y0F5U1FBWlFRTklCRUVrK0FBRnVOZ0FCYmpZQVlCQkE9PQQNAQUABAAAAAAAAAAAAAYJAQAAAAAAAAAAAzoAAkA2ZGF0YTphcHBsaWNhdGlvbi9tcGVnNC1iaWZzLWF1O2Jhc2U2NCx3QkFTWVFTSVVFVUZQd0E9BBICDQAAAgAAAAAAAAAABQMAAEAGCQEAAAAAAAAAAA\\=\\=\\\"\", a-framerate=(string)30.0, a-mpeg4-esid=(string)201, clock-base=(uint)1918588220, seqnum-base=(uint)40098, npt-start=(guint64)0, play-speed=(double)1, play-scale=(double)1'	! \
+        		rtpmp4vdepay			! \
+        		mpeg4videoparse			! \
+			tee name=t0			! \
+			queue				! \
+			mpegtsmux			! \
+			mpegtsparse			! \
+			filesink location=$RECORDFILE.ts t0. ! \
+			queue				! \
+			ffdec_mpeg4			! \
+			$SCALE				! \
+			$MIXERFORMAT2			! \
+			$SHMSINK1 2>>$LOGFILE
+sleep 2
+		;;
+	9020|9022|9024|9026|9028|9030|9032|9034|9036|9038)
+		echo "Starting H.264 Feed. "$MESSAGE >>$LOGFILE
+		gst-launch udpsrc sockfd=0		! \
+			"application/x-rtp, media=(string)video, clock-rate=(int)90000, encoding-name=(string)H264, sprop-parameter-sets=(string)\"Z0LAHtoCgL/lhAAAAwAEAAADAMA8WLqA\\,aM48gA\\=\\=\", payload=(int)96"			      ! \
+			rtph264depay			! \
+			h264parse			! \
+			tee name=t0			! \
+			queue				! \
+			mpegtsmux			! \
+			mpegtsparse			! \
+			filesink location=$RECORDFILE.ts t0. ! \
+			queue				! \
+			decodebin2			! \
+			$SCALE				! \
+			$MIXERFORMAT2			! \
+			$SHMSINK1 2>>$LOGFILE
+		echo "Stopping H.264 Feed. "$MESSAGE >>$LOGFILE
+		;;
+	9040|9042|9044|9046|9048|9050|9052|9054|9056|9058)
+		echo "Starting H.264 Feed. "$MESSAGE >>$LOGFILE
+
+		gst-launch -v udpsrc sockfd=0		! \
+			"application/x-rtp, media=(string)video, clock-rate=(int)90000, encoding-name=(string)H264, sprop-parameter-sets=(string)\"Z0JAKLtAKALb+AokAAADAAQAAAMAwYEAALcbAAtx73vheEQjUA\\=\\=\\,aM44gA\\=\\=\", payload=(int)96" ! \
+			rtph264depay			! \
+			h264parse			! \
+			queue				! \
+			tee name=t0			! \
+			queue				! \
+			mpegtsmux			! \
+			mpegtsparse			! \
+			filesink location=$RECORDFILE.ts t0. ! \
+			queue				! \
+			decodebin2			! \
+			$SCALE				! \
+			$MIXERFORMAT2			! \
+			$SHMSINK1 2>>$LOGFILE
+
+		echo "Stopping H.264 Feed. "$MESSAGE >>$LOGFILE
+		;;
+
+esac
+
+
+exit
+
+		gst-launch -v udpsrc sockfd=0		! \
+			"application/x-rtp, media=(string)video, clock-rate=(int)90000, encoding-name=(string)H264, sprop-parameter-sets=(string)\"Z0JAKLtAKALb+AokAAADAAQAAAMAwYEAALcbAAtx73vheEQjUA\\=\\=\\,aM44gA\\=\\=\", payload=(int)96" ! \
+			rtph264depay			! \
+			h264parse			! \
+			queue				! \
+			tee name=t1			! \
+			rtph264pay			! \
+			udpsink host=192.168.1.229 port=$port t1. ! \
+			queue				! \
+			tee name=t0			! \
+			queue				! \
+			mpegtsmux			! \
+			mpegtsparse			! \
+			filesink location=$RECORDFILE.ts t0. ! \
+			queue				! \
+			decodebin2			! \
+			$SCALE				! \
+			$MIXERFORMAT2			! \
+			$SHMSINK1 2>>$LOGFILE
+
+
+			#"application/x-rtp, media=(string)video, clock-rate=(int)90000, encoding-name=(string)H264, sprop-parameter-sets=(string)\"Z0JAKLtAKALb+AokAAADAAQAAAMAwYEAALcbAAtx73vheEQjUA\\=\\=\", payload=(int)96"
+
+    if [ X$snowmix != X ] ; then
+    (
+	#echo 'audio feed ctr isaudio 4'
+	gst-launch-0.10 -q \
+	udpsrc port=4000 caps='application/x-rtp, media=(string)video, payload=(int)96, clock-rate=(int)90000, encoding-name=(string)MP4V-ES, profile-level-id=(string)245, config=(string)000001B0F5000001B50900000100000001200088401928B02240A21F, a-mpeg4-iod=(string)\"\\ \\\"data:application/mpeg4-iod\\;base64\\,AoDUAE8BAf/1AQOAbwABQFBkYXRhOmFwcGxpY2F0aW9uL21wZWc0LW9kLWF1O2Jhc2U2NCxBUjBCR3dVZkF4Y0F5U1FBWlFRTklCRUVrK0FBRnVOZ0FCYmpZQVlCQkE9PQQNAQUABAAAAAAAAAAAAAYJAQAAAAAAAAAAAzoAAkA2ZGF0YTphcHBsaWNhdGlvbi9tcGVnNC1iaWZzLWF1O2Jhc2U2NCx3QkFTWVFTSVVFVUZQd0E9BBICDQAAAgAAAAAAAAAABQMAAEAGCQEAAAAAAAAAAA\\=\\=\\\"\", a-framerate=(string)30.0, a-mpeg4-esid=(string)201, clock-base=(uint)1918588220, seqnum-base=(uint)40098, npt-start=(guint64)0, play-speed=(double)1, play-scale=(double)1' ! \
+	rtpmp4vdepay	! \
+	mpeg4videoparse ! \
+	tee name=t0	! \
+	ffdec_mpeg4 ! \
+	$SCALE ! $MIXERFORMAT ! $SHMSINK1 \
+	t0. ! queue leaky=2 ! mpegtsmux ! tcpserversink port=4000
+	# videorate ! $SCALE ! $MIXERFORMAT ! $SHMSINK1 decoder. \
+	# ! queue ! audioconvert ! $AUDIOFORMAT ! filesink sync=true location=/dev/fd/1
+    ) | nc 127.0.0.1 9998
+    fi
+    #gst-launch-0.10 -v $SRC ! videorate ! $SCALE ! $MIXERFORMAT ! $SHMSINK1
+    #gst-launch-0.10 -v $SRC ! $SCALE ! $MIXERFORMAT ! $SHMSINK1
+    sleep 2
+done
+exit
+
+
+
+# Build a pipeline for receiving data from Logitech1:

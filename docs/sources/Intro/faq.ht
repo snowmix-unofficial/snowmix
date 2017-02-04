@@ -1,0 +1,532 @@
+<div class="content">
+
+	<div class="item">
+
+		<h1>About Snowmix</h1>
+		<div class="descr">Updated for Snowmix 0.5.1</div>
+
+		<h3>Introduction</h3>
+		<br/>
+
+		<p>This page may help you get an idea of what Snowmix is and how to get to use Snowmix. It is thought of as a beginners guide into Snowmix. Ideally it is intended to get you started using Snowmix without to much hazzle although some additional reading quite likely is required.</p>
+	</div>
+
+
+	<div class="item">
+		<h3>Content</h3>
+		<br/>
+		
+		<ul>
+			<li><a href="#whatissnowmix">What is Snowmix? </a></li>
+			<li><a href="#features">Which features does Snowmix offers? </a></li>
+			<li><a href="#platforms">Which OS platforms does Snowmix support?</a></li>
+			<li><a href="#hardware">What are the hardware requirements for running Snowmix?</a></li>
+			<li><a href="#windows">What about Snowmix for Windows?</a></li>
+			<li><a href="#software">What other software requirements does Snowmix have? </a></li>
+			<li><a href="#getting">How do I get Snowmix? </a></li>
+			<li><a href="#compile">How do I compile and install Snowmix? </a></li>
+			<li><a href="#test">How do I test Snowmix?</a></li>
+			<li><a href="#terminate">How do I terminate/shutdown Snowmix?</a></li>
+			<li><a href="#inifile">How do I write my own ini file? </a></li>
+			<li><a href="#output">How do I get mixed video out from Snowmix? </a></li>
+			<li><a href="#input">How do I feed video and audio into Snowmix? </a></li>
+			<li><a href="#referenceence">Where can I find a Reference Manual for Snowmix commands? </a></li>
+			<li><a href="#manuals">Where can I find Snowmix manuals? </a></li>
+			<li><a href="#tutorials">Where can I find Snowmix tutorials?</a></li>
+			<li><a href="#videos">Where can I find Snowmix videos?</a></li>
+			<li><a href="#overlaying">What are the different overlaying capabilities of feeds, virtual feeds, images, shapes and text compared?</a></li>
+			<li><a href="#scripting">How do I get started with Snowmix scripting? </a></li>
+			<li><a href="#advancedscripting">How do I get started with Advanced Snowmix scripting? </a></li>
+			<li><a href="#libraries">What are Snowmix Libraries? </a></li>
+			<li><a href="#synchronization">Where can I find out more about synchronizing audio and video in Snowmix? </a></li>
+			<li><a href="#help">How can I get free help and support with Snowmix?</a></li>
+			<li><a href="#consultancy">Is paid consultancy available?</a></li>
+			<li><a href="#contribute">How can I contribute to Snowmix?</a></li>
+			<li><a href="#endoflife">What are "End of Life Announcements"?</a></li>
+			<li><a href="#inthemedia">What has been written about Snowmix?</a></li>
+			<li><a href="#sourceforge">Snowmix on SourceForge</a></li>
+			<li><a href="#sites">Snowmix on other sites</a></li>
+		</ul>
+		<div align="right"><a href="">Top</a></div>
+	</div>
+
+
+	<div class="item">
+		<a name="whatissnowmix"><h3>What is Snowmix?</h3></a>
+		<br/>
+
+		<p>Snowmix is a very flexible and very fast command line tool for dynamically mixing live audio and video feeds. Snowmix supports overlaying video, images, texts and graphic elements as well as suports mixing audio. It offers animation, scripting, advanced clipping, simple blending and pattern gradient blending. <Strong>Snowmix is not an application</strong>, but rather a highly advanced specialized tool. However with the Snowmix libraries and a little imagination, tailoring Snowmix into one, is a walk in the park or a piece of cake if you like.</p>
+
+		<p>Snowmix was original and still is developed by the author to produce Live streaming television from the rocket launches in the Baltic Sea by <a href="http://www.copsub.com">Copenhagen Suborbitals.</a> You can see many of the <a href="https://www.youtube.com/channel/UCPzFMJIsp2fOQ_ic5a_zXTA">videos from Copenhagen Suborbitals on YouTube</a>.</p>
+		<div align="right"><a href="">Top</a></div>
+	</div>
+
+
+	<div class="item">
+		<a name="features"><h3>Which features does Snowmix offers?</h3></a>
+		<br/>
+
+		<p>Some of the features offered by Snowmix are:</p>
+		<ul>
+			<li>Unlimited number of regular video feeds (input of video feeds).</li>
+			<li>Unlimited geometries and frame rate (only limited by the computer CPU and RAM).</li>
+			<li>Unlimited number of virtual video feeds (copies of regular feeds).</li>
+			<li>Unlimited number of shape based video feeds \(copies of regular feeds).</li>
+			<li>Limitless scaling independently for width and height for all types of video feeds.</li>
+			<li>Handling of PAR (Pixel Aspect Ratio) for regular video feeds.</li>
+			<li>Limitless rotation of images, virtual and shape based video feeds.</li>
+			<li>Rectangular clipping for regular and virtual video feeds.</li>
+			<li>Limitless clipping for shape based video feeds and images.</li>
+			<li>Support of complex shape and pattern, solid and gradient based alpha blending.</li>
+			<li>Support for alpha blending for all types of video feeds and images.</li>
+			<li>Support for image transparency (images with an alpha channel).</li>
+			<li>Unlimited number of vector based (font based) texts in any color on top or underneath video.</li>
+			<li>Unlimited vector based rotation and alpha blending of text.</li>
+			<li>Support for solid and shaded (transparent) background for text.</li>
+			<li>Support for gradients and individual linear pattern shading for text backgrounds.</li>
+			<li>Support for simple animation of text, images and video feeds.</li>
+			<li>Support for complex graphics, image and video feed drawing, clipping, patterns, gradients and masking using graphic primitives of the 2D Cairo Graphics library.</li>
+			<li>Unlimited number of audio inputs, audio mixers and audio outputs.</li>
+			<li>Support for channel mapping, adding and subtraction.</li>
+			<li>Independent muting and volume control for all audio elements.</li>
+			<li>Support for simple and advanced scripting for all kinds of manipulation of audio and video.</li>
+			<li>Support for OpenGL Off Screen (CPU) and GPU assisted graphic and image operations enabling 3D effects</li>
+			<li>GUI tools for remotely controlling audio and scenes as well as for monitoring output timing and buffers</li>
+		</ul>
+
+		<p>But the complete list is a lot longer. <a href="developmentplans.html">Development Plans</a> are also available.</p>
+		<div align="right"><a href="">Top</a></div>
+	</div>
+
+
+	<div class="item">
+		<a name="platforms"><h3>Which OS platforms does Snowmix support?</h3></a>
+		<br/>
+
+		<p>Please see the <a href="[HOME]Intro/requirements.html#platforms">platform section</a>
+		on the <a href=[HOME]Intro/requirements.html">requirements</a> page.</p>
+
+		<div align="right"><a href="">Top</a></div>
+	</div>
+
+
+	<div class="item">
+
+		<a name="windows"><h3>What about Snowmix for Windows?</h3></a>
+		<br/>
+
+		<p>Snowmix <strong>has not</strong> been tested on Windows. While the code from
+		version 0.5.0 is modified to be able largely to compile with Visual Studio,
+		Snowmix depends on
+		<a href="http://gstreamer.freedesktop.org/data/doc/gstreamer/head/gst-plugins-bad-plugins/html/gst-plugins-bad-plugins-plugin-shm.html"><strong>shmsrc/shmsink</strong></a>
+		modules of <a href="http://gstreamer.freedesktop.org/">GStremaer</a> and these
+		modules depends on
+		<a href="http://en.wikipedia.org/wiki/Unix_domain_socket">POSIX socket based named pipes AF_UNIX</a>,
+		<a href="http://en.wikipedia.org/wiki/Mmap">mmap()</a> and
+		<a href="http://en.wikipedia.org/wiki/Shared_memory_%28interprocess_communication%29">shm_open()</a>.
+		POSIX socket based named pipes and POSIX shared memory are not available on native Windows.
+		Nevertheless <a href="https://bugzilla.gnome.org/show_bug.cgi?id=698657">efforts to port GStreamer shmsrc/shmsink to Windows is underway, but not there yet</a>.
+		When these efforts matrialize in a released binary of GStreamer for Windows, Snowmix
+		is likely to be releasd for Windows as well.</p>
+		<div align="right"><a href="">Top</a></div>
+	</div>
+
+
+	<div class="item">
+
+		<a name="hardware"><h3> What are the hardware requirements for running Snowmix?</h3></a>
+		<br/>
+
+		<p>Please see the <a href="[HOME]Intro/requirements.html#hardware">hardware section</a>
+		on the <a href=[HOME]Intro/requirements.html">requirements</a> page.</p>
+
+		<div align="right"><a href="">Top</a></div>
+	</div>
+
+
+	<div class="item">
+
+		<a name="software"><h3>What other software requirements does Snowmix have?</h3></a>
+		<br/>
+
+		<p>Please see the <a href="[HOME]Intro/requirements.html#software">software section</a>
+		on the <a href=[HOME]Intro/requirements.html">requirements</a> page.</p>
+
+		<div align="right"><a href="">Top</a></div>
+	</div>
+
+
+	<div class="item">
+
+		<a name="getting"><h3>How do I get Snowmix?</h3></a>
+		<br/>
+
+		<p>Snowmix is distributed for free as Open Source Software and latest versions can be
+		<a href="https://sourceforge.net/projects/snowmix/files/">downloaded from SourceForge here</a>.
+		Binaries <strong>are not</strong> available.</p>
+		<div align="right"><a href="">Top</a></div>
+	</div>
+
+
+	<div class="item">
+
+		<a name="compile"><h3>How do I compile and install Snowmix?</h3></a>
+		<br/>
+
+		<p>Instructions for compiling and installing Snowmix are available on the
+		page on how to <a href="[HOME]Intro/compileandinstall.html">compile, test and install</a>
+		Snowmix. The bootstrap script supplied with Snowmix will offer to check for missing libraries
+		and tools and offer to download and install them for you. If you have installed an earlier
+		version of Snowmix or want to track the development of Snowmix or want to
+		find interesting details, please view the <a href="[HOME]Documentation/changelog.html">Changelog</a>.
+		Please also take a look at the <a href="[HOME]Documentation/releasenotes.html">Release Notes</a>.</p>
+		<div align="right"><a href="">Top</a></div>
+	</div>
+
+	<div class="item">
+
+		<a name="test"><h3>How do I test Snowmix?</h3></a>
+		<br/>
+
+		<p>Instructions for a
+		<a href="[HOME]Intro/compileandinstall.html">running a demo test are available here</a>.
+		Assuming you have <a href="https://help.ubuntu.com/community/EnvironmentVariables">set the environment variable</a>
+		<i>SNOWMIX</i> to the directory of your installed Snowmix file tree as you were
+		told when running the boostrap file, then you can now run the Snowmix demo using
+		the following commands</p>
+
+		<code>$ snowmix_demo</code>
+		<div align="right"><a href="">Top</a></div>
+	</div>
+
+
+	<div class="item">
+
+		<a name="terminate"><h3>How do I shutdown/terminate Snowmix?</h3></a>
+		<br/>
+
+		<p>This is <strong>important</strong>, so please pay attention.
+		Snowmix will terminate cleanly if the command <i>quit</i> is executed in either
+		the Snowmix console window or through a control connection. If Snowmix on the
+		other hand is killed either through an external kill signal or through sending
+		a CTRL-C in the Snowmix console window, allocated shared memory will stay allocated
+		and in a sense lost. If repeated, Snowmix will eventually allocate all available
+		shared memory in a system. <strong>This is bad</strong> and you will need to
+		reboot your system or find another way to delete/free allocated shared memory.
+		On Linux, you can see and free allocated shared memory using the following commands:</p>
+
+		<code>$ df -k /run/shm
+$ rm /run/shm/shmpipe*</code>
+
+		<div align="right"><a href="">Top</a></div>
+	</div>
+
+
+	<div class="item">
+
+		<a name="inifile"><h3>How do I write my own ini file?</h3></a>
+		<br/>
+
+		<p>Snowmix requires an initilization file (or ini file for short) with some
+		specific Snowmix commands to run. Minimal examples of
+		<a href="[HOME]/Examples/basicconfigurations.html">ini files with explanation are available here</a>
+		See also section on <a href=#reference">Reference Manual</a> and
+		<a href="#manuals">Manuals</a> further down this page for more information on
+		commands for a Snowmix ini file. See also a list of
+		<a href="[HOME]Documentation/reserved.html">all Snowmix commands available</a>.</p>
+
+		<div align="right"><a href="">Top</a></div>
+	</div>
+
+
+	<div class="item">
+
+		<a name="output"><h3>How do I get mixed video out of Snowmix?</h3></a>
+		<br/>
+
+		<p>Snowmix comes with a few example scripts in the scripts directory for
+		getting audio and video out from Snowmix. The scripts are installed as
+		executables from the command line. Some of these are:</p>
+		<ul>
+			<li>av_output2dummy : Getting audio and video from Snowmix for dumping.</li>
+			<li>av_output2screen : Getting audio and video from Snowmix for display on screen and playing through the audio device.</li>
+			<li>av_output2tcpserver : Getting audio and video from Snowmix for encoding, muxing and make it available as a tcp server.</li>
+			<li>output2dummy : Getting video from Snowmix for dumping.</li>
+			<li>output2screen : Getting video from Snowmix for display on screen.</li>
+			<li>output2rtp : Getting video from Snowmix for encoding and streaming as RTP.</li>
+			<li>output2file : Getting video from Snowmix for encoding, encapsulation and saving it to a mp4 file.</li>
+		</ul>
+
+		<p>More details and instructions for outputting from Snowmix can be found
+		<a href="https://sourceforge.net/p/snowmix/wiki/Gstreamer%20Output/">for video here</a> and
+		<a href="https://sourceforge.net/p/snowmix/wiki/Audio/">audio here in the last part</a>.</p>
+
+		<div align="right"><a href="">Top</a></div>
+	</div>
+
+
+	<div class="item">
+
+		<a name="input"><h3>How do I feed video and audio into Snowmix?</h3></a>
+		<br/>
+
+		<p>Snowmix comes with a few example scripts in the scripts directory for feeding
+		audio and video into Snowmix. The scripts are installed as
+		executables from the command line. Some of these are:</p>
+
+		<ul>
+			<li>input2feed : Feeding audio or video or video and audio from a file into into Snowmix.</li>
+			<li>v4l2input2feed : Feeding Live video from a Linux Video Device into into Snowmix.</li>
+			<li>rtsp2feed : Fetching a RTSP stream and feed audio and video into Snowmix</li>
+			<li>rtsp2feed2 : Fetching a RTSP stream and feed audio and video into Snowmix</li>
+		</ul>
+
+		<p>More details and instructions for inputting from Snowmix can be found
+		<a href="https://sourceforge.net/p/snowmix/wiki/Gstreamer/">for video here</a> and
+		<a href="https://sourceforge.net/p/snowmix/wiki/Audio/">audio here in the last part</a>.</p>
+
+		<div align="right"><a href="">Top</a></div>
+	</div>
+
+
+	<div class="item">
+
+		<a name="reference"><h3>Where can I find a Reference Manual for Snowmix commands?</h3></a>
+		<br/>
+
+		<p>Reference manuals for Snowmix commands has been written although a few are still work in progress.
+		You can read more about the <a href="[HOME]Documentation/reference.html">reference manual here</a>.</p>
+
+		<div align="right"><a href="">Top</a></div>
+	</div>
+
+
+	<div class="item">
+
+		<a name="guides"><h3>Where can I find Snowmix Guides?</h3></a>
+		<br/>
+
+		<p>A number of Snowmix Guides has been written. For more information, please see the page on
+		<a href="[HOME]Documentation/guides.html">Snowmix Guides</a>.</p>
+
+		<div align="right"><a href="">Top</a></div>
+	</div>
+
+
+	<div class="item">
+
+		<a name="tutorials"><h3>Where can I find Snowmix tutorials?</h3></a>
+		<br/>
+
+		<p>A number of Snowmix tutorials has been written. For more information, please see list below:</p>
+
+		<ul>
+			<li><a href="https://sourceforge.net/p/snowmix/wiki/Tutorials/">Snowmix Tutorials on text</a>.</li>
+		</ul>
+		<div align="right"><a href="">Top</a></div>
+
+	</div>
+
+
+	<div class="item">
+
+		<a name="videos"><h3>Where can I find Snowmix Videos</h3></a>
+		<br/>
+
+		<p>See Snowmix in action on <a href="http://www.youtube.com/user/Snowmix4video">Snowmix's YouTube Channel</a>
+		There you can also find the Snowmix Tutorials.</p>
+
+		<p>If you have videos created with Snowmix, we would be happy to post such videos
+		on Snowmix's YouTube channel. Contact us through the
+		<a href="https://sourceforge.net/p/snowmix/discussion/Snowmix_Support_Forum/">Support Forum</a>.</p>
+		<div align="right"><a href="">Top</a></div>
+	</div>
+
+	<div class="item">
+
+		<a name="overlaying"><h3>What are the different overlaying capabilities of feeds, virtual feeds, images, shapes and text compared?</h3></a>
+		<br/>
+
+		<p>There is a table with explanation for comparison of all the
+		<a href="https://sourceforge.net/p/snowmix/wiki/Overlaying%20Capabilities">overlaying capabilities of feeds, virtual feeds, images, shapes and texts</a>.</p>
+	</div>
+
+	<div class="item">
+
+		<a name="scripting"><h3>How do I get started with Snowmix scripting?</h3></a>
+		<br/>
+
+		<p>If you would like to understand how scripts in Snowmix work, please take a
+		look at the page
+		<a href="[HOME]/Examples/scripting.html">Basic Snowmix Scripting</a>.
+		It explains basic Snowmix scripting and has examples. When you master basic
+		Snowmix scripting, take a look at the next section on advanced Snowmix scripting.</p>
+		<div align="right"><a href="">Top</a></div>
+	</div>
+
+	<div class="item">
+
+		<a name="advancedscripting"><h3>How do I get started with Advanced Snowmix scripting?</h3></a>
+		<br/>
+
+		<p>If you understand basic Snowmix scripting and would like to understand how advanced
+		scripting is possible with Snowmix, please take a look at the page for 
+		<a href="[HOME]Advanced/scripting.html">Advanced Snowmix Scripting</a>.
+		It is currently under development, but it does have links to examples with advanced
+		Snowmix scripting. Advanced scripting in Snowmix is based on using the built-in
+		<a href="https://sourceforge.net/p/snowmix/wiki/Tcl%20Interpreter/">Tcl Interpreter</a>.</a>
+		<div align="right"><a href="">Top</a></div>
+	</div>
+
+	<div class="item">
+
+		<a name="libraries"><h3>What are Snowmix Libraries?</h3></a>
+		<br/>
+
+		<p>Snowmix Libraries are collection of scripts installed in the $SNOWMIX/slib
+		directory.  The Snowmix libraries adds complex features and operations as well
+		ease of use to Snowmix. Snowmix libraries are mostly implemented using
+		<a href="[HOME]Advanced/scripting">Advanced Snowmix Scripting</a>.</p>
+
+		<p>You can add your own Snowmix libraries to the $HOME/$SNOWMIX_PREFIX/slib/
+		directory. If the environment variable SNOWMIX_PREFIX is not set, Snowmix will use
+		'.snowmix' for Linux and FreeBSD and 'Snowmix' for Mac OS X.</p>
+		<div align="right"><a href="">Top</a></div>
+	</div>
+
+	<div class="item">
+
+		<a name="synchronization"><h3>Where can I find out more about synchronizing audio and video in Snowmix?</h3></a>
+		<br/>
+
+		<p>There is a guide available for advanced information on
+		<a href="https://sourceforge.net/p/snowmix/wiki/AV%20Sync/">audio and video sync in Snowmix</a>.</p>
+		<div align="right"><a href="">Top</a></div>
+	</div>
+
+	<div class="item">
+
+		<a name="help"><h3>How can I get free help and support with Snowmix?</h3></a>
+		<br/>
+
+		<p>Snowmix comes with a
+		<a href="https://sourceforge.net/p/snowmix/discussion/Snowmix_Support_Forum/">free support forum</a>
+		were you can ask questions and share information. Please remember to create
+		a new thread for new questions so we don't get very long threads with many
+		different questions. That way hopefully we all can navigate the support forum
+		a lot easier and all benefit from questions and answers.</p>
+		<div align="right"><a href="">Top</a></div>
+	</div>
+
+	<div class="item">
+
+		<a name="consultancy"><h3>Is paid consultancy available?</h3></a>
+		<br/>
+
+		<p>Yes paid consultancy on Snowmix, GStreamer, Streaming and networks is available.
+		Please contact the author through the 
+		<a href="https://sourceforge.net/p/snowmix/discussion/Snowmix_Support_Forum/">Support Forum</a>
+		or use <a href="http://sourceforge.net/u/pmaersk/">this page privately</a> for initial contact.</p>
+		<div align="right"><a href="">Top</a></div>
+	</div>
+
+	<div class="item">
+
+		<a name="contribute"><h3>How can I contribute to Snowmix?</h3></a>
+		<br/>
+
+		<ul>
+		<li>First of you can start using Snowmix and help spread the word about
+		Snowmix to friends, colleagues and contacts.</li>
+
+		<li>Second you can tell us about what you are using Snowmix for in the
+		<a href="https://sourceforge.net/p/snowmix/discussion/Snowmix_Support_Forum/">Support Forum</a>.
+		We would very much like to receive screenshots of the mixing you do with Snowmix,
+		but also text telling us what you are using Snowmix for. We would also like
+		to receive movie clips with made with Snowmix we can post on our
+		<a href="http://www.youtube.com/user/Snowmix4video">Snowmix4video YouTube channel</a>.</li>
+
+		<li>Third you can write a
+		<a href="https://sourceforge.net/projects/snowmix/reviews/new">short review</a>
+		telling what you think of Snowmix.</li>
+
+		<li>Fourth we would very much like to receive help reading through the
+		documentation we have written here on this site and receive suggestions
+		and corrections for language and facts.</li>
+
+		<li>Fifth we would very much like to receive requests and suggestions for
+		new features for Snowmix in the
+		<a href="https://sourceforge.net/p/snowmix/discussion/Snowmix_Support_Forum/">Support Forum</a>.</li>
+
+		</ul>
+
+		<p>If you like to contribute code to Snowmix or find errors in the code
+		and have a fix for it, please contact the author in the
+		<a href="https://sourceforge.net/p/snowmix/discussion/Snowmix_Support_Forum/">Support Forum</a>.</p>
+		<div align="right"><a href="">Top</a></div>
+	</div>
+
+	<div class="item">
+
+		<a name="endoflife"><h3>What are "End of Life Announcements" ?</h3></a>
+		<br/>
+
+		<p>Features of Snowmix that are being changed or removed from Snowmix in
+		the next major release, are listed as
+		<a href="[HOME]Intro/endoflife.html">EndOfLife Announcements</a>.
+		A major release is a release where the <i>major version number</i> is changing.
+		Releasing 0.5.0 after 0.4.x is a major release while releasing 0.4.5 after 0.4.4
+		is a minor release. If Snowmix is stopping supporting a specific syntax of its
+		commands, this would result in a major release. When the command syntax is changed,
+		normally both the new and the old syntax is available in a new minor release.
+		If you are writing your own ini files or are using your own programs to send
+		commands and queries to Snowmix, reading the End of Life Announcements
+		are important to you.</p>
+
+		<div align="right"><a href="">Top</a></div>
+	</div>
+
+	<div class="item">
+
+		<a name="inthemedia"><h3>What has been written about Snowmix?</h3></a>
+		<br/>
+
+		<p>There is a page on
+		<a href="https://sourceforge.net/p/snowmix/wiki/Snowmix%20in%20the%20media">Snowmix in the media</a>
+		with links to articles about Snowmix. If you find articles about Snowmix
+		not listed on this page, please tell us in the
+		<a href="https://sourceforge.net/p/snowmix/discussion/Snowmix_Support_Forum/">Support Forum</a>.</p>
+		<div align="right"><a href="">Top</a></div>
+	</div>
+
+	<div class="item">
+
+		<a name="sourceforge"><h3>Snowmix on SourceForge</h3></a>
+		<br/>
+
+		<p>Most information on Snowmix is found on this
+		<a href="http://snowmix.sourceforge.net">website</a> you are now. However additional
+		information can also be found on the
+		<a href="https://sourceforge.net/projects/snowmix">Snowmix SourceForge project website</a>.</p>
+
+		<p>On SourceForge you can find
+		<a href="https://sourceforge.net/projects/snowmix/reviews">Snowmix reviews</a>.
+		You can also find the 
+		<a href="https://sourceforge.net/projects/snowmix/wiki">Snowmix Wiki</a>, but
+		all new information is being created on the website you are now. The project
+		page is also hosting the <a href="https://sourceforge.net/p/snowmix/discussion/Snowmix_Support_Forum/">Support Forum</a>.</p>
+		<div align="right"><a href="">Top</a></div>
+	</div>
+
+	<div class="item">
+
+		<a name="sites"><h3>Snowmix on other sites.</h3></a>
+		<br/>
+
+		<p>Snowmix has a channel on YouTube you can find <a href="https://www.youtube.com/user/Snowmix4video">here</a>.
+
+		<p>Snowmix has a page on Facebook you can find <a href="https://www.facebook.com/Snowmix4video">here</a>.
+		<div align="right"><a href="">Top</a></div>
+	</div>
+
+</div>

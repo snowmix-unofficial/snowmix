@@ -1,0 +1,86 @@
+#!/bin/bash
+# Deliver mixer1 and audio to dummy (fakesink)
+
+ip=127.0.0.1
+port=9999
+audio_sink_id=1
+
+rate=`echo audio sink rate | nc $ip $port | grep 'STAT: audio sink '$audio_sink_id' ' | cut -f6 -d' '`
+channels=`echo audio sink channels | nc $ip $port | grep 'STAT: audio sink '$audio_sink_id' ' | cut -f6 -d' '`
+
+tmpfile=/tmp/output2screen.tmp.$$
+echo 'system info' | nc 127.0.0.1 $port >$tmpfile
+geometry=`grep 'STAT:  System geometry' $tmpfile |cut -f3 -d: |cut -f2 -d' '|tr 'x' ' '`
+framerate=`grep 'STAT:  Frame rate' $tmpfile |cut -f3 -d: |cut -f2 -d' '`
+ctrsocket=`grep 'STAT:  Output ctr sock name' $tmpfile |cut -f3 -d: |cut -f2 -d' '`
+rm $tmpfile
+
+gstlaunch=`which gst-launch-1.0`
+if [ X$gstlaunch != X ] ; then
+  VIDEOCONVERT=videoconvert
+  VIDEO=video/x-raw
+  AUDIO=audio/x-raw
+  vfid=string
+  afid="format=(string)S16LE, "
+else
+  gstlaunch=`which gst-launch-0.10`
+  if [ X$gstlaunch != X ] ; then
+    VIDEOCONVERT=ffmpegcolorspace
+    VIDEO=video/x-raw-rgb
+    AUDIO=audio/x-raw-int
+    vfid=fourcc
+    afid=""
+  else
+    echo "Could not find gst-launch-1.0 or gst-launch-0.10. Stopping"
+    exit
+  fi
+fi
+
+frameratefraction()
+{
+  echo $1 | awk '{ rate=$1 ;
+         factor=1;
+         intrate=int(rate);
+         while (factor*rate > intrate) {
+           factor = factor * 10;
+           intrate = int(rate*factor);
+         }
+         printf("%d/%d\n",intrate,factor);
+       }'
+}
+ratefraction=`frameratefraction $framerate`
+           
+width=`echo $geometry |cut -f1 -d' '`
+height=`echo $geometry |cut -f2 -d' '`
+
+
+MIXERFORMAT=$VIDEO', bpp=(int)32, depth=(int)32, endianness=(int)4321, format=('$vfid')BGRA, red_mask=(int)65280, green_mask=(int)16711680, blue_mask=(int)-16777216, width=(int)'$width', height=(int)'$height', framerate=(fraction)'$ratefraction', pixel-aspect-ratio=(fraction)1/1, interlaced=(boolean)false'
+AUDIOFORMAT=$AUDIO', '$afid' endianness=(int)1234, signed=(boolean)true, width=(int)16, depth=(int)16, rate=(int)'$rate', channels=(int)'$channels
+
+while true ; do
+  snowmix=`ps c |cut -c28-34 | grep snowmix | head -1`
+  if [ X$snowmix != X ] ;then
+    if [ X$rate != X -a X$channels != X ] ; then
+      (echo audio sink ctr isaudio $audio_sink_id ; sleep 100000000 ) | \
+        nc 127.0.0.1 9999 | \
+      ( head -1
+        $gstlaunch -v shmsrc socket-path=$ctrsocket do-timestamp=true is-live=true ! \
+          $MIXERFORMAT		!\
+	  queue			!\
+	  fakesink		 \
+          fdsrc fd=0		!\
+          $AUDIOFORMAT		!\
+	  queue			!\
+	  fakesink
+      )
+    else
+        $gstlaunch -q shmsrc socket-path=$ctrsocket do-timestamp=true is-live=true ! \
+          $MIXERFORMAT		!\
+	  fakesink
+    fi
+  else
+    echo Snowmix is not running. Quitting $0
+    exit 1
+  fi
+  sleep 2
+done

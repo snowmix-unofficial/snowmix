@@ -1,0 +1,13 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="content-type" content="text/html; charset=iso-8859-1"/>
+<meta name="description" content="Snowmix Video Mixer"/>
+<meta name="keywords" content="Snowmix Video Mixer,Video,Mixer,OpenGL,Cairo Graphics,GStreamer,Linux,FreeBSD,MacOS,OS X"/> 
+<meta name="author" content="Peter Maersk-Moller"/> 
+<link rel="stylesheet" type="text/css" href="[HOME]default.css" media="screen"/>
+<link rel="shortcut icon" href="[HOME]img/Snowmix-logo-transparent-128x101.ico"/>
+<title>Snowmix - The Swiss Army Knife of Open Source Live Video Mixing.</title>
+</head>
+

@@ -1,0 +1,238 @@
+# Copyright by Peter Maersk-Moller 2012 - All rights reserved
+require version 0.4.0
+
+# Loading images into image 20-30
+# Placing image 21-28
+############## Digital Clock Section - Definition of a Clock ##################
+command create DigitalClockInit
+  message Digital Clock Init
+  image load 20 images/digital-0-105x151.png
+  image load 21 images/digital-1-105x151.png
+  image load 22 images/digital-2-105x151.png
+  image load 23 images/digital-3-105x151.png
+  image load 24 images/digital-4-105x151.png
+  image load 25 images/digital-5-105x151.png
+  image load 26 images/digital-6-105x151.png
+  image load 27 images/digital-7-105x151.png
+  image load 28 images/digital-8-105x151.png
+  image load 29 images/digital-9-105x151.png
+  image load 30 images/digital-colon-37x151.png
+  image place 21 20 650 26 center middle
+  image place 22 20 625 26 center middle
+  image place 23 30 607 26 center middle
+  image place 24 20 590 26 center middle
+  image place 25 20 565 26 center middle
+  image place 26 30 547 26 center middle
+  image place 27 20 530 26 center middle
+  image place 28 20 505 26 center middle
+  image scale 21 0.25 0.25
+  image scale 22 0.25 0.25
+  image scale 23 0.25 0.25
+  image scale 24 0.25 0.25
+  image scale 25 0.25 0.25
+  image scale 26 0.25 0.25
+  image scale 27 0.25 0.25
+  image scale 28 0.25 0.25
+  DigiClockSeconds
+  DigiClockSeconds2
+  DigiClockMinutes
+  DigiClockMinutes2
+  DigiClockHours
+  DigiClockHours2
+  DigiClockSeconds
+  tcl exec DigiClockInitTcl
+  tcl exec DigiClockTcl
+command end
+
+command create DigiClockSeconds
+  label start
+  image image 21 20
+  next
+  image image 21 21
+  next
+  image image 21 22
+  next
+  image image 21 23
+  next
+  image image 21 24
+  next
+  image image 21 25
+  next
+  image image 21 26
+  next
+  image image 21 27
+  next
+  image image 21 28
+  next
+  image image 21 29
+  next
+  DigiClockSeconds2
+  goto start
+command end
+
+command create DigiClockSeconds2
+  label start
+  image image 22 20
+  next
+  image image 22 21
+  next
+  image image 22 22
+  next
+  image image 22 23
+  next
+  image image 22 24
+  next
+  image image 22 25
+  next
+  DigiClockMinutes
+  goto start
+command end
+
+command create DigiClockMinutes
+  label start
+  image image 24 20
+  next
+  image image 24 21
+  next
+  image image 24 22
+  next
+  image image 24 23
+  next
+  image image 24 24
+  next
+  image image 24 25
+  next
+  image image 24 26
+  next
+  image image 24 27
+  next
+  image image 24 28
+  next
+  image image 24 29
+  next
+  DigiClockMinutes2
+  goto start
+command end
+
+command create DigiClockMinutes2
+  label start
+  image image 25 20
+  next
+  image image 25 21
+  next
+  image image 25 22
+  next
+  image image 25 23
+  next
+  image image 25 24
+  next
+  image image 25 25
+  next
+  DigiCount24Reset
+  DigiClockHours
+  goto start
+command end
+
+command create DigiCount24Reset
+  label start
+  next 23
+  message RESET HOUR 1+2
+  command restart DigiClockHours
+  command restart DigiClockHours2
+  DigiClockHours2
+  loop
+  #goto start
+command end
+
+command create DigiClockHours
+  label start
+  image image 27 20
+  next
+  image image 27 21
+  next
+  image image 27 22
+  next
+  image image 27 23
+  next
+  image image 27 24
+  next
+  image image 27 25
+  next
+  image image 27 26
+  next
+  image image 27 27
+  next
+  image image 27 28
+  next
+  image image 27 29
+  next
+  DigiClockHours2
+  goto start
+command end
+
+command create DigiClockHours2
+  image image 28 20
+  next
+  image image 28 21
+  next
+  image image 28 22
+  loop
+command end
+
+command create DigiClockInitTcl
+  proc SetDigiTime {} {
+    set sec_list ""
+    set a [clock format [clock seconds] -format "%H %M %S"]
+    set pi [expr 2*asin(1.0)]
+    set rotation_secs [expr [lindex $a 2] * $pi / 30.0]
+    set rotation_minute [expr [lindex $a 1] * $pi / 30.0]
+    set rotation_hour [expr ([lindex $a 0] + [lindex $a 1] / 60.0) * $pi / 6.0]
+    append sec_list "# Time = $a\n"
+    for {set i 0} {$i < [lindex $a 2]} {incr i 1} {
+      append sec_list DigiClockSeconds\n
+    }
+    for {set i 0} {$i < [lindex $a 1]} {incr i 1} {
+      append sec_list DigiClockMinutes\n
+    }
+    for {set i 0} {$i < [lindex $a 0]} {incr i 1} {
+      append sec_list DigiClockHours\n
+      append sec_list DigiCount24Reset\n
+    }
+    return $sec_list
+  }
+command end
+
+command create DigiClockTcl
+  set a [SetDigiTime ]
+  return [format "\n%s" $a]
+command end
+
+command create DigiDimClock
+  image move alpha 21 -0.02 50
+  image move alpha 22 -0.02 50
+  image move alpha 23 -0.02 50
+  image move alpha 24 -0.02 50
+  image move alpha 25 -0.02 50
+  image move alpha 26 -0.02 50
+  image move alpha 27 -0.02 50
+  image move alpha 28 -0.02 50
+command end
+command create DigiUnDimClock
+  image move alpha 21 0.02 50
+  image move alpha 22 0.02 50
+  image move alpha 23 0.02 50
+  image move alpha 24 0.02 50
+  image move alpha 25 0.02 50
+  image move alpha 26 0.02 50
+  image move alpha 27 0.02 50
+  image move alpha 28 0.02 50
+command end
+command afterend DigiDimClock
+command create DigiDim
+  command restart DigiDimClock
+  loop
+command end
+command create DigiUnDim
+  command restart DigiUnDimClock
+  loop
+command end

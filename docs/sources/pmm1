@@ -1,0 +1,150 @@
+Version 0.5.1
+
+	- Debian support now has its own additional bootstrap file to be executed
+	  automatically when running bootstrap. Will check for GStreamer 1.0
+	  and offer to download relevant packages.
+
+	- Including OpenGL GLUT support now requires '--enable-snowmixglut'
+	  when running configure. Full OpenGL support can be enabled by:
+
+		./configure --prefix=$prefix --enable-snowmixosmesa --enable-snowmixx11 --enable-snowmixglu -enable-snowmixglut
+
+	- On Mac OS X, a pipeline closing connection to Snowmix output control
+	  connection setup by GStreamer shmsrc, would under certain circumstances
+	  make Snowmix exit without any explanation. This happened when Snowmix
+	  would "send" data to the control connection of the connecting shmsrc
+	  and the shmsrc had broken the connection. Due to OS X not supporting
+	  MSG_NO_SIGNAL, a SIGPIPE would make Snowmix exit without warnings.
+	  Snowmix now correctly sets the socket option SO_NOSIGPIPE for OS X and
+	  catches the signal and closing the socket nicely. Linux just sets
+	  MSG_NOSIGNAL flag when sending. This bugfix has also been implemented
+	  on the feed control connection although so far, the bug has not been
+	  reproduced on OS X on the fed control connection.
+
+	- Deleting a loaded image or loading an image into an already used image id,
+	  would leak memory. This is now fixed. This is a bugfix.
+
+	- Error in CCairoGraphic::OverlayText() and UTF8Bytes() would in some cases
+	  lead to incorrect fewer number of characters being overlayed when using
+	  "text grow" combined with a string containing multibyte charaters. In
+	  some cases libPango would object to malformed UTF8 string with a for Snowmix
+	  unpredictable result. This is a bugfix.
+
+	- In addition to loading PNG images WITH an alpha channel/layer, Snowmix now
+	  also support loading PNG images without an alpha channel/layer.
+
+	- The command "text backgr rgb" with argument would switch the green and blue
+	  value. The correct order is red, green and blue. This is a bugfix.
+
+	- For Mac OS X, updating bootstrap-OSX for GStreamer 1.6.3 and MacPort 2.3.4.
+
+	- The tcl command "snowmix info xxxx ids" would in many cases overwrite memory
+	  unintended for image load, test, shape, virtual feed, feed, audio feed,
+	  audio mixer and audio sink leading to unpredictable results, usually a crash.
+	  This is a bugfix.
+
+	- Clipping of audio was detected as being outside the range of -32768 to 32767.
+	  The valid range for audio with no clipping is now set to -32767 to 32767.
+	  The previous range is not considered a bug and the change is as such just
+	  a minor adjustment.
+
+	- When having a source in CAudioMixer with fewer channels than the mixer
+	  itself, the mixer would, if volume of the source for the mixer was different
+	  from 1.0, for some samples of the source frequently multiply the volume
+	  to the source more than once. This was most clearly heard as clicking when volume for
+	  the source in CAudioMixer was set beyond 1.0 and very clearly heard when
+	  volume was set above 1.2-1.3. If volume was set to 1.3, then for most samples for
+	  the source these would be multiplied by 1.3, but some every now and then would
+	  be multiplied by 1.3*1.3. This is a bugfix.
+
+	- Adding/mixing  multiple sources in CAudioMixer would not correctly set
+	  newbuf->clipped to 100, if result exceeded +-32767, but it was rather set
+	  to true (=1) thus mostly avoiding detection of clipping. This is a bugfix.
+
+	- Adding a new option for the snowmix command of the  embedded interpreter.
+	  The command can be used to import settings and states from the output
+	  modules of Snowmix into the embedded Interpreter. The syntax of the
+	  new command option is:
+
+		snowmix info output ((info | status) [ format ]) | syntax
+
+	  One way to use the command can be like this:
+
+		tcl eval snowmix message [snowmix info output info]
+
+	- The command "tcl help" would print lines for "snowmix info shapes" and
+	  "snowmix info system" twice and the second print was not correct. Seconds
+	  removed. Cosmetic change.
+
+	- The command "audio feed delay <feed id> <ms>" would print to stderr, aka
+	  the Snowmix console instead of the controller issuing the command. Verbose
+	  mode for audio feed is needed. This is a bugfix.
+
+	- The command "audio sink status" was missing a parameter name "queue" in
+	  the format list included in the beginning of the list. This is a bugfix.
+
+	- The tcl command "snowmix info audio mixer source extended format" was missing
+	  the parameter name delay in its list. When using the format list to
+	  index output from "snowmix info audio mixer source extended ..." it
+	  would lead to a misinterpretation of the data. This is a bugfix.
+
+	- The tcl command "snowmix info audio mixer source info ..." would return an
+	  unbalanced tcl list if any of the mixer sources had a source map configured.
+	  This is a bugfix.
+
+	- The tcl command "snowmix info audio mixer source" would print signed/unsigned instead
+	  of muted/unmuted and it would print the value for signed/unsigned. Should be
+	  the value for muted/unmuted. This is a bugfix.
+
+	- The tcl command "snowmix info audio mixer source ..." would miss a space between an
+	  ending '}' and a starting '{' and mess up the use of this list if used as a list in
+	  tcl. This is a bugfix.
+
+	- The tcl commands "snowmix info audio feed status ..." and "snowmix info audio sink status ..."
+          would print signed/unsigned instead of muted/unmuted. It would also return a malformed tcl
+	  list with unbalanced '{}'. This is a bugfix.
+
+	- The tcl command "snowmix info audio mixer source extended ..." would access sample_count
+	  of an audio queue, also when none was appointed leading to a NULL pointer seg fault.
+	  This is a bugfix.
+
+	- Setting the Windows attribute override_redirect to true should now make the glx
+	  COpenglVideo class bypass the window manager. Enhancement.
+
+        - Update to slib/scenes.slib. SceneSetFrameActive used to set or list active frame/frames.
+          Used without arguments, it will list the all frame states for all scenes.
+          Used with scene_id as argument, it will list all frame state for that scene
+          Used with scene_id and frame_id as argument, it will list frame state for that scene and
+	  that frame. Enhancement. The syntax is:
+
+                SceneSetFrameActive [ scene_id [ frame_id [ active silent ] ] ]
+
+	- Adding support for compiling Snowmix with Cairo Graphics older than version 1.10. This
+	  however limits the list of Cairo Graphics Operators. See http://cairographics.org/operators/
+
+	- In configure.ac we now actually test for libtcl8.6, libtcl8.5 and libtcl in that order
+	  instead of just assuming it existence from location of header files.
+
+	- Adding freebsd as platform to configure.ac. Used for PCBSD.
+
+Version 0.5.0.1 and 0.5.1
+
+	- Adding xfc4-terminal and lxterm to possible terminal emulators for the demo script.
+	  Enhancement.
+
+        - The images/CS directory was not installed rendering the demo example for ini/sapphire-basis
+          flawed when using the scene tab in snowcub. Bugfix.
+
+	- The script scripts/av_output2screen used 'nc' rather than $NC. Potential stall on some systems.
+	  Bugfix.
+
+	- The script scripts/demo installed as snowmix_demo is missing a '&' preventing the demo script
+	  from working correctly on Linux/*nix systems (except MacOSX) if gnome-terminal is not installed.
+	  https://sourceforge.net/p/snowmix/discussion/Snowmix_Support_Forum/thread/551db9a7/
+	  Bugfix.
+
+	- The line with 'audiorate' in the script av_output2screen would in some cases stall the
+	  pipeline. The line has now been removed although on some systems it may be needed to
+	  avoid clicking sounds building up over time where the audio device is running
+	  slightly faster than system clock. Seen on Macs and some Linux systems. Sort of
+	  a bugfix.

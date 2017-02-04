@@ -1,0 +1,96 @@
+#!/bin/bash
+date=`date`
+basename=`basename $0`
+pid_dir=/var/run/stream
+pid_file=$pid_dir/$basename.$$
+echo $$ >$pid_file
+echo $date >>$pid_file
+echo "command : $0 $*" >>$pid_file
+
+SNOWMIXPORT=9998
+FRAMERATE=24/1
+FRAMERATE=12/1
+
+tmpfile=/tmp/$0.tmp.$$
+echo 'system info' | nc 127.0.0.1 $SNOWMIXPORT >$tmpfile
+geometry=`grep 'STAT:  System geometry' $tmpfile |cut -f3 -d: |cut -f2 -d' '|tr 'x' ' '`
+framerate=`grep 'STAT:  Frame rate' $tmpfile |cut -f3 -d: |cut -f2 -d' '`
+controlsocket=`grep 'STAT:  Output ctr sock name' $tmpfile |cut -f3 -d: |cut -f2 -d' '`
+rm $tmpfile
+#echo "Framerate $framerate"
+width=`echo $geometry |cut -f1 -d' '`
+height=`echo $geometry |cut -f2 -d' '`
+
+gstlaunch=`which gst-launch-1.0`
+if [ X$gstlaunch != X ] ; then
+  VIDEOCONVERT=videoconvert
+  VIDEO=video/x-raw
+  AUDIO=audio/x-raw
+  vfid=string
+  afid="format=(string)S16LE, "
+else
+  gstlaunch=`which gst-launch-0.10`
+  if [ X$gstlaunch != X ] ; then
+    VIDEOCONVERT=ffmpegcolorspace
+    VIDEO=video/x-raw-rgb
+    AUDIO=audio/x-raw-int
+    vfid=fourcc
+    afid=""
+  else
+    echo "Could not find gst-launch-1.0 or gst-launch-0.10. Stopping"
+    exit
+  fi
+fi
+
+
+export MIXERFORMAT=$VIDEO', bpp=(int)32, depth=(int)32, endianness=(int)4321, format=('$vfid')BGRA, red_mask=(int)65280, green_mask=(int)16711680, blue_mask=(int)-16777216, width=(int)'$width', height=(int)'$height', framerate=(fraction)'$FRAMERATE', pixel-aspect-ratio=(fraction)1/1, interlaced=(boolean)false'
+export SRC='shmsrc socket-path='$controlsocket' do-timestamp=true is-live=true'
+export X264SETTINGS='bitrate=1450 tune=zerolatency speed-preset=5'
+
+DATE=`date '+%y%m%d'`
+RECORD=/var/www/recordings/$DATE
+DATETIME=$DATE-`date '+%H:%M:%S.%N' | cut -c1-12`
+if [ ! -d $RECORD ] ; then
+  mkdir $RECORD
+  if [ ! -d $RECORD ] ; then
+    echo "$$ : Failed to create record directory $RECORD"
+    exit 1
+  fi
+fi
+RECORDFILE=$RECORD/video-out-mosaic-$DATETIME
+
+gstreamer_pipelines()
+{
+      $gstlaunch -v -e \
+	mpegtsmux name=muxer	! \
+	mpegtsparse		! \
+	tee name=t1		! \
+	queue 			! \
+	tcpserversink port=5010 sync-method=2 t1. !\
+	queue leaky=2			! \
+	filesink location=$RECORDFILE.ts  \
+	$SRC			! \
+	$MIXERFORMAT		! \
+	queue leaky=2		! \
+	ffmpegcolorspace	! \
+	x264enc $X264SETTINGS	! \
+	queue 			! \
+	h264parse		! \
+	muxer.
+}
+
+while true ; do
+  snowmix=`netstat -na |grep ':'$SNOWMIXPORT' ' |grep LISTEN |cut -c1-3`
+ # snowmix=`ps a |cut -c28-37 | grep snowmix | head -1`
+  if [ X$snowmix = X ] ; then
+    echo "$$ : Snowmix is not running. Sleeping"
+    sleep 2
+    continue
+  fi
+  break
+done
+
+gstreamer_pipelines 
+
+exit
+	'video/x-h264, framerate=(fraction)'$FRAMERATE ! \

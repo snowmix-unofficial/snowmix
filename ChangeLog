@@ -1,0 +1,2843 @@
+Snowmix Change Log
+
+Copyright 2012-2015 Peter Maersk-Moller
+Version 0.5.1
+
+	- Debian support now has its own additional bootstrap file to be executed
+	  automatically when running bootstrap. Will check for GStreamer 1.0
+	  and offer to download relevant packages.
+
+	- Including OpenGL GLUT support now requires '--enable-snowmixglut'
+	  when running configure. Full OpenGL support can be enabled by:
+
+		./configure --prefix=$prefix --enable-snowmixosmesa --enable-snowmixx11 --enable-snowmixglu -enable-snowmixglut
+
+	- On Mac OS X, a pipeline closing connection to Snowmix output control
+	  connection setup by GStreamer shmsrc, would under certain circumstances
+	  make Snowmix exit without any explanation. This happened when Snowmix
+	  would "send" data to the control connection of the connecting shmsrc
+	  and the shmsrc had broken the connection. Due to OS X not supporting
+	  MSG_NO_SIGNAL, a SIGPIPE would make Snowmix exit without warnings.
+	  Snowmix now correctly sets the socket option SO_NOSIGPIPE for OS X and
+	  catches the signal and closing the socket nicely. Linux just sets
+	  MSG_NOSIGNAL flag when sending. This bugfix has also been implemented
+	  on the feed control connection although so far, the bug has not been
+	  reproduced on OS X on the fed control connection.
+
+	- Deleting a loaded image or loading an image into an already used image id,
+	  would leak memory. This is now fixed. This is a bugfix.
+
+	- Error in CCairoGraphic::OverlayText() and UTF8Bytes() would in some cases
+	  lead to incorrect fewer number of characters being overlayed when using
+	  "text grow" combined with a string containing multibyte charaters. In
+	  some cases libPango would object to malformed UTF8 string with a for Snowmix
+	  unpredictable result. This is a bugfix.
+
+	- In addition to loading PNG images WITH an alpha channel/layer, Snowmix now
+	  also support loading PNG images without an alpha channel/layer.
+
+	- The command "text backgr rgb" with argument would switch the green and blue
+	  value. The correct order is red, green and blue. This is a bugfix.
+
+	- For Mac OS X, updating bootstrap-OSX for GStreamer 1.6.3 and MacPort 2.3.4.
+
+	- The tcl command "snowmix info xxxx ids" would in many cases overwrite memory
+	  unintended for image load, test, shape, virtual feed, feed, audio feed,
+	  audio mixer and audio sink leading to unpredictable results, usually a crash.
+	  This is a bugfix.
+
+	- Clipping of audio was detected as being outside the range of -32768 to 32767.
+	  The valid range for audio with no clipping is now set to -32767 to 32767.
+	  The previous range is not considered a bug and the change is as such just
+	  a minor adjustment.
+
+	- When having a source in CAudioMixer with fewer channels than the mixer
+	  itself, the mixer would, if volume of the source for the mixer was different
+	  from 1.0, for some samples of the source frequently multiply the volume
+	  to the source more than once. This was most clearly heard as clicking when volume for
+	  the source in CAudioMixer was set beyond 1.0 and very clearly heard when
+	  volume was set above 1.2-1.3. If volume was set to 1.3, then for most samples for
+	  the source these would be multiplied by 1.3, but some every now and then would
+	  be multiplied by 1.3*1.3. This is a bugfix.
+
+	- Adding/mixing  multiple sources in CAudioMixer would not correctly set
+	  newbuf->clipped to 100, if result exceeded +-32767, but it was rather set
+	  to true (=1) thus mostly avoiding detection of clipping. This is a bugfix.
+
+	- Adding a new option for the snowmix command of the  embedded interpreter.
+	  The command can be used to import settings and states from the output
+	  modules of Snowmix into the embedded Interpreter. The syntax of the
+	  new command option is:
+
+		snowmix info output ((info | status) [ format ]) | syntax
+
+	  One way to use the command can be like this:
+
+		tcl eval snowmix message [snowmix info output info]
+
+	- The command "tcl help" would print lines for "snowmix info shapes" and
+	  "snowmix info system" twice and the second print was not correct. Seconds
+	  removed. Cosmetic change.
+
+	- The command "audio feed delay <feed id> <ms>" would print to stderr, aka
+	  the Snowmix console instead of the controller issuing the command. Verbose
+	  mode for audio feed is needed. This is a bugfix.
+
+	- The command "audio sink status" was missing a parameter name "queue" in
+	  the format list included in the beginning of the list. This is a bugfix.
+
+	- The tcl command "snowmix info audio mixer source extended format" was missing
+	  the parameter name delay in its list. When using the format list to
+	  index output from "snowmix info audio mixer source extended ..." it
+	  would lead to a misinterpretation of the data. This is a bugfix.
+
+	- The tcl command "snowmix info audio mixer source info ..." would return an
+	  unbalanced tcl list if any of the mixer sources had a source map configured.
+	  This is a bugfix.
+
+	- The tcl command "snowmix info audio mixer source" would print signed/unsigned instead
+	  of muted/unmuted and it would print the value for signed/unsigned. Should be
+	  the value for muted/unmuted. This is a bugfix.
+
+	- The tcl command "snowmix info audio mixer source ..." would miss a space between an
+	  ending '}' and a starting '{' and mess up the use of this list if used as a list in
+	  tcl. This is a bugfix.
+
+	- The tcl commands "snowmix info audio feed status ..." and "snowmix info audio sink status ..."
+          would print signed/unsigned instead of muted/unmuted. It would also return a malformed tcl
+	  list with unbalanced '{}'. This is a bugfix.
+
+	- The tcl command "snowmix info audio mixer source extended ..." would access sample_count
+	  of an audio queue, also when none was appointed leading to a NULL pointer seg fault.
+	  This is a bugfix.
+
+	- Setting the Windows attribute override_redirect to true should now make the glx
+	  COpenglVideo class bypass the window manager. Enhancement.
+
+        - Update to slib/scenes.slib. SceneSetFrameActive used to set or list active frame/frames.
+          Used without arguments, it will list the all frame states for all scenes.
+          Used with scene_id as argument, it will list all frame state for that scene
+          Used with scene_id and frame_id as argument, it will list frame state for that scene and
+	  that frame. Enhancement. The syntax is:
+
+                SceneSetFrameActive [ scene_id [ frame_id [ active silent ] ] ]
+
+	- Adding support for compiling Snowmix with Cairo Graphics older than version 1.10. This
+	  however limits the list of Cairo Graphics Operators. See http://cairographics.org/operators/
+
+	- In configure.ac we now actually test for libtcl8.6, libtcl8.5 and libtcl in that order
+	  instead of just assuming it existence from location of header files.
+
+	- Adding freebsd as platform to configure.ac. Used for PCBSD.
+
+	- Updating bootstrap files in bootstrapd for all platforms.
+
+Version 0.5.0.1 and 0.5.1
+
+	- Adding xfc4-terminal and lxterm to possible terminal emulators for the demo script.
+	  Enhancement.
+
+        - The images/CS directory was not installed rendering the demo example for ini/sapphire-basis
+          flawed when using the scene tab in snowcub. Bugfix.
+
+	- The script scripts/av_output2screen used 'nc' rather than $NC. Potential stall on some systems.
+	  Bugfix.
+
+	- The script scripts/demo installed as snowmix_demo is missing a '&' preventing the demo script
+	  from working correctly on Linux/*nix systems (except MacOSX) if gnome-terminal is not installed.
+	  https://sourceforge.net/p/snowmix/discussion/Snowmix_Support_Forum/thread/551db9a7/
+	  Bugfix.
+
+	- The line with 'audiorate' in the script av_output2screen would in some cases stall the
+	  pipeline. The line has now been removed although on some systems it may be needed to
+	  avoid clicking sounds building up over time where the audio device is running
+	  slightly faster than system clock. Seen on Macs and some Linux systems. Sort of
+	  a bugfix.
+
+Version 0.5.0
+
+	- Adding the following 72 commands for OpenGL support in Snowmix:
+
+		glshape add [<glshape id> [<shape name>]]
+		glshape arcxz <glshape id> <angle> <aspect> <slices> <texleft> <texright> <textop> <texbottom>
+		glshape arcyz <glshape id> <angle> <aspect> <slices> <texleft> <texright> <textop> <texbottom>
+		glshape begin <glshape id> <form>
+		glshape blendfunc <glshape id> <s factor> <d factor>
+		glshape clear <glshape id> (depth | color | color+depth)
+		glshape clearcolor <glshape id> <red> <green> <blue> [<alpha>]
+		glshape color <glshape id> <red> <green> <blue> [<alpha>]
+		glshape context [(osmesa|glx|auto)]
+		glshape disable <glshape id> <mode>
+		glshape enable <glshape id> <mode>
+		glshape end <glshape id>
+		glshape entry <glshape id> (active|inactivate|number)
+		glshape finish <glshape id>
+		glshape flush <glshape id>
+		glshape glucylinder <glshape id> <quad id> <base> <top> <height> <slices> <stacks>
+		glshape gludisk <quad id> <inner> <outer> <slices> <loops>
+		glshape gludrawstyle <glshape id> <quad id> (fill|line|point|silhouette)
+		glshape glunormals <glshape id> <quad id> (none|flat|smooth)
+		glshape gluorientation <glshape id> <quad id> (outside|inside)
+		glshape glupartialdisk <quad id> <inner> <outer> <slices> <loops> <start> <sweep>
+		glshape gluperspective <glshape id> <fovy> <aspect> <znear> <zfar>
+		glshape glusphere <glshape id> <quad id> <radius> <slices> <stacks>
+		glshape glutexture <glshape id> <quad id> (0|1)
+		glshape if (osmesa|glx) <glshape id> <glshape command>
+		glshape info
+		glshape inshape <glshape id> <inglshape id>
+		glshape light <shape id> <gllight i> <pname> <value>
+		glshape lightv <shape id> <gllight i> <pname> <vector id>
+		glshape loadidentity <glshape id>
+		glshape materialv <glshape id> <face> <pname> <vector id>
+		glshape matrixmode <glshape id> (projection | modelview | texture | color)
+		glshape modify <glshape id> <line> (<no>[,<no>...] (<value> | values>)
+		glshape moveentry <shape id> <entry id> [<to entry>]
+		glshape normal <glshape id> <x> <y> <z>
+		glshape noop <glshape id>
+		glshape ortho <glshape id> <left> <right> <bottom> <top> <near> <far>
+		glshape popmatrix <glshape id>
+		glshape pushmatrix <glshape id>
+		glshape recursion <glshape id> <level>
+		glshape rotate <glshape id> <angle> <x> <y> <z>
+		glshape scale <glshape id> <scale x> <scale y> <scale z>
+		glshape scissor <glshape id> <x> <y> <width> <height>
+		glshape shademodel <glshape id> (flat|smooth)
+		glshape snowmix <glshape id> <snowmix command>
+		glshape translate <glshape id> <x> <y> <z>
+		glshape texcoord <glshape id> <s> [<r> [<t> [<q>]]]
+		glshape texfilter2d <glshape id> <near filter> <mag filter>
+		glshape texture add [<texture id> [<texture name>]]
+		glshape texture bind <glshape id> <texture id> [<min> <mag>] [(2d | cube)]
+		glshape texture source [<texture id> (feed <feed id>|frame <frame id>|image <image id>)|none [<id>]]
+		glshabe vbo add <vbo id> <name>
+		glshabe vbo config <vbo id> [(static|dynamic|stream) <form> (c3 | c4 | n3 | t1 | t2 | t3 | t4 | v2 | v3 | v4) ...]
+		glshabe vbo data <vbo id> [<data 0> <data 1> ...]
+		glshabe vbo indices <vbo id> [<index 0> <index 1> ...]
+		glshabe vbo <glshape id> <vbo id>
+		glshape vector add [<vector id> [<vector name>]]
+		glshape vector value [<vector id> <a> <b> [<c> [<d>]]]
+		glshape verbose [<level>]
+		glshape vertex <glshape id> <x> [<y> [<z> [<w>]]]
+		glshape help [form | mode | filter | factor | light | modify]
+		glshape place help
+		glshape copyback [frame | image <image_id> <x> <y> <width> <height>]
+		glshape [ place ] overlay (<id> | <id>..<id> | <id>..end | all) [(<id> | <id>..<id> | <id>..end | all)] ....
+		glshape place [<place id> [ <shape id> <x> <y> <z> [<scale x> <scale y> <scale z> [<rotation> <rx> <ry> <rz> [<red> <green> <blue> [<alpha>]]]]]
+		glshape place alpha [<place id> [<alpha>]]
+		glshape place coor [<place id> [<x> <y> <z>]]
+		glshape place rgb [<place id> [<red> <green> <blue> [<alpha>]]]
+		glshape place rotation [<place id> [<rotation> <rx> <ry> <rz>]]
+		glshape place scale [<place id> [<scale x> <scale y> <scale z>]]
+		glshape place help	// this help
+
+	- Adding 4 entries to be listed for the command 'help'. The entries are:
+		glshape help
+		glshape place help
+		shape help
+		shape place help
+
+	- As announced in EndOfLifeAnnouncements, this version no longer
+	  supports the following commands:
+
+		Obsolete command		Replacement
+		--------------------------------------------------
+		cairooverlay feed		-- no replacement --
+		image place align		image align
+		image place alpha		image alpha
+		image place anchor		image anchor
+		image place clip		image clip
+		image place coor		image coor
+		image place filter		image filter
+		image place image		image image
+		image place matrix		image matrix
+		image place move alpha		image move alpha
+		image place move clip		image move clip
+		image place move coor		image move coor
+		image place move offset		image move offset
+		image place move rotation	image move rotation
+		image place move scale		image move scale
+		image place offset		image offset
+		image place rotation		image rotation
+		image place scale		image scale
+		overlay feed			feed overlay
+		overlay image			image overlay
+		overlay virtual feed		vfeed overlay
+		overlay text			text overlay
+		text place align                text align
+		text place alpha                text alpha
+		text place anchor               text anchor
+		text place backgr alpha         text backgr alpha
+		text place backgr clip          text backgr clip
+		text place backgr linpat        text backgr linpat
+		text place backgr round         text backgr round
+		text place backgr alpha         text backgr alpha
+		text place backgr move alpha    text backgr move alpha
+		text place backgr move clip     text backgr move clip
+		text place backgr rgb           text backgr rgb
+		text place backgr               text backgr
+		text place clip                 text clip
+		text place clipabs              text clipabs
+		text place coor                 text coor
+		text place grow                 text grow
+		text place move alpha           text move alpha
+		text place move clip            text move clip
+		text place move coor            text move coor
+		text place move rotation        text move rotation
+		text place move scale           text move scale
+		text place offset               text offset
+		text place repeat move          text repeat move
+		text place rgb                  text rgb
+		text place rotation             text rotation
+		text place scale                text scale
+
+	- As announced in EndOfLifeAnnouncements, this version no longer
+	  execute returned strings from the Tcl Interpreter as Snowmix
+	  commands. Version 0.4.4 introduced the embedded tcl command
+	  *snowmix parse* to excute Snowmix commands from within the embedded
+	  interpreter.
+
+	- Adding new command *feed drop* to drop frames from the input FIFO
+	  for feeds. It is not possible to drop more frames that the fifo
+	  contains minus one. The syntax is:
+
+		feed drop <feed id> <n drops>
+
+	- If a feed was connected but a frame never arrived, the feed would have
+	  the state RUNNING. It should be STALLED. This is a bugfix.
+
+	- A TCP connection to Snowmix's control port where the connection IP
+	  address was not allowed (ie. not in the allow list) would cause
+	  Snowmix to exit. This is a bugfix.
+
+	- If verbose is set using the command *verbose 1*, a connecting
+	  TCP connection to Snowmix will now cause the IP address to
+	  be printed at console. Before the IP would be printed as an integer
+	  and a hex.
+
+	- The command *image move scale* could reduce the scale of an image
+	  to zero. When a overlayed placed image was reduce to scale zero,
+	  overlaying other images would be affected (they became invisible).
+	  This is now fixed by ensuring the move command can not make the
+	  scale become zero. This is a bugfix.
+
+	- Testing for existence of a loaded image is now possible as it
+	  has been and is possible to test for the existence of a command
+	  macro. Example:
+
+		command create TestImage14
+		  if exist(image,14)
+		    message image 14 is loaded
+		  else
+		    message image 14 is not loaded
+		  endif
+		  loop
+		command end
+
+	- Image loaded and image placed now have a sequence number. This
+	  number will for each image_id or place_id be incremented
+	  when deleted or a new image is loaded. Currently the sequence
+	  number for a placed image is currently not incremented.
+
+	- Making CVideoMixer m_geometry_width and m_geometry_height
+	  private and exposing the geometry through the calls
+	  GetSystemWidth(), GetSystemHeight() and SystemGeometry().
+
+	- In configure.ac. We now check for libcairo and fail if it is not
+	  available. We now check for libpangocairo and fail if it is not
+	  available. We now skip checking GTK+ if snowmixgui is not enabled.
+	  We now skip checking for OSMesa if snowmixosmesa is not enabled.
+	  We now skip checking for GLEW if snowmixglew is not enabled.
+
+	- Adding command *shape newsubpath* to add the Cairo Graphic primitive
+	  newsubpath. The syntax is:
+
+		shape newsubpath <shape id>
+
+	- When a shape includes a *shape arcrel_cw* or *shape arcrel_ccw*,
+	  it is now checked if the there is a current point. If there is
+	  no current point, a relative arc is not possible and a warning
+	  is printed on the console. There is no current point right after
+	  a *shape newpath*.
+
+	- Support for CentOS Linux 7.0 added to bootstrap. However at
+	  current state CentOS is missing AAC codec and H264 codec
+	  for both GStreamer 0.10 and 1.0. Furthermore the 1.0 version
+	  is at current state version 1.0.7, which is buggy. Version
+	  1.2.4 or 1.4.x would be preferable.
+
+	- Bootstrap for Fedora forced system update. Fixed. Now it is
+	  optional. Package libpng12-devel changed to libpng-devel.
+
+	- Renaming ini files to end with .ini.
+
+	- There was a double free error when deleting a loaded image.
+	  This is a bugfix.
+
+	- The script demo would only run the basic_feeds demo case.
+	  any other choice would make the script exit. This is a bugfix.
+
+	- Version 0.4.5 would print to Snowmix console when adding
+	  or deleting fonts. Fixed.
+
+	- The program snowcub.tcl is now installed as a symbolic link
+	  typically in /usr/local/bin or /opt/local/bin to snowcub.tcl
+	  in the tcl directory of the lib/Snowmix-0.5.0 typically in
+	  /usr/local or /opt/local. The program can now be executed
+	  anywhere assuming you have set enviroment variable PATH to
+	  include the bin directory. The syntax for snowcub.tcl is
+	  still
+
+		snowcub.tcl [-- -FLAGS] [ IP:PORT ]]
+
+	  where FLAGS are any of the characters 'avsrto'. If IP:PORT
+	  is not specified, it will use default settings which are
+	  whatever the environment variables SNOWMIX_IP and SNOWMIX_PORT
+	  is set to. If these variables are not set, snowcub.tcl will use
+	  127.0.0.1 for IP and 9999 for PORT.
+
+	- When snowmix starts, it will no longer write the node name
+	  on the Snowmix consol. Use command *system info* to see the
+	  node name. By default, the *system name* is set to the node
+	  name of the system running Snowmix.
+
+	- If Snowmix was started with an ini file without a reasonably
+	  system frame rate, Snowmix would wait for a very long time in
+	  deleting CVideoOutput class when the command *quit* was
+	  given. This bug has now been fixed.
+
+	- Snowmix is now installable and SHOULD be installed running the
+	  command:
+
+		$ cd WHERE_YOU_UNPACKED_SNOWMIX_TO
+		$ ./bootstrap
+		$ make
+		$ sudo make install
+
+	  You only need sudo if you install Snowmix to a place that needs
+	  sudo rights. By default Snowmix will be installed into
+	  /usr/local. If you want to install it to somewhere else, you
+	  can execute the following command after the bootstrap and before
+	  the make:
+
+		$ ./configure --prefix=WHERE_EVER_YOU_WANT_TO_INSTALL_SNOWMIX
+
+	  When Snowmix is installed it will install the following in the
+	  prefix directory:
+
+		bin/snowmix
+		lib/Snowmix-VERSION/frames/.....
+		lib/Snowmix-VERSION/images/.....
+		lib/Snowmix-VERSION/ini/.....
+		lib/Snowmix-VERSION/scripts/.....
+		lib/Snowmix-VERSION/slib/.....
+		lib/Snowmix-VERSION/tcl/.....
+		lib/Snowmix-VERSION/test/.....
+
+	  and it will make symbolic links for all scripts in the scripts
+	  directory in bin. The VERSION must be replaced by the version
+	  number of Snowmix here 0.5.0. The symbolic links will potentially
+	  overwrite programs in the bin directory with similar names. After
+	  installation you will need to set the enviroment variable SNOWMIX
+	  to point to the Snowmix diretory holding the frames, images etc.
+	  directories. You do this by adding the following line to your
+	  ~/.profile or ~/.bashrc or ~/.bash_profile depending on you
+	  system and choice of shell AND installation point:
+
+		export SNOWMIX=/usr/local/lib/Snowmix-0.5.0
+
+	  typical for Linux depending on your installation point. For
+	  Mac OS X you will typically have to add the following to your
+	  ~/.bash_profile
+
+		export SNOWMIX=/opt/local/lib/Snowmix-0.5.0
+
+	  After adding the setting to your ~/.profile or ~/.bashrc or
+	  your ~/.bash_profile depending on system and shell, you must
+	  logout and login again for the settings to take effect.
+
+	- Snowmix now requires the environment variable SNOWMIX to be set
+	  to either the base directory of the Snowmix file tree or the
+	  installation directory of Snowmix.
+
+	  The SNOWMIX variable setting depends on the version of Snowmix
+	  and where you choose to install Snowmix. The program snowmix will
+	  exit if the environment variable SNOWMIX is not set to point to the
+	  installation directory. After setting the enviroment variable,
+	  and after logging out and in again, you can test it by executing
+	  the commands in seperate windows:
+
+		$ snowmix ini/basic_feeds
+		$ output2screen
+
+	- Enforcing that control socket name for *feed* file name MUST be
+	  absolute by starting with a '/'
+
+	- Enforcing the *system socket* path file name MUST be absolute by
+	  starting with a '/'.
+
+	- Snowmix now creates a search path with by default the following
+	  3 paths in the listed order using environment variables:
+
+		Current working directory
+		$HOME/$SNOWMIX_PREFIX
+		$SNOWMIX
+
+	  Snowmix will exit if the the environment variables HOME and
+	  SNOWMIX is not set. If SNOWMIX_PREFIX is not set, Snowmix will
+	  use the following default prefix:
+
+		Unix		: '.snowmix'
+		Mac OS X	: 'Snowmix'
+	  	Windows		: 'Application Data/Snowmix'
+
+	  Snowmix will in the $HOME/$SNOWMIX_PREFIX create the following
+	  directories, if they do not exist.
+
+		frames	: for your personal Snowmix raw frames.
+		images	: for your personal Snowmix png images.
+		ini	: for your personal Snowmix ini files.
+		scripts	: for your personal Snowmix scripts.
+		slib	: for your personal Snowmix libraries.
+		tcl	: for your personal Snowmix tcl scripts.
+		test	: for your personal Snowmix test movies.
+
+	  NOTE: Because of the search path feature, you may have to change
+	  your ini file if it contains relative paths to loading images,
+	  including files or writes audio sink to a file with relative
+	  path. Typically you will change '../images/someimage.png' to
+	  'images/someimages.png'. The following script can do it for
+	  you:
+
+		# Use with caution
+		cd YOUR_INI_FILE_DIRECTORY
+		files=`ls`
+		for file in $files ; do sed -e 's/\.\.\///g' < $file >tmpfile ; mv tmpfile $file ; done
+
+	  You can use the 'ls' command to set the files you want the change
+	  for. THINK AND USE WITH CAUTION.
+	  
+	- Snowmix will now use the search path when loading the intital
+	  ini file unless file name is absolute, ie starting with a '/'.
+
+	- Snowmix will list the search path on the Snowmix console when
+	  starting Snowmix.
+
+	- The command *system info* will now include information about the
+	  absolute file name for the initial ini file.
+
+	- Snowmix will now use the search path when including files using
+	  the *include* command unless file name is absolute, ie starting
+	  with a '/'.
+
+	- Snowmix will now use the search path when loading images unless
+	  the file name given is absolut, ie starting with a '/'. Further
+	  more when using the command *image load* to list loaded images,
+	  the absolute file name loaded will be listed.
+
+	- Snowmix will now use the search path when opening a file for
+	  writing for audio sink unless file name is absolute, ie. starting
+	  with a '/'.
+
+	- bootstrap for Mac OS X will now offer to install GStreamer 1.4.5
+	  instead of 1.4.4.
+
+	- The bootstrap script was calling a subscript with sh rather than
+	  bash. This could result in minor printing confusion if /bin/sh
+	  was not bash. Now testing for bash and uses bash over sh.
+
+	- The bootstrap process will now look for libpng15 in addition
+	  to libpng16 and libpng12.
+
+	- The command *image source* missed the alignment parameter in its
+	  call to OverlayFrame messing up parameters. This is a bugfix.
+
+	- Banner message when connecting to Snowmix now adds a '.' in the end.
+
+	- For the command *audio sink help* the audio volume was listed as going from 0..255.
+	  Valid volume is from 0.0..4.0. This has now been corrected.
+
+Version 0.4.5:
+
+	- The function CCairoGraphics::OverlayText() has been renamed to
+	  CCairoGraphics::OverlayTextOld() and remain, but a new function
+	  CCairoGraphics::OverlayText() has been written to optimize
+	  calculations, include offset calculations and fix bugs including
+	  bug for round corners. Using round corners for text backgrounds
+	  would get it wrong if the scale_x != scale_y of the placed text.
+	  This is now fixed. The new function is used when overlaying text.
+	  The old one will eventually dissapear.
+
+	- In CCairoGraphics::OverlayText() we now only spend time finding
+	  the new extend/geometry of a placed text, if its font or
+	  string has changed. We can trigger a new update of the extend by
+	  setting the text_id_seqno or font_id_seqno of a placed text to
+	  zero. If a string or font with a specific string id or font id
+	  is changed exactly 2^16 times wrapping the sequence counter to
+	  zero, the placed text will have its sized checked for every frame.
+	  The solution is to change the string or font again, possible
+	  just set it to the same, which triggers an increment of the
+	  sequence number.
+
+	- A Pango Font Description is now allocated when the command
+	  *text font* is used to define a font with a *font id*. Previous
+	  the Pango Font Description was allocated for every placed text
+	  overlayed for every frame. This and the other optimization for
+	  texts has reduced the Snowmix load on an old Thinkpad T61 from
+	  23-24% to 18-19% using the ini/basic_feeds example.
+
+	- The command *text place backgr* would list pad values for top and
+	  bottom with the word "coor" infront possible confusing understanding.
+	  The word "coor" has been removed. It was this:
+
+		MSG: text place backgr  0 pad    20,40    coor     2,4     alpha 1.0000 rgb(0.000,0.000,0.000) h
+
+	  Has now been changed to this:
+
+		MSG: text place backgr  0 pad-lrtb    20,40        2,4     alpha 1.0000 rgb(0.000,0.000,0.000) h
+
+	- A number of *text place ..." commands are considered obsolete yet
+	  supported until end of Snowmix version 0.4.x. They are replaced
+	  by shorter versions to optimize parsing. The output of command
+	  *text help* has been updated to reflect this. The obsolete commands
+	  and their respective replacement are listed below:
+
+		Obsolete command		Replacement command
+		----------------------------------------------------------
+		text place align		text align
+		text place alpha		text alpha
+		text place anchor		text anchor
+		text place backgr alpha		text backgr alpha
+		text place backgr clip		text backgr clip
+		text place backgr linpat	text backgr linpat
+		text place backgr round		text backgr round
+		text place backgr alpha		text backgr alpha
+		text place backgr move alpha	text backgr move alpha
+		text place backgr move clip	text backgr move clip
+		text place backgr rgb		text backgr rgb
+		text place backgr		text backgr
+		text place clip			text clip
+		text place clipabs		text clipabs
+		text place coor			text coor
+		text place grow			text grow
+		text place move alpha		text move alpha
+		text place move clip		text move clip
+		text place move coor		text move coor
+		text place move rotation	text move rotation
+		text place move scale		text move scale
+		text place offset		text offset
+		text place repeat move		text repeat move
+		text place rgb			text rgb
+		text place rotation		text rotation
+		text place scale		text scale
+		
+
+	- Adding new command *text verbose* in-line with setting/toggling
+	  the verbose level for images, shapes etc. Valid value
+	  for verbose level a positive integer including 0. The syntax
+	  is:
+
+		text verbose [<verbose level>]
+
+	- Adding new command *text offset* to add offset for rotation of
+	  text. Default value for offset is 0,0. The syntax is:
+
+		text offset [<place id> <offset x> <offset y>]
+
+	- The program snowcub in tcl/snowcub.tcl takes new parameters.
+	  Example:
+
+		snowcub -- -s SOME_HOST
+		snowcub -- -as SOME_HOST:9990
+
+	  The first example starts snowcub with the Scene panel for
+	  host SOME_HOST and will connect to port 9999. The second
+	  example will start snowcub with the Audio and the Scene
+	  panel in that order and connect to SOME_HOST port 9990.
+
+	- configure.ac now adds pkg-config info for libtcl if it
+	  adds anything. For Chakra we need to add '-ltcl' in addition
+	  to what pkg-config tell.
+
+	- configure.ac now checks for libpng16 and prefers libpng16
+	  over libpng12. If you have and older installation with
+	  port for Mac with libpng compiled in, you may have to
+	  uninstall port and all packages and reinstall port again. The
+	  bootstrap for OS X will offer to install port and missing
+	  packages.
+
+	- Adding new command *image source* to create a new image from
+	  a feed, an image or the mixers system frame. Currently the
+	  system only have one system frame with the source id 0. If
+	  an image with the specified *image id* already exists, that
+	  image will be deleted. The command can also be used to scale,
+	  rotate or alpha blend existing images. The syntax is:
+
+		image source [(feed | image | frame) <image id> <source id> [ <offset x> <offset y> <width> height> [<scale_x> <scale_y> [<rotation> <alpha> [(fast | good | best | nearest | bilinear | gaussian)]]]]]
+
+	- Deleting/freeing a loaded image would leak memory if the image
+	  was given a name. Also row pointers for png was not freed. Fixed.
+
+	- Adding two missing ']]' for *image place* in the list printed
+	  for the command *image help*.
+
+	- The help list for audio feed had an extra ']' at the end of the
+	  audio feed drop line. Fixed.
+
+	- A number of *image place ..." commands are considered obsolete yet
+	  supported until end of Snowmix version 0.4.x. The obsolete commands
+	  and their replacement are listed below:
+
+		Obsolete command		Replacement command
+		----------------------------------------------------------
+		image place align		image align
+		image place alpha		image alpha
+		image place anchor		image anchor
+		image place clip		image clip
+		image place coor		image coor
+		image place filter		image filter
+		image place image		image image
+		image place matrix		image matrix
+		image place move alpha		image move alpha
+		image place move clip		image move clip
+		image place move coor		image move coor
+		image place move offset		image move offset
+		image place move rotation	image move rotation
+		image place move scale		image move scale
+		image place offset		image offset
+		image place rotation		image rotation
+		image place scale		image scale
+
+	- Adding new command *image geometry* listing the geometry of
+	  a single or all placed images depending on arguments. The
+	  syntax is:
+
+		image geometry [ <place id> ]
+
+	- Setting clip for virtual feed, the clip_w + clip_x must be
+	  less or equal to width. Same applies for clip_h + clip_y and
+	  height. This is also checked vor *vfeed move clip* where the
+	  movement/animations stops if clip is exceeding feeds geometry.
+
+	- Optimizing CVideoImage::Update to only run its many checks
+	  if some of the step parameters are non zero. A run through
+	  update with no animation steps will disable future runs until
+	  a step parameter for a move command is set to non zero. This
+	  is similar to an optimization done previously for CTextItems.
+
+	- Optimizing CVirtualFeed::Update to only run its many checks
+	  if some of the step parameters are non zero. A run through
+	  update with no animation steps will disable future runs until
+	  a step parameter for a move command is set to non zero. This
+	  is similar to an optimization done previously for CTextItems.
+
+	- Adding new command *image move offset* to add animation for
+	  the the offset parameter for virtual feeds. The synatx is:
+
+		image move offset [<place id> <delta offset x> <delta offset y> <step offset x> <step offset y>]
+
+	- Adding new command *vfeed move offset* to add animation for
+	  the the offset parameter for virtual feeds. The synatx is:
+
+		vfeed move offset [<vir id> <delta offset x> <delta offset y> <step offset x> <step offset y>]
+
+	- Renaming IMAGE_ALIGN_* and TEXT_ALIGN_* to SNOWMIX_ALIGN_*
+	  and moving definition to snowmix.h
+
+	- Major rewrite of CCairoGraphic::OverlayFrame() for optimization and
+	  correct handling of combination of offset/scale/rotation. Old code
+	  is still in CCairoGraphic::OverlayFrameOld(). Both functions now
+	  take argument align, but old code ignores its value.
+
+	- Moving CVideoMixer::OverlayVirtualFeed() to
+	  CVirtualFeed::OverlayFeed() and major rewrite for optimization with
+	  less calls and pointers to pointers.
+
+	- Command *image help* listed syntax for *image load* to be.
+
+		image load [<id no> [<file name>]]
+		image write <id no> <file name>
+
+	  This has been changed to
+
+		image load [<image id> [<file name>]]
+		image write <image id> <file name>
+
+	  Further more \<id no> changed to \<place id> for the rest of the image
+	  commands.
+
+	- Command *image place* in verbose mode with arguments would print wrong
+	  number for id to control connection. Fixed.
+
+	- Command *shape place help* listed the syntax for *shape place alpha*
+	  wrong. The syntax is:
+
+		shape place alpha [<place id> <alpha>]
+
+	- Class CTextItems, CVideoShape, CVirtualFeed and CVideoImage are now
+	  all using the same SetAnchor() function. Illegal anchor syntax,
+	  illegal is non n, s, e, w, c, ne, nw, se, sw, will leave anchor
+	  settings unchanged. In previous version an illegal setting
+	  would result in nw ie. 0,0.
+
+	- Adding new command *vfeed anchor* to set or list anchor of virtual
+	  feeds. A placed virtual feed will be placed accoding to its anchor.
+	  The anchors, also appying to texts, shapes and images, are:
+
+		n  : North adds w/2,0 to place coordinates.
+		s  : South adds w/2,h to place coordinates.
+		ne : North-east adds w,0 to place coordinates.
+		e  : East adds w,h/2 to place coordinates.
+		se : South-east adds w,h to place coordinates.
+		nw : North-west adds 0,0 to place coordinates (default).
+		w  : West adds 0,h/2 to place coordinates.
+		sw : South-west adds 0,h to place coordinates.
+		c  : Center adds w/2,h/2 to place coordinates.
+
+	  The syntax is:
+
+		vfeed anchor [<vir id> (n | s | e | w | c | ne | nw | se | sw)]
+
+	- Adding new command *text place anchor* to set or list anchor of placed
+	  text. Used without arguments, the command will list anchor values
+	  for placed text. The syntax is:
+
+		text place anchor [<place id> (n | s | e | w | c | ne | nw | se | sw)]
+
+	- Adding new command *image place anchor* to set or list anchor of placed
+	  images. Used without arguments, the command will list anchor values
+	  for placed images. The syntax is:
+
+		image place anchor [<place id> (n | s | e | w | c | ne | nw | se | sw)]
+
+	- Adding new command *shape place anchor* to set or list anchor of placed
+	  images. Used without arguments, the command will list anchor values
+	  for placed shapes. The syntax is:
+
+		shape place anchor [<place id> (n | s | e | w | c | ne | nw | se | sw)]
+
+	- Adding center option 'c' for anchor for placed text, place shapes and
+	  placed images. Adds to syntax list for command *text help*,
+	  *shape place help* and *image help*.
+
+	- Adding new command *vfeed align* to set or list alignment of
+	  virtual feeds. A placed virtual feed will be placed accoding
+	  to the alignment. The syntax is:
+
+		vfeed align [<vir id> (left | center | right ) ( top | middle | bottom)]
+
+	  The order of vertical and horizontal alignment is indifferent.
+
+	- The command *vfeed place rect* used without arguments will
+	  now also print alignment.
+
+	- The command *image help* listed two possible different syntax
+	  lines for the command *image place*. The valid syntax is
+
+		image place [<id no> [<image id> <x> <y> [(n | s | e | w | c | ne | nw | se | sw)] [(left | center | right) (top | middle | bottom)]
+
+	- All image commands setting parameters are silent when verbose
+	  level is set to 0 AND the command is successful. Default level
+	  is 0. When verbose level is greater than 0, using an image command
+	  for setting image parameters will return a single informative
+	  line. A failed command will always return a line with error
+	  message. The *image overlay* does not set any parameters and
+	  does not return any informative message. Commands update to
+	  print information when verbose and successful:
+
+		image place alpha
+		image place clip
+		image place filter
+		image place move alpha
+		image place move clip
+		image place move scale
+		image place move coor
+		image place move rotation
+		image place offset
+		image place image
+		image place rotation
+		image place scale
+		image place matrix
+		image name
+		image write
+
+	- Command *image verbose* now accepts a level as argument. Used
+	  without, verbose is toggled between 0 and 1 in line with verbose
+	  settings for other modules such as feed, shapes etc. Valid level
+	  is an integer number greater or equal to 0.  The syntax is now:
+
+		image verbose [ <level> ]
+
+	  The *image help* command has been updated to reflect the change.
+
+	- Command *image write* would print two lines if failing. Only
+	  one should be printed. More error info is now printed to stderr.
+	  Fixed.
+
+	- Command *image name* would print two lines if failing. Only
+	  one should be printed. If verbose, more error info is now
+	  printed to stderr. Fixed.
+
+	- Command *image place align* would print two lines if successful. Only
+	  one should be printed. Fixed.
+
+	- Command *image place align* would in some cases continue parsing a
+	  command line despite synatx error and make no complaining about it.
+	  Fixed.
+
+	- Command *image place* with only image id as argument for deleting
+	  a placed image would print two lines if successful. Only one should
+	  be printed. Fixed.
+
+	- Command *image help* listed *image load* twice. Fixed.
+
+	- Optimizing parsing *image* commands.
+
+	- The command *image place move rotation* now accepts fraction of PI for
+	  the argument \<rotation>. such as 2PI/3 or 1PI/12.
+
+	- The command *image place rotation* now accepts fraction of PI for
+	  the argument \<rotation>. such as 2PI/3 or 1PI/12.
+
+	- The command *vfeed move clip* used without arguments, will now
+	  list the move parameters for clipping for vfeeds. The command
+	  *vfeed help* has been updated to list the option to use the
+	  command without arguments.
+
+	- The command *vfeed move coor* used without arguments, will now
+	  list the move parameters for coordinates for vfeeds. The command
+	  *vfeed help* has been updated to list the option to use the
+	  command without arguments.
+
+	- The command *vfeed move scale* used without arguments, will now
+	  list the move parameters for scale for vfeeds. The command
+	  *vfeed help* has been updated to list the option to use the
+	  command without arguments.
+
+	- The command *vfeed move rotation* used without arguments, will now
+	  list the move parameters for rotation for vfeeds. The command
+	  *vfeed help* has been updated to list the option to use the
+	  command without arguments.
+
+	- The command *vfeed move alpha* used without arguments, will now
+	  list the move parameters for alpha for vfeeds. The command
+	  *vfeed help* has been updated to list the option to use the
+	  command without arguments.
+
+	- The command *vfeed add* did not remove trailing spaces in the name
+	  specified. This has now been fixed.
+
+	- The *vfeed help* specified the non implemented command *vfeed geometry*
+	  for setting the geometry of a vfeed. However the geometry is defined
+	  by the source of the vfeed and can not be changed. The syntax
+	  printed for *vfeed help* is changed to reflect this and the code
+	  for listing the geometries has been added. Used without arguments,
+	  the command will list geometries for all vfeeds. The syntax is:
+
+		vfeed geometry [ <vir id> ]
+
+	- The command *vfeed place rect* was specified with a valid syntax
+	  including no arguments as many other place commands. However
+	  this was not implemented. The command used without arguments
+	  will now list vfeeds configured indluding parameters that
+	  can be set with the command.
+
+	- In CVirtualFeed::set_virtual_feed_source, the function FeedState
+	  could theoretically return NULL leading to core dump. Fixed.
+
+	- Adding command *vfeed verbose* to set or toggle verbose level
+	  for vfeed commands. The command *vfeed info* lists the verbose
+	  level. The syntax is:
+
+		vfeed verbose [ <level> ]
+
+	- All vfeed commands setting parameters are silent when verbose
+	  level is set to 0 AND the command is successful. Default level
+	  is 0. When verbose level is greater than 0, using a vfeed command
+	  for setting vfeed parameters will return a single informative
+	  line. A failed command will always return a line with error
+	  message. The *vfeed overlay* does not set any parameters and
+	  does not return any informative message.
+
+	- Adding command *vfeed info* to list information on setup for
+	  virtual feeds in line with command such as *feed info* etc.
+	  The syntax is:
+
+		vfeed info
+
+	- On OSX, bootstrap will now offer to download and install
+	  GStreamer 1.4.4 as opposed to 1.4.1 before.
+
+	- bootstrapd/bootstrap-ubuntu modified to work with Debian 7.7.0.
+	  Will install missing packages and compile.
+
+	- Adding command *vfeed coor* to set the coordinates for a virtual
+	  feed. Used without arguments, the command will list coordinates
+	  for the virtual feeds. The syntax is:
+
+		vfeed coor [<vir id> <x> <y>]
+
+	- Adding command *vfeed clip* to set clip parameters for a virtual
+	  feed. Used without arguments, the command will list clip paramaters
+	  for the virtual feeds. The syntax is:
+
+		vfeed clip [<vir id> <clip w> <clip h> <src_x> <src_y>]
+
+	- Changed help output for *vfeed help* for *vfeed place rect*. The
+	  text *width* and *height* was changed to *clip h* and *clip h*.
+
+		vfeed place rect [<vir id> [<x> <y> <clip w> <clip h> <clip x> <clip y> [<rotation> <scale_x> <scale_y> <alpha>]]]
+
+	- Adding command *vfeed move rotation* to the output of *vfeed help*.
+	  The command has been available since 0.3.0, but not part of the
+	  output of the *vfeed help* command.
+
+	- The command *vfeed move rotation* now accepts fraction of PI for
+	  the argument \<rotation>. such as 2PI/3 or 1PI/12.
+
+	- The command *vfeed place rect* now accepts fraction of PI for
+	  the optional argument \<rotation>. such as 2PI/3 or 1PI/12.
+
+	- Adding command *vfeed rotation* to set or list rotation value for
+	  virtual feeds. Used without arguments, the command lists the
+	  rotation for the virtual feeds. The syntax is:
+
+		vfeed rotation [ <vir id> <rotation> ]
+
+	  The rotation parameter can use fractions of PI such as 2PI/3 or
+	  1PI/12.
+
+	- Adding command *vfeed scale* to set scale parameters for
+	  virtual feeds. Used without arguments, the command lists the 
+          scale settings for virtual feeds. The syntax is:
+
+		vfeed scale [ <vir id> <scale_x> <scale_y> ]
+
+	- Adding command *vfeed alpha* to set alpha value for virtual feeds.
+	  Used without arguments, the command lists the alphas for virtual
+	  feeds. The syntax is:
+
+		vfeed alpha [ <vir id> <alpha> ]
+
+	- The command *vfeed help* is update to list new vfeed commands.
+
+	- Some parsing optimization in Parse in CVirtualFeed class.
+
+	- Audio sink's Update() function has been rewritten to a new
+	  function NewUpdate(). The old function will remain for now,
+	  but is unused. The new functions buffers output if writing
+	  out audio samples would block. New functions for SetFds()
+	  and CheckReadWrite() has also been written for audio sink for
+	  used in the main loop for select() call, but remain inactive
+	  for now as they currently are deemed unnecessary. At each frame
+	  loop NewUpdate is called buffering all samples in audio sink
+	  and an attempt is made for writing out all buffered data. Non
+	  written samples may then get written the next time around.
+
+	- Function bool NumberWithPI() moved to file snowmix_util.cpp/h.
+
+	- Keyword *vfeed* and *virtual feed* are now interchangeable. All
+	  commands starting with keyword *virtual feed* can now be executed
+	  with the keyword *vfeed*. String compare in parsing in controller
+	  optimized. Listing help for *virtual feed* now list the keyword
+	  *vfeed* rather than *virtual feed*. All commands in CVirtualFeed
+	  that printed the keywords *virtual feed* now prints *vfeed*. It is
+	  not recommended in new scripts and programs to use the keyword
+	  *virtual feed*, but the ability to process *virtual feed* in
+	  commands will remain for now.
+
+	- scripts/input2feed new has the following command syntax:
+
+		scripts/input2feed <feed id> [ <audio feed id> [ <input file> ]]
+
+	  Omitting \<audio feed id> or setting it to 0 will disable the audio
+	  feed. Omitting the \<input file> the script will select a file in
+	  the test directory.
+
+	- boostrapd/bootstrap-OSX now installs port 2.3.3 if needed instead of
+	  2.3.0. Port 2.3.0 was not availble for OS X 10.10 Yosemite.
+
+	- slib addition/change to feeds.slib.
+
+		tcl eval FeedWatch <feed id>
+		tcl eval FeedUnWatch <feed id>
+		tcl eval FeedWatchCommand <feed id> <state> <command>
+		tcl eval FeedWatchCheck
+
+	  FeedWatch is used to add feeds to be checked for state change.
+	  FeedUnWatch is used to remove a feed from the list of feeds to be
+	  checked for state change. The list of feeds to be checked is stored
+	  in the variable feed(watchlist).
+	  FeedWatchCommand is used to specify which tcl command to be executed
+	  when the feed changes state to \<state>. Multiple commands can be
+	  separated by semicolon.
+	  FeedWatchCheck is an internal function automatically added to the
+	  *overlay pre* command macro when at least one feed is to watched or
+	  checked for state change. This function is responsible for executing
+	  the command specified to be executed when a state change is detected.
+	  A state change to RUNNING requires the count of good frames for a feed
+	  to advance by at least one good frame. The count of good frames for
+	  a feed is an internal counter advanced by one for every Snowmix
+	  frame period if the feed has a frame available.
+
+	- slib addition/change to scenes.slib.
+
+		tcl eval ScenePush <scene id> [ <fade> ]
+		tcl eval ScenePop [ <fade> ]
+
+	  ScenePush will push the current active scene onto a stack and set the
+	  scene identified by \<scene id> as active scene. The \<fade> argument
+	  is passed onto the function SceneSetState used for activating the scene.
+	  The ScenePop function pops a scene id from the stack and sets this as
+	  the active scene.
+
+
+	- Messages written to controllers using controller_write_msg() was written
+	  to controllers write_fd directly hoping for the best (in non bloking mode).
+	  Now if nothing is queued for writing for the controller, the message
+	  is written and write result is checked. If data remains to be written,
+	  this data is now queued in a list. All data is queued in a list if
+	  data is already pending (queued in the list) writing. The CController
+	  SetFds() now sets the write_fds for the controller, if data is queued
+	  in the controllers list and subsequently is part of the select() call
+	  in the main video loop. The CController CheckRead() is renamed to
+	  CheckReadWrite() and now also handles writing out pending data for
+	  a controller.
+
+	- struct controller in CController added linked list output_buffer. Deleting
+	  an allocated controller should be handled through ControllerListDeleteElement().
+
+	- Offset for rotation in CCairoGraphic::OverlayFrame was calculated as x,y
+	  plus half width and height. A scaled virtual feed would not rotate around
+	  its center, but around the center of the unscaled feed. It will now rotate
+	  around its center. This is a bugfix.
+
+	- trim_string() optimization and secure against str==NULL. Safe guard
+	  and optimization.
+
+	- Parsing shape commands was not checking against NULL nor empty
+	  string. This is just a safe guard and optimization.
+
+Version 0.4.4:
+
+	- Adding new command *feed overlay* to overlay/mix a single feed or a list of feeds.
+	  Note that the command can only beused as part of executing the command macro
+	  set with the command *overlay finish*. The syntax of the command is:
+
+		feed overlay (<id> | <id>..<id> | all | end | <id>..end) [ (<id> | <id>..<id> | all | end | <id>..end) ] ....
+
+	  The command is a supplement to the command *stack* allowing to control when
+	  the feeds are overlayed/mixed when executing the command macro associated
+	  the command *overlay finish*.
+
+	- Adding new command *feed fast overlay*. This command replaces the undocumented
+	  command *overlay feed* which can still be used for the rest of version 0.4.x.
+	  Please see EndOfLifeAnnouncement file for more. The syntax of the argument for
+	  the new command is as for the old command *overlay feed*. Note that the command
+	  can only beused as part of executing the command macro set with the command
+	  *overlay finish*.  The syntax is:
+
+		feed fast overlay <feed id> <col> <row> <feed col> <feed row> <cut cols> <cut rows> [ <scale 1> <scale 2> [ <par_w> <par_h> [ center ]]]
+
+	- Adding new command *shape filter* to control how a feed or an image is overlayed
+	  when a shape containing a feed or an image is overlayed. The command should be used
+	  directly after adding a feed or an image to a shape when defining a shape being
+	  a list of Cairo Graphic primitives. If the next primitive in a shape after a
+	  feed or image primitive is not a filter primitive, Snowmix will by default
+	  add the filter command FAST while executing the shape.
+
+		shape filter <shape id> (fast | good | best | nearest | bilinear | gaussian)
+
+	  The gaussian filter method is as of writing not implemented in libcairo,
+	  but the ability to set is left there in case libcairo in future versions
+	  implement gaussian blending. WARNING. Any filter setting not being fast
+	  or nearest will make the overlaying of that image 30-50 times slower. The
+	  example below demonstrate the use of the command:
+
+		shape add 1 My shape
+		shape moveto 1 0.0000 0.0000
+		shape inshape 1 2
+		shape clip 1
+		shape newpath 1
+		shape feed 1 -640.0000 -360.0000 0.6500 0.6500
+		shape filter 1 bilinear
+		shape paint 1 1.0000
+
+	- Adding new command *virtual feed filter* to control how an image is overlayed
+	  when using the *overlay virtual feed* command. The syntax is:
+
+		virtual feed filter [ <place id> (fast | good | best | nearest | bilinear | gaussian)]
+
+	  The gaussian filter method is as of writing not implemented in libcairo,
+	  but the ability to set is left there in case libcairo in future versions
+	  implement gaussian blending. WARNING. Any filter setting not being fast
+	  or nearest will make the overlaying of that image 30-50 times slower. The
+	  default filter value is fast.
+
+	- Adding new command *image place filter* to control how an image is overlayed
+	  when using the *image overlay* command. The syntax is:
+
+		image place filter [ <place id> (fast | good | best | nearest | bilinear | gaussian)]
+
+	  The gaussian filter method is as of writing not implemented in libcairo,
+	  but the ability to set is left there in case libcairo in future versions
+	  implement gaussian blending. Using a filter method being best, good or
+	  bilinear may be needed, if animation of scale of the image is used.
+	  WARNING. Any filter setting not being fast or nearest will make the
+	  overlaying of that image 30-50 times slower. Smaller images takes less
+	  time overlay. The default filter value is fast.
+
+	- Adding new command *feed filter* to control how a feed is overlayed
+	  when using the *stack* command. The syntax is:
+
+		feed filter [ <feed no> (fast | good | best | nearest | bilinear | gaussian)]
+
+	  The gaussian filter method is as of writing not implemented in libcairo,
+	  but the ability to set is left there in case libcairo in future versions
+	  implement gaussian blending. WARNING. Any filter setting not being fast
+	  or nearest will make the overlaying of that feed 30-50 times slower. The
+	  default filter value is fast.
+
+	- When overlaying a feed, an image, a virtual feed and a shape based feed,
+	  these were all being overlayed using cairo_set_source_surface(). This
+	  function would in libcairo-1.12.16 (Ubuntu 13.10 and previous as of date)
+	  use as deafult a BEST filter function for overlaying through libpixman.
+	  Ubuntu 14.10LTS has of writing libcairo-1.13.0. This library uses the
+	  filter BEST which is 30-50 times slower. Use of the filter FAST as
+	  default is now enabled and Snowmix will work as fast as before or
+	  even faster with libcairo.1.13.0 and forward. This is a bugfix for
+	  Ubuntu 14.10 and forward. Older Ubuntus may later also get an upgraded
+	  libcairo and then this fix will apply to them as well.
+
+	- Listing help for shape place would not list the full syntax for
+	  the command *shape overlay*. Further more the entry was listed
+	  under the *shape help* rather than *shape place overlay*. It is
+	  now recommended but optional to write *shape place overlay* rather
+	  than just *shape overlay* as this command belongs to the
+	  *shpe place* class of commands. This has now been fixed.
+
+	- Listing help for image would not list the syntax for the command
+	  *image overlay*. This has now been fixed.
+
+	- Listing help for text would not list the syntax for the command
+	  *text overlay*. This has now been fixed.
+
+	- Listing help for virtual feed would not prepend each line with the
+	  "MSG: " string. Neither was an empty line with just "MSG:" printed
+	  as the last line. This has now been fixed.
+
+	- Listing feed par or feed scale would not print an empty *MSG:* line.
+	  This has now been fixed.
+
+	- Listing *feed help* would list the parameters for *feed par* to be
+	  scale_1 and scale_2. This has now been changed to width and height.
+
+	- SDL on OSX requires pixel bytes to be copied in the order ABGR while
+	  on Linux a memcpy can work (BGRA). This is a bugfix for monitor on
+	  command for OSX.
+
+	- CCairoGraphic::OverlayFrame mistakenlay allocated a Cairo Context
+	  and never really used it. The Cairo context is created in the main
+	  mixer loop before running the overlay finish macro. Not really a bug,
+	  but unnecessary. Fixed.
+
+	- The command *audio mixer status* was for the delay parameter using
+	  the mixers channel count rather than the source channel count when
+	  calculating the delay currently in the queue. This is a bugfix.
+
+	- Adding the command *audio mixer source rmsthreshold*. With this
+	  command the new buffers will not be added to the mixers source
+	  queue for the specific source if the max RMS value found for
+	  channels of the new buffer is not at least equal to the specified
+	  threshold level. The command is developed to be used in conjunction
+	  with the command *audio mixer source pause*. Togther, the source
+	  can pause mixing and new samples are only added if they exceeds a
+	  threshold possibly throwing away silent samples until the source
+	  threshold is zeroed or the pause is cancelled. The syntax is:
+
+		audio mixer source [rmsthreshold <mixer id> <source no> <level>]
+
+	- The command *audio mixer help* did not list the source drop option.
+	  Fixed.
+
+	- The command *audio mixer help* did not list the source move option.
+	  Fixed.
+
+	- Audio feed can now handle misaligned sample input. Misaligned
+	  audio input is when audio data received on the control connection
+	  in a single buffer does not contain enough bytes to construct
+	  a full sample set of sample for all channels for the audio
+	  feed using precisely all data received in the buffer. Assume
+	  2 channels and 2 bytes per sample. Each sample set then require
+	  4 bytes. If 43 bytes are received, then 10 sample sets can be
+	  constructed leaving 3 bytes. These 3 remaining bytes are now
+	  prepended the next audio data received hopefully eventually
+	  realigning sample data.
+
+	- Adding the command *audio mixer source pause* to pause mixing a
+	  source into an audio mixer stream. The pause will last for as many
+	  frames as specified by the command. Samples added to the source
+	  queue will queue up. The syntax is:
+
+		audio mixer source [pause <mixer id> <source no> <frames>]
+
+	- The command *virtual feed source*, would return error if the source
+	  was an image and it would not work. This has now been corrected.
+	  This is a bugfix.
+
+	- The command *text place repeat move* would under some circumstances
+	  not start moving. This has now been fixed. This is a bug fix.
+
+	- When setting the feed geometry and when width or height is larger than
+	  the system geometry, the error just said the width or the height was
+	  illegal. It will now specify that the width or height must be set
+	  between 1 and system width or height.
+
+	- When bytes read for a dead image file for feed was less than required,
+	  the error message said it was unable to read the file. This has now
+	  been change to specify that it was unable to read N number of bytes
+	  required.
+
+	- Trailing whitespaces are now removed from command given to command
+	  **command at**.
+
+	- set_tcl_exec was not freeing memory allocated for script sent to
+	  tcl_eval. This is bugfix.
+
+	- When placing a shape using the command **place shape**, the range of
+	  valid color values was not checked. Values above 1.0 would when used
+	  have effect as the value was 1.0 and values below 0.0 would have
+	  effect as 0.0. Nevertheless when listed, values outside range would
+	  be displayed. This has now been corrected and values are silently
+	  set to values between 0.0 and 1.0.
+
+	- Adding new command **command pointer atline**. The command can be used
+	  to change the command pointer for a given command. The command pointer
+	  is a positive number indicating from which line the command will start
+	  executing the next time a given command is called. The command given
+	  without any argument will list the command pointer status for all
+	  commands created. If a name is given as argument, the command will
+	  list the command pointer status for the specified command. If both a
+	  command name and a line number is given, the specified command will
+	  have its command pointer set to the given line number. The syntax is:
+
+		command pointer atline [ <command name> [ <line> ]]
+
+	  A negative command line in the listing indicates that the command has
+	  its command pointer set beyond the end of the command. The following
+	  two commands are identical in function:
+
+		command restart SOME_COMMAND_NAME
+		command pointer atline SOME_COMMAND_NAME 1
+
+	- If a command was created and that command was the last command used
+	  and the command gets deleted, its value was still present in the cache
+	  of the FindCommand. As such FindCommand would return this value if
+	  the command was sought after by all the code that uses FindCommand.
+	  This is a very rare case, but a bug. This has now been fixed so
+	  FindCommand now returns NULL in the specified case.
+
+	- When using the feeds and stack for videomixing, the frame of feed 0
+	  was made with memset filling zeros. This would set the alpha value
+	  for each pixel to zero. Under some circumstances this could
+	  potentially lead to noise in the mixed frame. This has now been
+	  fixed. This is a bugfix.
+
+	- When setting the source for an audio sink, it was checked if the
+	  number of channels of the source is equal to number of channels of
+	  the sink, but only if the source is an audio feed. Now the check is
+	  also done if the source is a mixer. This is a feature enhancement.
+
+	- When setting the source for an audio sink, rate of the source was
+	  not checked for being equal to the rate of the sink. This is now
+	  done. This is a feature enhancement.
+
+	- Existing command **stack** is added the command option *list*. With
+	  this option the command will list the existing stack. The syntax is
+	  now:
+
+		stack [ list | <feed id> [ <feed id> [ ... ]]]
+
+	- Executing the **feed par** command would result in a message printed
+	  if the command succeeded. The command must be silent if succeeded as
+	  long as the command **feed verbose** has yet to be implemented.
+
+	- Executing command **text place backgr** with the padding parameters
+	  and without the RGBA parameters would reset RGBA parameters of the
+	  background to 0,0,0,1. Now this no longer happens. This is a bugfix.
+
+	- Adding new command **text place backgr alpha** to change the alpha
+	  value for a text background. The syntax is:
+
+		text place backgr alpha [<place id> <alpha>]
+
+	- Adding new command **text place backgr rgb** to change the color
+	  value for a text background. The syntax is:
+
+		text place backgr rgb [<place id> [ <red> <green> blue> [ <alpha> ] ]
+
+	- In the syntax printed for command **text help**, the inconsistent
+	  naming of the id number for placed text has where necessary been
+	  changed from *<id no>* to *<place id>*.
+
+	- In the syntax printed for command **text help**, the inconsistent
+	  naming of the id number for string text has where necessary been
+	  changed from *<id no>* to *<string id>*.
+
+	- When adding a source map to audio mixer and in verbose mode, the map
+	  reported created was printed wrong. This is a buf fix.
+
+	- Adding missing **message** and *messagef** to printed list for the
+	  **help** command.
+
+	- Adding new command **image name** for associating a name with a
+	  loaded image. The syntax is:
+
+		image name [<image id> [<name>]]
+
+	- Adding missing function MaxPatterns() to class CVideoShape.
+
+	- Command **text help** was missing newlines after
+	  *text place backgr move alpha* and *text place repeat move*. This is
+	  a bugfix.
+
+	- When creating the CTclInterpreter class in CController class, it is
+	  now checked that the Interpreter was in fact craeated. This is a
+	  safety fix.
+
+	- Adding new command **tcl reset**. The command will delete the Tcl
+	  Interpreter and create a new fresh one. All data and setting from
+	  the old interpreter is lost. The syntax is:
+
+		tcl reset
+
+	- Adding new command **tcl help** for listing available commands for
+	  the CTclInterface class. The command has been added to the output of
+	  the **help** command as well. The syntax is:
+
+		tcl help
+
+	- CTextItems::AddString and CTextItems::AddFont would in some cases
+	  not count the correct number of strings and fonts. This is a bugfix.
+
+	- Adding command **snowmix info** to Tcl interpreter. It is now
+	  possible to query for Snowmix settings from inside the Tcl
+	  interpreter. The syntax are:
+
+		tcl eval snowmix info audio (feed | sink) (info | status | extended | syntax)
+			(format | ids | maxid | nextavail | <id_list>)
+		tcl eval snowmix info audio mixer (info | status | extended | source info |
+			source status | source extended | syntax)
+			(format | ids | maxid | nextavail | <id_list>)
+		tcl eval snowmix info command ( names | list | at | syntax ) [ format | <name> ]
+		tcl eval snowmix info feed (geometry | status | extended | state | syntax)
+			(format | ids | maxid | nextavail | <id_list>)
+		tcl eval snowmix info image (load | place | move | extended | syntax)
+			(format | ids | maxid | nextavail | <id_list>)
+		tcl eval snowmix info text (string | font | place | move | backgr | linpat | syntax)
+			(format | ids | maxid | nextavail | <id_list>)
+		tcl eval snowmix info (vfeed | virtual feed) (place | move | extended | syntax)
+			(format | ids | maxid | nextavail | <id_list>)
+		tcl eval snowmix info shape (info | list | place | move)
+			( format | ids | maxid | nextavail | <id_list> )
+		tcl eval snowmix info system (info | status | maxplaces | overlay | syntax) [ format ]
+		tcl eval snowmix info shape ( syntax | ( ( info | list | place | move )
+			( format | ids | maxid | nextavail | <id_list>) )
+		tcl eval snowmix info system (info | status | maxplaces | overlay | syntax) [ format ]
+
+	  where
+		<id list = ( <id> | <id>..<id> | <id>..end | all [ <id>.. [ ..]] )
+
+	  The *format* will list the format used when command is an id list.
+	  The *ids* will return a list of IDs in use. The *maxid* will return
+	  the maximum ID set with the *maxplace* command. The *nextavail* will
+	  list the next unused ID. The *id_list* will return return a list of
+	  information for the IDs in the list that are in use.
+
+	- Adding command **snowmix parse ** and **snowmix parse silent** to Tcl
+	  interpreter. It is now possible to parse and execute native Snowmix
+	  commands directly from inside the Tcl interpreter. The command or
+	  commands can be single line as well as multi line \(multiple
+	  commands). The syntax inside the interpreter is
+
+		snowmix parse <command> [ <newline> <command> [ <newline> <command> [ ... ]]]
+		snowmix parse silent <command> [ <newline> <command> [ <newline> <command> [ ... ]]]
+		snowmix parses <command> [ <newline> <command> [ <newline> <command> [ ... ]]]
+
+	  The command section will be passed over to the parser of the
+	  CController class for imidiate execution. This is different from the
+	  way tcl eval command has bee programmed to work, where Snowmix
+	  commands returned by **tcl eval** are not executed until the command
+	  passed to **tcl eval** returns. The tcl command **snowmix** does not
+	  return any strings and will return TCL_OK upon success and TCL_ERROR
+	  upon failure. It is possible to execute nested commands similar to
+	  the following command:
+
+		tcl eval snowmix parse tcl eval <some command>
+
+	  but it is NOT recommended. The command **snowmix parse silent** is
+	  identical to the command **snowmix parse** except, the controller
+	  channel is set to NULL preventing printing any messages and status
+	  on the controller channel where the command is executed from. The
+	  command **snowmix parses** is identical to and a short version for
+	  **snowmix parse silent**.
+	
+
+	- International character support \(UTF-8) is now implemented. Needed
+	  checking for \*ci less than zero in trim_string and initial space
+	  parsing in trim_string and controller_parse_command. Command
+	  **text place grow** now supports multibyte characters \(ie. UTF-8)
+	  international characters.
+
+	- Command **help** was not listing the seven *system output* commands:
+
+		system output buffers <buffer count>
+		system output delay <frames>
+		system output freeze <number frames to freeze>
+		system output info
+		system output mode <mode>
+		system output reset
+		system output status
+
+	- Adding new command **system output freeze** which make Snowmix output
+	  the same frame for a specified number of frames creating the
+	  appearence of a frozen video stream. The command was introduced in
+	  0.4.3, but was not mentioned in the change log nor the release notes.
+
+		system output freeze <number frames to freeze>
+
+	- Adding new command **system output info** which will list
+	  information about the systems output configuration. The command was
+	  introduced in 0.4.3, but was not mentioned in the change log nor the
+	  release notes. The syntax of the command is:
+
+		system output info
+
+	- Adding new command **system output status** which will list the
+	  status of the current video output. The command was introduced in
+	  0.4.3, but was not mentioned in the change log nor the release notes.
+	  The syntax of the command is:
+
+		system output status
+
+	- Replacing macro system_frame_no with macro SYSTEM_FRAME_NO with NULL
+	  check of m_pVideoMixer and m_pVideoMixer->m_pController.
+
+	- Setting the clip parameters for a placed image that does not exist
+	  would fail silently. This has now been fixed.
+
+	- Setting the alpha value for a placed image that does not exist
+          would fail silently. This has now been fixed.
+
+	- Setting the rotation value for a placed image that does not exist
+          would fail silently. This has now been fixed.
+
+	- Setting the scale values for a placed image that does not exist
+          would fail silently. This has now been fixed.
+
+	- Setting the move alpha values for a placed image that does not exist
+          would fail silently. This has now been fixed.
+
+	- Setting the move clip values for a placed image that does not exist
+          would fail silently. This has now been fixed.
+
+	- Setting the move coor values for a placed image that does not exist
+          would fail silently. This has now been fixed.
+
+	- Setting the move rotation values for a placed image that does not exist
+          would fail silently. This has now been fixed.
+
+	- Setting the move scale values for a placed image that does not exist
+          would fail silently. This has now been fixed.
+
+	- Setting the anchor value for a placed image that does not exist
+          would fail silently. This has now been fixed.
+
+	- Fixes in CVideoShape:
+
+		- Allocation of memory for m_shapes was using sizeof shape_t
+		  instead shape_t*.
+		- Allocation of memory for m_placed_shapes was using sizeof
+		  placed_shape_t instead of placed_shape_t*.
+		- Allocation of memory for m_patterns was using sizeof pattern_t
+		  instead of pattern_t*.
+		- 
+
+	- Fixes in CTextItems:
+
+		- Wrong type used for sizeof in calloc for text_item_t.
+		- safe guard for pController in list_help was insufficient.
+		- If we fail to allocate mem for string concat, we complain.
+		- Potential memory leak in set_text_font if command was malformed.
+		- Potential memory leak in set_text_string_concat. Code rewritten
+		  and contatenating non existent strings will now fail. Using
+		  a source string as destination will now work.
+		- potential memory leak in set_text_font for malformed command.
+		- m_text_places[id]->pRollerText was not freed in deconstructor.
+
+	- Fixes in CAudioSink:
+
+		- Using m_sinks[id] after it was freed in DeleteSink.
+		- Double possible NULL reference for m_sinks[id] in SetSinkBufferSize.
+
+	- Fixes in CAudioFeed:
+
+		- Unnecessary setting n= -1 in set_feed_add.
+		- Possible NULL reference for m_feeds[id] in SetFeedBufferSize.
+
+	- Fixes in CVideoMixer:
+
+		- StopMixer was referencing m_pVideoMixer->m_pController without NULL
+		  check (system_frame_no).
+		- AddAudioToMixer was not checking against divide by zero.
+		- Update unnecessary initialized pSource.
+		- pSource->pAudioQueue was used in Update (inserting silence) without
+		  NULL checking
+
+	- Fixes in CVideoFeed:
+
+		- m_pixel_bytes was not checked against zero in feed_set_idle before
+		  used for calloc and allocated mem was not checked against NULL.
+		- feed->width and height was not checked against zero before used in
+		  calloc.
+
+	- Fixes in CVideoMixer:
+
+		- Potential NULL reference for m_pController and m_pMonitor when
+		  outputting to monitor for output_producer.
+		- Potential NULL reference for m_pCairoGraphic when wrting PNG
+		  file in output_producer.
+		- Potential NULL reference for m_pVideoImage in OverlayImage.
+
+	- Fixes in CVirtualFeed:
+
+		- Potential memory leak in SetFeedName (although less likely).
+		- Deconstructor of class will use DeleteFeed to delete vfeeds.
+		- Memory leak when deleting a feed. pMatrix was not freed
+
+	- Fixes in CVideoOutput:
+
+		- In MainLoopTimed buf could potentially be NULL.
+		- In MainLoop last_buf was set and never used.
+
+	- Fixes in CController:
+
+		- ip_to was unnecessary intialized to a value never read.
+
+	- Fixes in CCommand:
+
+		- Double initialization of pC in CommandCheck.
+		- p could potentially be NULL in DeleteCommandByName.
+		- In DeleteCommandHead, the right part of the tree was not
+		  deleted correctly potentially producing a double free.
+		- Potential memory leak of allocated space in case of errors
+		  is fixed
+
+	- Fixes in CVideoImage:
+
+		- set_image_load could potentially be called with ci == NULL
+		- dead storage for number_of_pases in LoadImage.
+		- width or height could potentially be zero for an image to load.
+
+	- Fixes in CTclInterface:
+
+		- Dead storage res removed in CTCLInterface. Optimization.
+		- Memory Leak of script_name in set_tcl_exec in CTclInterface. Optimization.
+
+	- Fixed potential division with zero in MakeRMS in audio_util.cpp.
+
+	- The include file malloc.h resides in /usr/include/malloc/malloc.h
+	  on OS X, while it resides in /usr/include/malloc.h. This prevented
+	  compilation on OS X. This has now been fixed. This was primarily a
+	  compiler issue.
+
+	- Printing u_int64_t on amd64 Linux require a long unsigned int \(%lu)
+	  while on i386/i686 it require a long long unsigned int \(%llu). The
+	  definition of __WORDSIZE == 32 or 64 determine this. On OS X (using
+	  LLVM 5.0) the __WORDSIZE is 64, but still require a long long
+	  unsigned int \(%llu).  This has now been fixed in various files
+	  primarily audio_feed.cpp,
+	  audio_mixer.cpp and audio_sink.cpp. This was primarily a compiler
+	  issue but it can have lead to strange output of verbose and status
+	  messages.
+
+	- In CVideoOutput::CVideoOutput the variable m_pOutput_memory_list was
+	  not set to NULL. This had no apparent effect on Linux, but could
+	  fail on other platforms as head of list was undetermined. This is a
+	  bug fix.
+
+	- In CVideoOutput::InitOutput the buffer allocated for each frame
+	  accounting was set to size of pointer of pointer to
+	  output_memory_list_type instead of size of output_memory_list_type.
+	  This had had no effect on Linux by pure luck. This could sometimes
+	  fail on other platforms. This is a bugfix.
+
+Version 0.4.3:
+
+	- The syntax for the commands **overlay finish** and **overlay pre** have
+	  been changed to the following:
+
+		overlay finish [<command name>]
+		overlay pre [<command name>]
+
+	  When using these commands without the argument <command name>, the
+	  commands list the command name, if any has been specoified.
+
+	- Rewritten the video mixing part for video feeds in output_producer in the
+	  CVideoMixer class to use OverlayFrame in CCairoGraphic class. This have
+	  the following benefits:
+
+		1) Pixel Aspect Ratio for feeds is no longer limited to 1:1, 5:4
+		   and 12:11. Nearly ny aspect ratio can now be set. Neither
+		   infinite nor zero however is not a good choice.
+
+		2) Scale for feeds is no longer limited to 1:1, 1:2, 1:3, 1:4, 1:5,
+		   2:3 and 2:5. Nearly any scale expressed as a fraction can now be
+		   set however neither infinite nor zero is a wise choice.
+
+		3) High CPU load associated with certain combination of PAR and
+		   scale for feeds has now been erradicated and most if not all
+		   combination use the same low level of CPU.
+
+	- Hidden command **overlay feed** changed to use Cairo Graphics removing
+	  restictions on scale and PAR as well as leading to faster execution. With
+	  this change and the change of how video feeds are stacked using the stack
+	  command, the code for slower integer operations on video frames found in
+	  the CVideoScaler class (video_scaler.cpp) removed.
+
+	- Adding alpha values to basic video feeds. The syntax of the command is
+
+		feed alpha [<feed id> <alpha>]
+
+	  This only sets a variable in the feed. It does not alter the value of
+	  the alpha channel in the BGRA stream of the feed. The alpha channel of
+	  the stream must still contain 255 for each pixel for Snowmix to work
+	  as expected. Gstreamer 1.2.0 to 1.2.2 sets by mistake the alpha channel
+	  to 127 for each pixel which is comparable to an alpa value of 0.5. Fix is
+	  to use GStreamer < 1.2.0 or > 1.2.2.
+
+        - Renamed class CVideoFeed to CVideoFeeds to make room for class CVideoFeed
+          describing the individual feed as a class rather than a struct. This is
+	  done to limit direct access to internal structures of a feed from other
+	  classes. Work included in:
+
+		CVirtualFeed
+		CVideoMixer
+
+	  Converting the feed struct to a class is work in progress and not part of
+	  this release.
+
+	- Count of samples amples passed through audio mixer has been upgraded to u_int64_t,
+	  which for 44100Hz should give millions of years running time without wrapping.
+
+	- Wrapping of samples count in audio feed and sink fixed when reaching UINT_MAX. When
+	  number of samples passed through an audio feed exceeded UINT_MAX, wrong number of
+	  samples per second was calculated. This has now been fixed. If number of samples
+	  passed through an audio feed exceeds 2 times UINT_MAX between two successive calls
+	  to Update(), the fix would fail, but that is extremely unlikely to happen as
+	  Update() is supposed to be called at frame rate.
+
+	- Changing output of command **audio mixer rate** to be in line with similar
+	  commands for feeds and sinks. Dropping printing name of mixer.
+
+	- Adding command *audio mixer source delete* for deleting a mixer source. The
+	  syntax is:
+
+		audio mixer source [delete <mixer id> <source no>]
+
+	- Deleting a mixer source, when deleting an audio mixer, did not remove
+	  and free any audio queues the mixer source or sources might have. This has
+	  now been fixed.
+
+	- Correcting syntax for command *audio mixer source add silence* printed by the
+	  command *audio mixer help*.
+
+	- Changing the output for the following commands to print 'STAT:' instead of
+	  'MSG:' when given without arguments to be inline with other parts of Snowmix:
+
+		audio sink source
+		audio sink queue maxdelay
+		audio sink queue
+		audio sink stop
+		audio sink start
+
+	- Changing output format of the commands *audio sink start* and *audio sink stop*
+	  so the state is printed in capital letters to be inline with the rest of Snowmix.
+
+	- Closing a controller connection setup as an audio sink, could in some cases result
+	  in the following message:
+
+		Error. Controller is set to audio feed, but the feed is in state UNKNOWN.
+		Closing controller for fd 3,3 Calling stop sink 1
+
+	  While the connection is properly closed, the message made no sense. This has now
+	  been fixed.
+
+	- Changing the source for an audio sink would in some cases fail or make Snowmix
+	  core dump. This has now been fixed.
+
+	- The function RemoveQueue() for CAudioFeed, CAudioMixer and CAudioSink could in some
+	  cases lead to an infinite loop. This has now been fixed.
+
+	- Parsing commands for audio feeds, mixers and sinks did not check
+	  the command string for NULL nor skipping extra spaces. Fixed.
+
+	- Adding new command **system output reset** which will reset the
+	  control connection for the shmsrc connected to Snowmix by closing
+	  it. It is the responsibility of the shmsrc to detect this and
+	  reconnect if it want to. The syntax is:
+
+		system output reset
+
+	- Optimizing command loop for **system ....** commands and fixing
+	  printing error of command string when a system command failed.
+
+	- Moving **system output** command parsing to class CVideoOutput.
+
+	- When using snowmix in loop mode 2 and output mode 2 and when Snowmix runs
+	  out of available shm buffers for video output, shm buffers will stay unavailable
+	  to the main video loop until at least half of the allocated shm buffers are
+	  available again. To use this feature, use the following cli option
+
+		./snowmix -l2 ../ini/.....
+
+	  and in the ini file 
+
+		system output mode 2
+
+	- Adding command **system name** to name the system. The system name will show
+	  when listing the info with the command *system info* or the command *system name*
+	  without any parameter. The system name will be intialized with the node name of
+	  the system the mixer is running using equivalent of uname -n. When the command
+	  is used to set the system name, the node name is prepended. The syntax is:
+
+		system name [<system name>]
+
+	- Class CVideoMixer was not freeing up m_command_pre and m_command_finish
+	  when destroyed.
+
+	- The command **system socket** can now be used with and without the argument
+	  *output socket name*. In the latter case, the socket name will be printed.
+	  The syntax is now:
+
+		system socket [<output socket name>]
+
+	- The command **system host allow** will now print the keyword *STAT:* instead
+	  of *MSG:* prepended each line. The last line will only contain the string
+	  'STAT: ' followed by a newline.
+
+	- Controllers fd was not set non-blocking. This is now fixed though it
+	  ought not be a problem, as select\() was used.
+
+	- tine_now in MainMixerLoop is now passed to output_producer and used
+	  herein. Also used for determine timed commands.
+
+	- Moving main_poller from main.cpp to class CVideoMixer as MainMixerLoop.
+
+	- Moving feed functions from main.cpp into class CVideoFeed. The new
+	  names of the functions with nearly similar names are:
+
+		SetFds (int maxfd, fd_set *rfds, fd_set *wfds);
+		CheckRead (fd_set *rfds, u_int32_t block_size);
+		Timertick (u_int32_t block_size, struct feed_type* feed_list);
+		ReleaseBuffers (struct feed_type *feed);
+		FindArea (struct feed_type *feed, int area_id);
+		UseBuffer (struct feed_type *feed, int area_id, unsigned long offset, unsigned long bsize);
+		AckBufferPtr (u_int32_t block_size, struct buffer_type *buffer);
+		UseBufferPtr (struct buffer_type *buffer);
+
+	- Deleting the class CVideoImage would core dump Snowmix. This has now
+	  been fixed. However previous, the class was not deleted specifically.
+	  On executing the command **quit**, the CVideoMixer class and all
+	  its allocations/creations are now deleted/deconstructed.
+
+	- Shared memory pipe name format and name changed. For linux the pipe
+	  is visible as a file in /run/shm/
+
+	- Command **system info** output formatting was changed and it will now
+	  also print the fd of output_client_socket and the output shm pipe name.
+	  Mode and delay for output is also shown. Scripts that finds the ctr sock
+	  name using system info must be updated. See extract of example from
+	  system info below.
+
+		....
+		STAT:  Output ctr sock name : /tmp/mixer1
+		STAT:  Output ctr fd        : master 8 client 3
+		STAT:  Output settings      : mode 1 delay 1
+		STAT:  Output frames inuse  : 0 of 40
+		STAT:  Output shm name      : /shmpipe.16980.    0
+		....
+
+	- Script input2feed will now ignore audio if corresponding audio feed
+	  is not defined in running snowmix.
+
+	- Script av_output2screen will now ignore audio if audio sink
+	  is not defined in running snowmix.
+
+	- Most scripts in scripts/ are changed to check for gstreamer-1.0 and
+	  use that version if present. Otherwise it will default to gstreamer-0.10.
+
+	- The script bootstrap has been changed and further developed in several ways.
+	  The script now checks individually for each package/library required and
+	  offers to install any missing package.
+
+	- src/Makefile.am now uses settings from configure for tcl/tk and libpng.
+
+	- configure.ac now sets correts include directory for SDL and inserts
+	  it in Makefile.am. It will complain if it does find SDL.h or SDL/SDL.h.
+
+	- configure.ac now checks for libgstreamer-1.0. If not found it will default
+	  to libgstreamer-0.10. If not found either, it will complain.
+
+	- configure.ac now checks for libpng12 and complain if not found.
+
+	- configure.ac now checks for tcl/tk8.6. If not found it will default to
+	  8.5. If not found either, it will complain.
+
+	- bootstrap now checks for tcl8.6/tk8.6 first. If it is not found it will default
+	  to tcl8.5/tk8.5. If not found either, it will suggest installing 8.6
+
+	- New command **system output mode** sets the way video output is handled.
+	  Current 3 modes are available. The modes are:
+
+		Mode 0 : Simple direct output in main thread. Default
+		Mode 1 : Simple threaded. Buffers are placed in a queue and a second
+			 thread handles communicating for video out. Buffer are send
+			 when ready.
+		Mode 2 : As Mode 1, but communication out has an extra layer of timing.
+			 This mode is experimental and not fully tested.
+
+	  The command must be set before the command **system socket**. The syntax is:
+
+		system output mode <mode>
+
+	- New command **system output delay** sets a delay for video output in terms
+	  of frame delay. Minimum is 1. Setting it higher than buffers available will
+	  block video output. Default value is 1. This command has no effect for mode
+	  0. The command is recommended to be set before the command **system socket**.
+	  The syntax is:
+
+		system output delay <frames>
+
+	- New command **system output buffers** sets the number of buffers, one for
+	  each frame, to allocate for video out. The default value is 20. Minimum is
+	  10. Maximum is 1000 though not recommended. The command must be set before
+	  the command **system socket**. The syntax is:
+
+		system output buffers <buffer count>
+
+	- Shared memory was allocating 50 frames for output. This has been changed to 20.
+	  This can be changed with the command **system output buffers**.
+
+	- When a feed was used by a shape or by a virtual feed, the feed was not marked as
+	  used internally. This has no consequence for a live feed, as it will always
+	  consume frames at frame rate. However a recorded feed would not be marked as
+	  used and subsequently then the recorded feed would not advance/consumed at
+	  frame rate. This is a bug fix.
+
+Version 0.4.2:
+
+	- The FD for reading idle image file for feeds was not closed after reading. The
+	  FD is now closed. This was not a bug, but rather a waste of ressources. Small
+	  optimization.
+
+	- All placed text that was overlayed, called the UpdateMove function for each frame
+	  to change any parameters that needed changed for animation purposes. This is now
+	  skipped, if the placed text has no animation set. Small optimization.
+
+	- Optimizing parsing loop of *text* commands. Also parsing in the individual
+	  commands was overhauled. Optimization. The commands overhauled are:
+
+		text place align
+		text place alpha
+		text place backgr clip
+		text place backgr linpat
+		text place backgr move alpha
+		text place backgr move clip
+		text place backgr
+		text place clipabs
+		text place clip
+		text place coor
+		text place grow
+		text place move alpha
+		text place move clip
+		text place move scale 
+		text place move coor
+		text place move rotation
+		text place repeat move
+		text place rgb
+		text place rotation
+		text place scale
+		text place string
+		text place font
+		text place info
+		text place
+		text string concat
+		text string
+		text font available
+		text font
+		text help
+
+	- A list of **text** command will now report fail, if the *place id* does not
+          reference a placed text. The commands are:
+
+		text place align
+		text place alpha
+		text place backgr clip
+		text place backgr linpat
+		text place backgr move alpha
+		text place backgr move clip
+		text place backgr
+		text place clipabs
+		text place clip
+		text place coor
+		text place grow
+		text place move alpha
+		text place move clip
+		text place move scale 
+		text place move coor
+		text place move rotation
+		text place repeat move
+		text place rgb
+		text place rotation
+		text place scale
+		text place string
+		text place font
+		text place info
+
+	  Please note that a text placed referencing to string or font id that does not
+	  is NOT placed. This is a change in behaviour compared to earlier versions.
+
+	- Adding new command **shape tell scale**. The command is solely intended to be used
+	  for debugging purpose. The command place an entry in the specified shape macro that
+	  when overlayed will print the current scale of the graphic context to stderr. The
+	  syntax is:
+
+		shape scaletell <shape id>
+
+	- Adding command **text place backgr round** to provide round corners for text background.
+	  The radius of each corner must be specified. A radius of 0 is equal to a 90 degree coirner.
+	  The syntax is:
+
+		text place backgr round [<place id> <left top> <right top> <left bottom> <right bottom>]
+
+
+	- When using the command **text grow**, the width of the text was calculated as
+	  the width of the current shown string rather than the width of the full string.
+	  This would affect placement of text aligned for *center* or *right*. It would
+	  also affect the size of the background, if enabled. This has now been changed
+	  so the width is calculated as the full string and not the current shown string.
+	  If the old behaviour is desired, the keyword variable must be added to the
+	  *grow* command as shown for the syntax below here:
+
+		text place grow <id no> <start len> [<delta grow> [variable]]
+
+	- When using the command **text font** to delete a font, a string was deleted instead
+	  This has now been fixed.
+
+	- The command **text help** was not listing that the command **text place backgr linpat**
+	  could be used without arguments. Fixed.
+
+	- The command **text place** now checks for existence of string and font before
+	  creating a placed text. The command will now return an error if string and/or
+	  font does not exist. The command will now also return an error, if it failed.
+	  Before it could fail silently, if memory was insufficient.
+
+	- The command **text string concat** would in most cases core dump. This
+	  is a bug and has now been fixed. Further more the command will add a space
+	  between strings concatenated.
+
+	- Adding the commands **shape source alphamul** and **shape source alphaadd**. The
+	  command is used to multiply a factor or add a constant to the current alpha level
+	  in a shape and the effect is inherited down, but not up. Unless the command is later
+	  followed by a command that uses the alpha level such as *shape source rgb* or
+	  *shape source rgba* and then later followed by a command such as *shape paint*,
+	  *shape fill*, *shape stroke* etc, the command will have no effect. The command can
+	  among other things be used in recursion to decrease or increase the alpha level.
+	  Alpha levels are always between 0 and 1 but the factor can be any valid value hold
+	  in a double. The syntax is
+
+		shape source alphaadd <shape id> <alpha constant>
+		shape source alphamul <shape id> <alpha factor>
+
+	- Adding the command **text place string** and **text place font**. The command
+	  can be used to change the string id or font id for a placed text. The syntax is:
+
+		text place string [<place id> <string id>]
+		text place font [<place id> <font id>]
+
+	- The command **shape list** was not listing the command *shape save*.
+	  This has now been fixed.
+
+	- The command **shape list** was not listing the command *shape restore*.
+	  This has now been fixed.
+
+	- The command **shape list** was not listing the command *shape recursion*.
+	  This has now been fixed.
+
+	- The command **shape list** listed command *shape rotation* as *shape scale*.
+	  This has now been fixed.
+
+	- The command **shape list** was not listing the commands *stroke preserve*
+	  and *fill preserve* correctly. This has now been fixed.
+
+	- The command **shape source rgb** was in verbose mode listing it created a shape
+	  entry named *shape source rgba*. Likewise was the command **shape source rgba** listing
+	  it created an entry named *shape source rgb*. This has now been fixed.
+
+	- The command *shape help* did not list the syntax for the command *shape rectangle*.
+	  This has now been fixed. The syntax is:
+
+		shape rectangle <shape id> <x> <y> <width> <height>
+
+	- The command **shape recursion** would with *shape verbose* larger than 0, print the
+	  word *RECURSION* as part of the information. This has now been changed to *recursion*.
+
+	- The command **shape line width** would with *shape verbose* larger than 0, print the
+	  word *width* as part of the information. This has now been changed to *line width*.
+
+	- The command **shape inshape** would with *shape verbose* larger than 0, print the
+	  word *shape* as part of the information. This has now been changed to *inshape*.
+
+	- Adding the command **shape arcrel_cw** and **shape arcrel_ccw* for drawing arcs
+	  relative to the current position of the graphic context. The command
+	  will draw an arc at Cairo Graphic context's current position added the parameters
+	  *x* and *y*. The syntax are:
+
+		shape arcrel_cw <shape id> <x> <y> <radius> <angle from> <angle to>
+		shape arcrel_ccw <shape id> <x> <y> <radius> <angle from> <angle to>
+
+	- The command **shape arc_ccw* was not parsed correctly making the command
+	  unusable. This has now been fixed.
+
+	- Optimizing the parsing of **feed** commands. Removing unnecessary strlen
+	  and reordering parsing order.
+
+	- The output of the command *feed list* and feed list verbose* has been
+	  changed to be in line with the rest of Snowmix. Also for this command, the
+	  output the string "MSG:" was changed to "STAT:" and the last line printed
+	  for both commands is the string "STAT: " plus a newline.
+
+	- The command *feed info* will now also list how many feeds can be created in total.
+
+	- The command *feed add* without parameters will now list the created
+	  feeds inline with other add commands in Snowmix. The command
+	  *feed help* has been updated to reflect the added syntax.
+
+	- The command *shape list help* was listing incorrect and incomplete syntax
+	  for the commands *shape place coor*, *shape place offset*, *shape place rgb*,
+	  *shape place rotation*, *shape place scale* and *shape place shape*. This
+	  has now been fixed.
+
+	- The following commands deleted an entry instead of moving it. This
+	  is a bug that has now been fixed.
+
+		shape moveentry <shape id> first N
+		shape moveentry <shape id> last N
+
+	  where N is a positive integer greater than 0.
+
+	- It will now be reported on stderr by the main_poller in main.cpp if
+	  frame processing is lagging. So far the code is disabled. Fills console
+	  on slower systems.
+
+	- Command system info will now also report the number of open control connections.
+
+	- Command system info will now also report the control connection port number.
+
+	- Command system info will now also report the number of lagged frames, but the code to
+	  count it is not yet enabled.
+
+	- Adding "animation" command to audio feed volume. When the command is given,
+	  the volume for all channels in the feed will be added \<delta volume> at
+	  frame rate a number of times set by \<delta steps>. The syntax is
+
+		audio feed move volume [<feed id> <delta volume> <delta steps>]
+
+	  Audio volumes are limited to values between 0 and MAX_VOLUME_FLOAT
+	  defined in audio_util.h to 4.0. A volume of 1.0 means unchanged level.
+
+	- Adding "animation" command to audio mixer volume. When the command is given,
+	  the volume for all channels in the mixer will be added \<delta volume> at
+	  frame rate a number of times set by \<delta steps>. The syntax is
+
+		audio mixer move volume [<mixer id> <delta volume> <delta steps>]
+		audio mixer source move volume [<mixer id> <source_no> <delta volume> <delta steps>]
+
+	- Adding "animation" command to audio sink volume. When the command is given,
+	  the volume for all channels in the sink will be added \<delta volume> at
+	  frame rate a number of times set by \<delta steps>. The syntax is
+
+		audio sink move volume [<sink id> <delta volume> <delta steps>]
+
+	- Changing max audio feeds in audio_feed.h from 10 to 20
+
+	- Deleting a pattern by issuing the command **shape pattern add \<pattern id>**
+	  deleted a shape rather than a pattern. This is now fixed. This is a bug fix.
+
+Version 0.4.1
+
+	- Adding support for complex graphics drawing, clipping, patterns, gradients
+	  and masking using graphic primitives through 46 new shapes command and
+	  14 new shape place commands. The commands are listed in the Release
+	  Note.
+
+	- Adding commands "text overlay" and "image overlay". These are identical
+	  to the commands "overlay text" and "overlay image" respectively except
+	  they are moved to the class CTextItem and CVideoImage. This enables
+	  text overlay and image overlay to be executed as a result of a tcl
+	  eval or tcl exec return result. The old commands will remain in the
+	  version 0.4.x, but are considered deprecated and will be removed in
+	  version 0.5.0. The new commands will return an error if not called
+	  inside the "overlay pre" and "overlay finish" or a command from
+	  inside these recursively. Ie. you can not execute an overlay command
+	  manually from a control connection as you always are in the wrong
+	  time window. Only the overlay pre and finish commands are executed
+	  in the right time window where a frame to overlay will present.
+
+	- Execution of defined commands was done by calling the command parse with
+	  the controller connection set to NULL. This prohibited a command macro
+	  from writing to the control connection. This has now changed, so output will
+	  go to the control connection giving the command. The execution
+	  of commands defined inside the "overlay pre" and "overlay finish" are still
+	  parsed with the controller connection set to NULL preventing possibly flodding
+	  the main control connection (usually stderr) with messages. However some commands
+	  may still fail and possibly writing to stderr.
+
+	- Changing output of command "message". Now it writes as show below.
+
+		MSG: ..........
+
+	  Furthermore, instead of writing the message to stderr, it now writes
+	  to the controller connection issuing the command instead.
+
+	- Adding command "messagef". It is similar to the message command except
+	  it adds the current frame number. The syntax is
+
+		messagef <the message>
+
+	  The output will look like this where the current frame count is 1324:
+
+		MSG: <1324> ......
+
+	- Adding command "text place clipabs" to provide a fixed clipping window
+	  for text and possibly its background. The clipping coordinates and size
+	  is absolute disregarding where the text is placed. The syntax is
+
+		text place clipabs [<place id> <clip x> <clip y> <clip width> <clip height>]
+
+	- The command "text place clip" will now return an error if the text place
+	  id indicated does not exist. This is a bug fix.
+
+	- Calling "overlay image" through "overlay finish" or "overlay pre" when
+	  no image was loaded caused seg fault in OverlayImage in video_mixer.cpp.
+	  This is a bug fix.
+
+	- Adding command "image write" to write out in raw rgba format an image already
+	  loaded. This is useful to create dead-images for the feeds as these
+	  are required to be in the rgba format. The syntax is
+
+		image write <image id> <file name>
+
+	  The command is not recommended used for live video mixing as writing
+	  to a file system may delay or block the main video loop of Snowmix.
+
+	- Commands created with name ending with ".tcl" case insensitive are now
+	  not checked and should not be executed as ordinary snowmix command. They
+	  should only be executed using the command "tcl exec" command. The changed
+	  is made to avoid a lot of false error messages from Snowmix when trying
+	  to identify break and jump points as if the command was a snowmix command
+	  and not a tcl script. Commands with name ending in ".tcl" are reserved
+	  for tcl script.
+
+	- Adding version and number of free and inuse outbuffer information to
+	  command system info. Fixing display of pixel format error.
+
+	- Adding information to system info whether or not Video shapes has been
+	  loaded.
+
+	- Adding inversion for audio mixer source. If enabled, the source will be
+	  inverted before used in mixer. The command has the follwoing syntax:
+
+		audio mixer source invert <mixer id> <source id>
+
+	  The command will toggle the status of a boolean variable used to determine
+	  whether samples should be inverted or not. Issued once for a mixer source, the
+	  samples will be inverted. Used twice on the same mixer and same source,
+	  the samples will not be inverted, which is the default state. The command
+
+		audio mixer source
+
+	  will list whether or not samples will be inverted using the word *invert* for
+	  when samples are to be inverted and the word *normal* for when the samples
+	  are not inverted.
+
+	- Changing the syntax for audio mixer start by adding the optional keyword soft.
+	  The syntax is now:
+
+		audio mixer start [[soft ]<mixer id>]
+
+	  The functionality was already in the code since 0.4.0. As this syntax change
+	  is an extension rather than a change of the reserved word commands, this
+	  does not prompt the need for a change of the major version number.
+
+	- New "system host allow" to limit access to connect to Snowmix. If not
+	  present, only connections from 127.0.0.1 is allowed. If present then
+	  only connections from ip adresses specified is allowed. In the latter
+	  case, 127.0.0.1 will usually have to be added. The command has the
+	  following syntax:
+
+		system host allow [ <network> | <host> [ <network> | <host> [ ...]]]
+
+	  Host must be specified as a.b.c.d like 192.168.1.2
+	  Network must be specified as a.b.c.d/e like 192.168.1.0/24
+
+	- Command image place now also prints anchor coordinates.
+
+	- Fixing bug with alpha for virtual feed. The feed was not painted with alpha
+	  in OverlayFrame() in cairo_graphics when alpha < 1.0
+
+	- Timed commands was not executed if there was no process connected
+	  to read produced video output frames. This has now been fixed.
+
+	- Fixing missing and erronous entries for the command "help".
+
+	- Togle verbosity for m_controller in controller.cpp now reports verbosity on when
+	  toggled on.
+
+Version 0.4.0
+
+	- Adding audio mixing capabilities through the classes CAudioFeed, CAudioMixer and
+	  CAudioSink. The classes adds the following commands
+
+		audio feed add [<feed id> [<feed name>]]  // empty <feed name> deletes entry
+		audio feed add silence <feed id> <silence in ms>
+		audio feed channels [<feed id> <channels>]
+		audio feed ctr isaudio <feed id>
+		audio feed delay [<delay in ms>]
+		audio feed drop <feed id> <drop in ms>]
+		audio feed format [<feed id> (8 | 16 | 24 | 32 | 64) (signed | unsigned | float)]
+		audio feed info
+		audio feed mute [(on | off) <feed id>]
+		audio feed rate [<feed id> <rate>]
+		audio feed status
+		audio feed verbose [<verbose level>]
+		audio feed volume [<feed id> (- | <volume>) [(- | <volume> ...)]] // volume = 0..MAX_VOLUME
+		audio feed help
+
+		audio mixer add [<mixer id> [<mixer name>]]
+		audio mixer add silence <mixer id> <ms>
+		audio mixer drop <mixer id> <ms>
+		audio mixer channels [<mixer id> <channels>]
+		audio mixer mute [(on | off) <mixer id>]
+		audio mixer queue <mixer id>
+		audio mixer rate [<mixer id> <rate>]
+		audio mixer source [(feed|mixer) <mixer id> <source id>]
+		audio mixer source add silence <mixer id> <source no> <ms>
+		audio mixer source [map <mixer id> <source no>]
+		audio mixer source [maxdelay <mixer id> <source no> <ms>]
+		audio mixer source [mute (on|off) <mixer id> <source no>]
+		audio mixer source [volume <mixer id> <source no> (-|<volume>) [(-|<volume>) ...]]
+		audio mixer start [<mixer id>]
+		audio mixer stop [<mixer id>]
+		audio mixer verbose [<verbose level>]
+		audio mixer volume [<mixer id> (-|<volume>) [(-|<volume>) ...]] // volume = 0..MAX_VOLUME
+		audio mixer status
+		audio mixer help
+
+		audio sink add [<sink id> [<sink name>]]
+		audio sink add silence <sink id> <ms>
+		audio sink channels [<sink id> <channels>]
+		audio sink ctr isaudio <sink id> // set control channel to write out audio
+		audio sink drop <sink id> <ms>]
+		audio sink file <sink id> <file name>
+		audio sink format [<sink id> (8 | 16 | 24 | 32 | 64) (signed | unsigned | float) ]
+		audio sink mute [(on | off) <sink id>]
+		audio sink queue <sink id> 
+		audio sink queue maxdelay <sink id> <max delay in ms
+		audio sink rate [<sink id> <rate>]
+		audio sink source [(feed | mixer) <sink id> <source id>]
+		audio sink start [<sink id>]
+		audio sink status
+		audio sink stop [<sink id>]
+		audio sink verbose [<verbose level>]
+		audio sink volume [<sink id> <volume>] // volume = 0..255
+		audio sink help
+
+	  More information on how to use Snowmix for audio mixing is available in the Wiki at
+	  http://sourceforge.net/p/snowmix/wiki/Audio/
+
+
+	- Adding command 'overlay pre'. This command is similar to the command 'overlay finish'
+	  except the command set by this is called at frame rate before audio feeds, mixers and
+	  sinks are processed. This also means that the command set is executed whether or not
+	  a consumer of frames is connected to Snowmix. The latter is different from the command
+	  'overlay finish' since overlay finish is not called if there is no consumer of frames.
+	  The syntax for 'overlay pre' is
+
+		overlay pre <command name>
+
+	- Fixing command 'virtual feed add' to print created virtual feeds and their
+	  respective names
+
+	- Adding command 'system info'. Command will provide some system info. The syntax is
+
+		system info
+
+	- Adding command 'virtual feed matrix'. The syntax is:
+
+		virtual feed place matrix <feed id> <xx> <xy> <yx> <yy> <x0> <y0>
+
+	- Adding command 'image place matrix'. The command enable a transformation of
+	  the coordinate system. To find more information on coordinate transformation,
+	  please use Google to search for 'cairo matrix transformation'. While the matrix
+	  command support offset and scaling, these functions are best used by using the
+	  commands 'image place', 'image offset' and 'image scale'. However the matrix
+	  transformation also support skewing, which can not be done by other commands.
+	  The syntax is:
+
+		image place matrix <place id> <xx> <xy> <yx> <yy> <x0> <y0>
+
+	- Adding help text in video_image for command 'image help'.
+
+	- Setting allowable 'system frame rate to be between 1 and 100. MIN and
+	  MAX is set in controller.h as MIN_SYSTEM_FRAME_RATE and MAX_SYSTEM_FRAME_RATE
+
+	- The following reserved keywords (commands) has changed name
+
+		port		-> system control port
+		geometry	-> system geometry
+		frame rate	-> system frame rate
+		socket		-> system socket
+
+	- Fixing bug with 'image place' and 'image place coor' where the return value
+	  would be non zero reporting and error even though the command would be executed
+	  correct. Negative coordinates trigged the bug.
+
+	- Clock example in tcl was using %I as format for hour which produces a 2 digit
+	  number for hours. This is okay for 01..07 and 10..12, but 08 and 09 are seen
+	  as illegal octal numbers for the tcl command expr. Subsequently the clock
+	  would fail if hour or minutes or seconds equals 08 or 09. Fix is to use %l.
+	  Minutes and seconds fixed by replacing leading '0' with ''.
+
+Version 0.3.4
+
+	- Adding command 'image place image'. The command is intended to be used to change
+	  the image of an already placed image. The syntax is:
+
+		image place image [<place id> <image id>]
+
+	- Adding command 'image place offset'. The command will offset the placed image by
+	  <offset x> and <offset y> pixels. Because an image is rotated at the coordinates
+	  given with the command 'image place', 'image place coor' and 'image place align',
+	  offset is not included when calculating the rotation point. This have the effect
+	  that a placed image can be moved on a circle with the radius being
+	  squareroot(offset_x * offset_x + offset_y + offset_y). The syntax is:
+
+		image place offset <place id> <offset x> <offset y>
+
+	- Adding command 'image place clip'. Full clip is '0.0 1.0 0.0 1.0'. Clipping more
+	  can be '0.1 0.6 0.2 0.7' that will 10% in from left, 40% from right, 20% from top
+	  30% from bottom.
+
+		image place clip [<place id> [<clip left> <clip right> <clip top> <clip bottom>]]
+
+	- Adding command 'image place move clip' to add animation for clipping image. The syntax
+	  for the command is:
+
+		image place move clip [<id no> <delta left> <delta right> <delta top>
+			<delta bottom> <left steps> <right steps> <top steps> <bottom steps>]
+
+	- Adding command 'image place scale'. The command can be used to scale a placed
+	  image.  A scale value of 1.0 means no scaling. A scaling of 0.0 means no image
+	  will be displayed. The command alone without parameters list the scale of placed
+	  images. The syntax is:
+
+		image place scale [<place id> <scale x> <scale y>]
+
+	- Adding command 'image place move scale'.
+
+		image place move scale [<place id> <delta scale x> <delta scale y> <step x> <step y>]
+
+	- Adding command 'image place alpha'. The command can be used to change the alpha
+	  placed of a placed image. The command alone without parameters list the alpha
+	  of placed images. The syntax is:
+
+		image place alpha [<place id> <alpha>]
+
+	- Adding command 'image place move alpha'. The commands adds ability to automatically
+	  change the alpha by adding <delta alpha> repeated <delta steps> times. Alpha is
+	  kept betwen 0.0 and 1.0. The syntax is:
+
+		image place move alpha [<place id> <delta alpha> <delta steps>]
+
+	- Adding command 'image place rotation'. The command can be used to rotate a placed
+	  image.  The command alone without parameters list the rotation of placed images.
+	  The syntax is:
+
+		image place rotation [<place id> <rotation>]
+
+	- Adding command 'image place move rotation'. The commands adds ability to automatically
+	  change the rotation by adding <delta rotation> repeated <delta steps> times. Rotation
+	  is kept between 2PI and -2PI. The syntax is:
+
+		image place move rotation [<place id> <delta rotation> <delta steps>]
+
+
+	- Adding command 'image place coor' to change the coordinates, anchor and alignment
+	  of an image already placed. The syntax is:
+
+		image place coor [<place id> <x> <y> [ (nw | ne | se | sw | n | s | e | w )]
+		( left | center | right) ( top | middle | bottom) ]
+
+	- Adding command 'image place move coor' to add animation for the placement of an
+	  image already placed. The syntax is:
+
+		image place move coor [<place id> <delta x> <delta y>  <step_x> <step_y>]
+
+	- Changing syntax of command 'image place' to add anchor (n, s, e, w, ne, nw, se, sw). The
+	  command will create a place id if it doesn't exist.  The syntax is:
+
+		image place [<place id> [<image id> <x> <y> [(nw | ne | se | sw | n | s | e | w )]
+		( left | center | right) ( top | middle | bottom) ]
+
+	- Adding command 'image place align'. The command can be used to change the
+	  alignment of a placed image. The syntax is:
+
+		image place align [<place id> (left | center | right) (top | middle | bottom)]
+
+	- Adding command 'message'. This command will pront a message on stderr output.
+	  The syntax is:
+
+		message <some text>
+
+	- Adding extra printed information for the command 'image place'.
+
+	- Adding command 'text verbose'. The command will toggle verbose settings
+	  for class CVideoText and if set, will increase verbosity.
+
+	- Adding command 'image verbose'. The command will toggle verbose settings
+	  for class CVideoImage and if set, will increase verbosity.
+
+	- Renaming command 'help image' to 'image help' and moving 'image help'
+	  listing to class CVideoImage.
+
+	- Adding ParseCommand() to class CVideoImage, moving set_image_load() and
+	  set_image_place() to class CVideoImage. Optimize parsing for image in
+	  class CController and class CVideoImage.
+
+	- Fixing bug in command 'loop' and 'next' when used with a count value.
+
+	- Fixing bug in command 'tcl exec' that prevented entering tcl commands where
+	  the tcl command, like definining a proc, spanned more than one line.
+
+Version 0.3.3
+
+	- Adding command 'command at' to introduce timed commands. While timed commands
+	  can be emulated by using a sufficient number of 'next', this command is much
+	  more scalable. If the time given for the command is preceeded by a '+', the
+	  time will be considered relative, otherwise absolute time is used. Absolute
+	  time is seconds since EPOCH (1. jan 1970). The command 'command at' without
+	  any other arguments will listed timed commands. When time for a time command
+	  elapses, the command will be excuted and the entry removed. The syntax of the
+	  command is:
+
+		command at [[+]<time> <command ........>] // time =  [[hh:]mm:]nn[.nnnnn]
+
+	- Adding command 'include' to include a file while reading the ini file. This command
+	  MUST NOT be used in a command loop while running frames through Snowmix as
+	  reading files can block for a short or longer period. So use it ONLY in
+	  the ini file. The syntax is:
+
+		include <file name>
+
+	- Adding command 'label'. The command 'label' can only be used inside commands
+	  created using 'command create'. They have no function, except they function
+	  as jump points for the command 'goto'. The syntax is:
+
+		label <label name>
+
+	- Adding command 'goto'. This function can only be used inside commands created
+	  using 'command create'. It pprovides an unconditional jump to label <label name>.
+	  The syntax is:
+
+		goto <label name>
+
+	- Adding command 'if', 'else', 'endif'. All 'if's must have a corresponding 'endif'.
+	  An 'if' can have a corresponding 'else'. If condition for the 'if' is true, then
+	  the commands below 'if' until 'else' (if existing) are excuted. If the condition
+	  is false, the commands below 'else' are executed. If no 'else' is present, the
+	  execution continues after the 'endif'. The conditions that can be tested on are
+	  'feedstate(<feed number>,<feed state>)', prevstate(<feed number>,<feed state>)'
+	  and 'exist(command,<command name>)'. Condition can be negated with '!' and
+	  combined with '&&' and '||'. <feed number> is a positive interger indicating the
+	  number of a real feed. The test feedstate test on current feed status while
+	  prevstate test on previous feed state. In both cases it is the state of the
+	  reel feed rather than virtual feeds. The condition exist() can be used to
+	  test whether or not a command created with 'command create' exist. The syntax is:
+
+		if <condition>
+		  command
+		  command
+		  ...
+		else
+		  command
+		  command
+		  ...
+		endif
+
+	  The syntax for condition is:
+
+		<condition> = ['!']<cond> [('||' | '&&') <condition>]
+		<cond>      = <feedstate> | <prevstate> | <exist>
+		<feedstate> = feedstate(<feed no>,<feed state>) | 
+		<prevstate> = prevstate(<feed no>,<feed state>) | 
+		<exist>     = exist(command,<command name>);
+		<feed no>   = 0....(2^32)-1
+		<feed state>= 'SETUP' | 'PENDING' | 'RUNNING' | 'STALLED' | 'DISCONNECTED'
+		  
+	- Reserved command 'nextframe' renamed to next. The command 'nextframe' will work
+	  for the next two releases and then be removed. A command containing the command
+	  'next' will suspend execution of the command until called next time (which may
+	  be for the next frame, if the command is in the main command loop (included
+	  in the command given for the command 'overlay finish'. The syntax is:
+
+		next [<frame count>]
+
+	- Adding command 'command addatline'. This command can be used to add a command at
+	  a specific line in the command <command name>. The syntax is:
+
+		command addatline <command name> <line number> <command>
+
+	- Adding command 'command deleteline'. This command deletes a specific line in a
+	  command. Commands can be listed with the command 'command list <command name>' to
+	  identify the line to be deleted. The syntax is:
+
+		command deleteline <command name> <line number>
+
+	- Adding command 'command push'. This command adds a <command> to the end of the command
+	  <command name>. The syntax is:
+
+		command push <command name> <command>
+
+	- Adding command 'command pop'. This command removes one or more lines in a command
+	  by popping them from the end of the command. The syntax is:
+
+		command pop <command name> [ <count>]
+
+	- The command 'command list <command name>' listed the command lines counting
+	  from 0. Changed to counting from 1.
+
+	- Fixing incorrect return values of command parsing in class CCommand and further
+	  use of this in parsing in class CController.
+
+	- Adding command 'command delete'. The syntax is:
+
+		command delete <command name>
+
+	- Optimize for speed parsing of commands in parse_commands in class CController.
+
+	- Optimize for speed parsing commands in class CVideoFeed.
+
+	- Adding class CVideoFeeds and moving video feed relevant code to this class.
+	  Mostly moved from class CController.
+
+	- Adding command option 'maxplaces video feeds' to command 'maxplaces'.
+
+	- Adding command 'require version'. This enforces that the SNowmix version
+	  must match <major 1>.<major 2> and that Snowmix version major1.major2.minor
+	  MUST be greater or equel to <minor>. Adding 'require version 0.3.2' to
+	  ini files. The syntax is
+
+		require version <major 1>.<major 2>.<minor>
+
+	- Removing dead code in controller.cpp
+
+	- Making 'maxplaces' code in controller.cpp private for class CController.
+
+	- Adding many new entries to list_help in class CVideoText in video_text.cpp.
+	  Should have been in version 0.3.2
+
+	- Adding module 'videorate' to all input examples in scripts directory. It is
+	  not strictly necessary, but useful if you use another video source with a
+	  different framerate.
+
+
+Version 0.3.2
+
+	- Adding command 'text font available' to list text font families available on platform.
+	  The syntax is:
+
+		text font available
+
+	- Adding commands 'text place move clip' and 'text place backgr move clip' to add animation
+	  for clipping text (alone) and clipping background (and text). The syntax for the commands
+	  are:
+
+		text place move clip [<id no> <delta left> <delta right> <delta top>
+			<delta bottom> <left steps> <right steps> <top steps> <bottom steps>]
+
+		text place backgr move clip [<id no> <delta left> <delta right> <delta top>
+			<delta bottom> <left steps> <right steps> <top steps> <bottom steps>]
+
+	- Adding command 'text place scale'. A scale value of 1.0 means no scaling. A scaling
+	  means no text will be displayed.
+
+		text place scale [<place id> <scale x> <scale y>]
+
+	- Adding command 'text place move scale'.
+
+		text place move scale [<place id> <delta scale x> <delta scale y> <step x> <step y>]
+
+	- Adding command 'text place clip'. Full clip is '0.0 1.0 0.0 1.0'. Clipping more
+	  can be '0.1 0.6 0.2 0.7' that will 10% in from left, 40% from right, 20% from top
+	  30% from bottom.
+
+		text place clip [<place id> [<clip left> <clip right> <clip top> <clip bottom>]]
+
+	- Adding command 'text place backgr clip'. Clipping background and text as text.
+
+		text place backgr clip [<place id> [<clip left> <clip right> <clip top> <clip bottom>]]
+
+	- Adding command 'text place backgr move alpha' to add animation for changing alpha
+	  of text background. This also affect alpha of linpat. This is explained further below.
+	  The syntax is:
+
+		text place backgr move alpha [<id no> <delta alpha_bg> <alpha_bg steps> ]
+
+	- Adding command 'text place move alpha'. The commands adds ability to automatically
+	  change the alpha by adding <delta alpha> repeated <delta steps> times. Alpha is
+	  kept betwen 0.0 and 1.0. The syntax is:
+
+		text place move alpha [<place id> <delta alpha> <delta steps>]
+
+	- Adding command 'text place move rotation'. The commands adds ability to automatically
+	  change the rotation by adding <delta rotation> repeated <delta steps> times. Rotation
+	  is kept between 2PI and -2PI. The syntax is:
+
+		text place move rotation [<place id> <delta rotation> <delta steps>]
+
+	- Adding command 'text string concat' to concatenate two text strings. If destination
+	  string is empty, it is created as initially an empty string. The destination string
+	  is concatenated for all following source strings. The syntax is:
+
+		text string concat <destination text id> <source text id> [<source text id> ...]
+
+	- Various cleaning in the class CTextItem aligning output and correction of minor errors.
+
+	- All alpha parameters for text linear pattern (linpat) background are now multiplied
+	  with the alpha value for the the text background. This way manipulating the alpha
+	  value of the text background will also affect the alpha for the linpat background.
+
+	- Fixing loop n. Loop function for 'loop 1' was not working.
+
+	- All text strings for 'text string <text id> <some text>' are now parsed for
+	  occurrence of '\n', '\t' and '\\' and translated to Newline, Tab and '\' (their)
+	  respective codes fo course). Note that Newlines and Tabs in strings will affect
+	  layout of the string. Newlines in strings will create multi line layout and Tabs
+	  in strings will cause indentation.
+
+Version 0.3.1 alpha
+
+	- Adding command 'command afterend ' to set the next command of <command name> to point to NULL meaning no command of <command name> will be executed (if it is included) until <command name> is restarted. The syntax is:
+
+            command afterend <command name>
+
+	- Adding command 'maxplaces' to set maximum number of strings, fonts, text places, images, image places and virtual feeds. The command should be used early in the ini files as the command has no effect after text, fonts etc. has been created. The syntax is:
+
+    maxplaces [(strings | fonts | texts | images | imageplaces | virtual feeds) <number>]
+
+	- Command 'text place move' renamed to 'text place repeat move'. This breaks earlier ini files and ini files examples has been updated. Syntax is now:
+
+            text place repeat move [<id no> | <id no> <dx> <dy> <end x> <end y>]
+
+	- Adding command 'text place grow'. Only the first charaters are shown. In next frame more characters are shown etc. Grow speed by (len>>4 | 0x01) by default. Syntax is:
+
+            text place grow <place id> <start len> [<delta grow>]
+
+	- Adding command 'text place coor' to change the coordinates of a text placed. The syntax of the command is:
+
+    text place coor [<place_id> <x> <y>]
+
+	- Adding command 'text place move coor' to add a command that automatically moves text from one set of coordinates to another. The syntax is
+
+    text place move coor [<place_id> <delta_x> <delta_y> <step_x> <step_y>]
+
+	- Adding alpha channel for text object. Valid values for alpha is 0.0 >= alpha <= 1.0. This breaks earlier format of ini files and ini example files has been updated. The command text place now has the syntax:
+
+    text place [<place_id> [<text_id> <font_id> <x> <y> [<red> <green> <blue>
+        [ <alpha> [ nw | ne | se | sw | n | s | e | w ]]]]]
+
+	- Adding command 'text place alpha' to change the alpha of text placed. The syntax is:
+
+    text place alpha [<place id> <alpha>]
+
+	- Adding command 'text place rotation' to change the rotation of text placed. The syntax is:
+
+    text place rotation [<place id> <rotation>]
+
+	- Adding text [#RUNTIME,d] where d is a feed number and the runtime is the runtime since the feed started. [#RUNTIME] defines system running time.
+
+	- Speeding up controller parse commands by moving parsing of 'text' commands and supporting functions to video_text module (class CVideoText)
+
+	- Speeding up controller parse commands by moving parsing of 'command' commands and supporting functions to command module (class CCommand).
+
+	- Changing command 'help text', 'help virtual feed' and 'help command' into 'text help', 'virtual feed help' and 'command help' as well as moving respective help listing to the class CVideoText, class CVirtualFeed and class CCommand.
+
+	- Adding means to delete earlier created linear pattern (linpat) for background of text placed using the command listed below:
+
+            text place backgr linpat <place_id>
+
+
+
+	- Adding command 'command afterend ' to set the next command of <command name> to point to NULL meaning no command of <command name> will be executed (if it is included) until <command name> is restarted. The syntax is:
+
+            command afterend <command name>
+
+	- Adding command 'maxplaces' to set maximum number of strings, fonts, text places, images, image places and virtual feeds. The command should be used early in the ini files as the command has no effect after text, fonts etc. has been created. The syntax is:
+
+    maxplaces [(strings | fonts | texts | images | imageplaces | virtual feeds) <number>]
+
+	- Command 'text place move' renamed to 'text place repeat move'. This breaks earlier ini files and ini files examples has been updated. Syntax is now:
+
+            text place repeat move [<id no> | <id no> <dx> <dy> <end x> <end y>]
+
+	- Adding command 'text place grow'. Only the first charaters are shown. In next frame more characters are shown etc. Grow speed by (len>>4 | 0x01) by default. Syntax is:
+
+            text place grow <place id> <start len> [<delta grow>]
+
+	- Adding command 'text place coor' to change the coordinates of a text placed. The syntax of the command is:
+
+    text place coor [<place_id> <x> <y>]
+
+	- Adding command 'text place move coor' to add a command that automatically moves text from one set of coordinates to another. The syntax is
+
+    text place move coor [<place_id> <delta_x> <delta_y> <step_x> <step_y>]
+
+	- Adding alpha channel for text object. Valid values for alpha is 0.0 >= alpha <= 1.0. This breaks earlier format of ini files and ini example files has been updated. The command text place now has the syntax:
+
+    text place [<place_id> [<text_id> <font_id> <x> <y> [<red> <green> <blue>
+        [ <alpha> [ nw | ne | se | sw | n | s | e | w ]]]]]
+
+	- Adding command 'text place alpha' to change the alpha of text placed. The syntax is:
+
+    text place alpha [<place id> <alpha>]
+
+	- Adding command 'text place rotation' to change the rotation of text placed. The syntax is:
+
+    text place rotation [<place id> <rotation>]
+
+	- Adding text [#RUNTIME,d] where d is a feed number and the runtime is the runtime since the feed started. [#RUNTIME] defines system running time.
+
+	- Speeding up controller parse commands by moving parsing of 'text' commands and supporting functions to video_text module (class CVideoText)
+
+	- Speeding up controller parse commands by moving parsing of 'command' commands and supporting functions to command module (class CCommand).
+
+	- Changing command 'help text', 'help virtual feed' and 'help command' into 'text help', 'virtual feed help' and 'command help' as well as moving respective help listing to the class CVideoText, class CVirtualFeed and class CCommand.
+
+	- Adding means to delete earlier created linear pattern (linpat) for background of text placed using the command listed below:
+
+            text place backgr linpat <place_id>
+
+Version 0.3.0 alpha
+
+	- First public release

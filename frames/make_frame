@@ -1,0 +1,16 @@
+#!/bin/bash
+
+echo making frame
+echo -e "Width : \c"
+read width
+echo -e "height : \c"
+read height
+echo $width $height
+bytes=`expr $width "*" $height "*" 4`
+newframe="newframe_"$width"x"$height".bgra"
+
+
+MIXERFORMAT='video/x-raw-rgb, bpp=(int)32, depth=(int)32, endianness=(int)4321, format=(fourcc)BGRA, red_mask=(int)65280, green_mask=(int)16711680, blue_mask=(int)-16777216, width=(int)'$width', height=(int)'$height', pixel-aspect-ratio=(fraction)1/1, interlaced=(boolean)false'
+gst-launch-0.10 -q videotestsrc ! $MIXERFORMAT ! fdsink fd=1 | dd of=$newframe bs=$bytes count=1
+
+echo "New dead image frame file is "$newframe

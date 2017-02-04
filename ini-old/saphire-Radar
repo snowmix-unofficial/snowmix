@@ -1,0 +1,358 @@
+# Copyright by Peter Maersk-Moller 2012 - All rights reserved
+require version 0.4.1
+
+command create RadarLib.tcl
+
+  set radar(frame) 0
+  set radar(radars) ""
+  set radar(2PI) [expr 8*atan(1.0)]
+
+  #set radar(ray) 8
+  #set radar(rayangle) 0.0
+  #set radar(rayspeed) 96
+  #set radar(2PI) [expr 8*atan(1.0)]
+  #set radar(deltaangle) [expr $radar(2PI) / $radar(rayspeed)]
+  #set radar(step) 0
+
+  set vessel(vostok,r1) 800
+  set vessel(vostok,r2) 400
+  set vessel(vostok,angle) 0
+  set vessel(vostok,speed) 0.002
+  set vessel(bluerib,r1) 500
+  set vessel(bluerib,r2) 600
+  set vessel(bluerib,angle) 2.3
+  set vessel(bluerib,speed) -0.0025
+  set vessel(hjortoe,r1) 500
+  set vessel(hjortoe,r2) 1200
+  set vessel(hjortoe,angle) -1
+  set vessel(hjortoe,speed) 0.001
+
+  proc UpdateVessel { vessel_name } {
+    global vessel
+    set vessel($vessel_name,angle) [expr $vessel($vessel_name,angle) + $vessel($vessel_name,speed)]
+    set x [expr $vessel($vessel_name,r1) * cos($vessel($vessel_name,angle))]
+    set y [expr $vessel($vessel_name,r2) * sin($vessel($vessel_name,angle))]
+    SetVesselCoors $vessel_name $x $y
+  }
+
+
+
+  # Set radar ray speed, fade speed and reset ray angle to 0
+  proc SetRadarSpeed { name speed } {
+    global radar
+    set s ""
+    set radar($name,rayspeed) $speed
+    set radar($name,rayfade) [expr -0.80 / $speed]
+    set radar($name,deltaangle) [expr 8*atan(1.0) / $radar($name,rayspeed)]
+    set radar($name,step) 0
+    append s "shape place rotation $radar($name,ray_place_id) 0.0\n"
+    return "\n$s\n"
+  }
+
+  # Returns the screen cordinates on a radar depending on vessel coordinates
+  proc RadarScreenCoors { name x y } {
+    global radar
+    set x [expr int($radar($name,x) + $x * $radar($name,scale_x) + 0.5)]
+    set y [expr int($radar($name,y) + $y * $radar($name,scale_y) + 0.5)]
+    return "$x $y"
+  }
+
+  # Set the radar update angle for a vessel depending on coordinates
+  proc RadarVesselSetUpdateAngle { name vessel x y} {
+    global radar
+    if { $x == 0 && $y == 0 } {
+      set radar($name,vessel,$vessel,update) 0
+    } else {
+      set angle [expr atan2($y,$x)]
+      if {$angle < 0.0} { set angle [expr $angle + $radar(2PI)] }
+      set radar($name,vessel,$vessel,update) [expr round($radar($name,rayspeed) * $angle / $radar(2PI))]
+    }
+  }
+
+  # Add vessel to radar
+  proc RadarAddVessel { radarname vesselname vessel_id place_id shape_id text_id x y red green blue } {
+    global radar
+    set s ""
+    append radar($radarname,vessels) "$vessel_id "
+    set radar($radarname,vessel,$vessel_id,name) $vesselname
+    set radar($radarname,vessel,$vessel_id,place_id) $place_id
+    set radar($radarname,vessel,$vessel_id,shape_id) $shape_id
+    set radar($radarname,vessel,$vessel_id,text_id) $text_id
+    set radar($radarname,vessel,$vessel_id,x) $x
+    set radar($radarname,vessel,$vessel_id,y) $y
+    set radar($radarname,vessel,$vessel_id,newx) $x
+    set radar($radarname,vessel,$vessel_id,newy) $y
+    set radar($radarname,vessel,$vessel_id,rgb) "$red $green $blue"
+    set radar($radarname,vessel,$vessel_id,display) 1
+    RadarVesselSetUpdateAngle $radarname $vessel_id $x $y
+    set xy [RadarScreenCoors $radarname $x $y]
+    set sx [lindex $xy 0]
+    set sy [lindex $xy 1]
+    #append s "message shape place $place_id $shape_id $sx $sy 10 10 0 $red $green $blue 0.0\n"
+    append s "shape place $place_id $shape_id $sx $sy 12 12 0 $red $green $blue 1.0\n"
+    append s "text string $text_id $vesselname\n"
+    append s "text place $text_id $text_id 6 $sx $sy 1 1 1 0.8\n"
+    append s [VesselTextPlace $radarname $vessel_id $sx $sy]
+    return "\n$s\n"
+  }
+
+  proc VesselTextPlace { name vessel sx sy } {
+    global radar
+    set s ""
+    set align ""
+    if { $radar($name,vessel,$vessel,x) > 0 } {
+      set align " right"
+      set dx -6
+    } else {
+      set align " left"
+      set dx 6
+    }
+    #if { $radar($name,vessel,$vessel,y) > 0 } {
+    #  append align " bottom"
+    #  set dy -0
+    #} else {
+    #  append align " top"
+    #  set dy 0
+    #}
+    set dy 0
+    append align " middle "
+    #return
+    append s "text align $radar($name,vessel,$vessel,text_id) $align\n"
+    append s "text coor $radar($name,vessel,$vessel,text_id) [expr $sx + $dx] [expr $sy + $dy]\n"
+    return "\n$s\n"
+  }
+
+  # Set new coordinates for a vessel on all radars if existing
+  proc SetVesselCoors { vessel x y } {
+    global radar
+    foreach name $radar(radars) {
+      if {![info exist radar($name,vessel,$vessel,name)]} continue
+      RadarVesselSetUpdateAngle $name $vessel $x $y
+      set radar($name,vessel,$vessel,newx) $x
+      set radar($name,vessel,$vessel,newy) $y
+      if { $radar($name,radius_squared) > [expr $x * $x + $y * $y] } { set display 1 } else { set display 0 }
+      RadarDisplayVessel $name $vessel $display
+    }
+  }
+
+  # Display or not to display vessel on radar
+  proc RadarDisplayVessel { name vessel display } {
+    global radar
+    set s ""
+    if {![info exist radar($name,vessel,$vessel,name)]} continue
+    if { $display == 0 && $radar($name,vessel,$vessel,display) > 0 } {
+      append s "shape place alpha $radar($name,vessel,$vessel,place_id) 0\n"
+      append s "text alpha $radar($name,vessel,$vessel,text_id) 0\n"
+    }
+    set radar($name,vessel,$vessel,display) $display
+    return "\n$s\n"
+  }
+
+  # Update radar checks if a vessel is hit by the ray and should be updated
+  proc UpdateRadar {} {
+    global radar
+    UpdateVessel vostok
+    UpdateVessel bluerib
+    UpdateVessel hjortoe
+    incr radar(frame)
+    set s ""
+    foreach name $radar(radars) {
+      foreach vessel $radar($name,vessels) {
+        if {$radar($name,step) == $radar($name,vessel,$vessel,update)} {
+          append s "shape place alpha $radar($name,vessel,$vessel,place_id) $radar($name,vessel,$vessel,display)\n"
+          append s "shape place move alpha $radar($name,vessel,$vessel,place_id) $radar($name,rayfade) $radar($name,rayspeed)\n"
+          append s "text alpha $radar($name,vessel,$vessel,text_id) $radar($name,vessel,$vessel,display)\n"
+          append s "text move alpha $radar($name,vessel,$vessel,text_id) [expr $radar($name,rayfade) / 2] $radar($name,rayspeed)\n"
+          if { $radar($name,vessel,$vessel,x) != $radar($name,vessel,$vessel,newx) || $radar($name,vessel,$vessel,y) != $radar($name,vessel,$vessel,newy) } {
+            set xy [RadarScreenCoors $name $radar($name,vessel,$vessel,newx) $radar($name,vessel,$vessel,newy)]
+            set sx [lindex $xy 0]
+            set sy [lindex $xy 1]
+            append s "shape place coor $radar($name,vessel,$vessel,place_id) $sx $sy\n"
+            append s [VesselTextPlace $name $vessel $sx $sy]
+            set radar($name,vessel,$vessel,x) $radar($name,vessel,$vessel,newx)
+            set radar($name,vessel,$vessel,y) $radar($name,vessel,$vessel,newy)
+            #RadarVesselSetUpdateAngle $name $vessel $radar($name,vessel,$vessel,newx) $radar($name,vessel,$vessel,newy)
+          }
+        }
+      }
+      if {$radar($name,step) < $radar($name,rayspeed)} {
+        incr radar($name,step)
+      } else {
+        #append s "message Radar $name at zero angle\n"
+        append s "shape place rotation $radar($name,ray_place_id) 0\n"
+        append s "shape place move rotation $radar($name,ray_place_id) $radar($name,deltaangle) $radar($name,rayspeed)\n"
+        set radar($name,step) 0
+      }
+    }
+    return "\n$s\n"
+  }
+
+  proc RadarSetRange { name range } {
+    global radar
+    set s ""
+    set radar($name,range) $range
+    set radar($name,scale_x) [expr 0.93 * $radar($name,width) / $radar($name,range)]
+    set radar($name,scale_y) [expr 0.93 * $radar($name,height) / $radar($name,range)]
+    if { $range < 2000 } {
+      set range_text [format "R=%.0fm" [expr $radar($name,range) / 2.0]]
+    } elseif { $range < 20000 } {
+      set range_text [format "R=%.2fkm" [expr $radar($name,range) / 2000.0]]
+    } else {
+      set range_text [format "R=%.1fkm" [expr $radar($name,range) / 2000.0]]
+    }
+    append s "text string $radar($name,text_id) $range_text\n"
+    set range [expr $range / 2.0]
+    set radar($name,radius_squared) [expr $range * $range]
+    foreach vessel $radar($name,vessels) {
+      if { $radar($name,radius_squared) > [expr $radar($name,vessel,$vessel,newx) * $radar($name,vessel,$vessel,newx) + $radar($name,vessel,$vessel,newy) * $radar($name,vessel,$vessel,newy)] } { set display 1 } else { set display 0 }
+      append s [RadarDisplayVessel $name $vessel $display]
+      set xy [RadarScreenCoors $name $radar($name,vessel,$vessel,newx) $radar($name,vessel,$vessel,newy)]
+      set sx [lindex $xy 0]
+      set sy [lindex $xy 1]
+      append s "shape place coor $radar($name,vessel,$vessel,place_id) $sx $sy\n"
+      append s [VesselTextPlace $name $vessel $sx $sy]
+    }
+    return "\n$s\n"
+  }
+
+  # Creates the radar placing it as shape place id place_id using the shape radar_id,
+  # circle_id and ray_id at x,y with width and height specified.
+  proc CreateRadar {name place_id ray_place_id radar_id circle_id ray_id text_id x y width height} {
+    append s "shape place $place_id $radar_id $x $y $width $height 0.0 0 0 0 1.0\n"
+    global radar
+    append radar(radars) $name
+    set radar($name,vessels) ""
+    set radar($name,rayangle) 0.0
+    set s ""
+    set radar($name,radar_id) $radar_id
+    set radar($name,circle_id) $circle_id
+    set radar($name,ray_id) $ray_id
+    set radar($name,place_id) $place_id
+    set radar($name,ray_place_id) $ray_place_id
+    set radar($name,text_id) $text_id
+    set radar($name,x) $x
+    set radar($name,y) $y
+    set radar($name,width) $width
+    set radar($name,height) $height
+    append s [RadarSetRange $name 1000]
+    append s "text place $radar($name,text_id) $radar($name,text_id) 5 [expr 2+round($radar($name,x) - $radar($name,width)/2)] [expr 2+round($radar($name,y) - $radar($name,height)/2)] 1 1 1\n"
+    append s [CreateRadarCircleShape $circle_id]
+    #
+    #append s "shape add $ray_id\n"
+    append s "shape add $ray_id Radar Ray\n"
+    append s "shape moveto $ray_id 0.0 0.0\n"
+    append s "shape lineto $ray_id 0.5 0.0\n"
+    append s "shape line width $ray_id -2.0\n"
+    append s "shape line cap $ray_id round\n"
+    append s "shape stroke $ray_id\n"
+    #
+    #append s "shape add $radar_id\n"
+    append s "shape add $radar_id Radar\n"
+    append s "shape inshape $radar_id 2\n"
+    append s "shape clip $radar_id\n"
+    append s "shape paint $radar_id\n"
+    append s "shape newpath $radar_id\n"
+    append s "shape scale $radar_id 0.93 0.93\n"
+    append s "shape inshape $radar_id 1\n"
+    append s "shape clip $radar_id\n"
+    append s "shape inshape $radar_id 1\n"
+    append s "shape source pattern $radar_id $circle_id\n"
+    append s "shape paint $radar_id\n"
+    append s "shape moveto $radar_id 0 0.5\n"
+    append s "shape lineto $radar_id 0 0.125\n"
+    append s "shape moveto $radar_id 0 -0.125\n"
+    append s "shape lineto $radar_id 0 -0.5\n"
+
+    append s "shape moveto $radar_id -0.5 0.0\n"
+    append s "shape lineto $radar_id -0.125 0\n"
+    append s "shape moveto $radar_id 0.125 0.0\n"
+    append s "shape lineto $radar_id 0.5 0\n"
+    append s "shape moveto $radar_id -0.02 0.43625\n"
+    append s "shape lineto $radar_id  0.02 0.43625\n"
+    append s "shape moveto $radar_id -0.02 0.31125\n"
+    append s "shape lineto $radar_id  0.02 0.31125\n"
+    append s "shape moveto $radar_id -0.02 0.18625\n"
+    append s "shape lineto $radar_id  0.02 0.18625\n"
+    append s "shape moveto $radar_id -0.02 -0.18625\n"
+    append s "shape lineto $radar_id  0.02 -0.18625\n"
+    append s "shape moveto $radar_id -0.02 -0.31125\n"
+    append s "shape lineto $radar_id  0.02 -0.31125\n"
+    append s "shape moveto $radar_id -0.02 -0.43625\n"
+    append s "shape lineto $radar_id  0.02 -0.43625\n"
+
+    append s "shape moveto $radar_id 0.43625  0.02\n"
+    append s "shape lineto $radar_id 0.43625 -0.02\n"
+    append s "shape moveto $radar_id 0.31125  0.02\n"
+    append s "shape lineto $radar_id 0.31125 -0.02\n"
+    append s "shape moveto $radar_id 0.18625  0.02\n"
+    append s "shape lineto $radar_id 0.18625 -0.02\n"
+    append s "shape moveto $radar_id -0.18625  0.02\n"
+    append s "shape lineto $radar_id -0.18625 -0.02\n"
+    append s "shape moveto $radar_id -0.31125  0.02\n"
+    append s "shape lineto $radar_id -0.31125 -0.02\n"
+    append s "shape moveto $radar_id -0.43625  0.02\n"
+    append s "shape lineto $radar_id -0.43625 -0.02\n"
+    append s "shape source rgba $radar_id 0 1 0 0.4\n"
+    append s "shape line width $radar_id -1\n"
+    append s "shape stroke $radar_id\n"
+    #
+    append s "shape place $place_id $radar_id $x $y $width $height 0.0 0 0 0 1.0\n"
+    append s "shape place $ray_place_id $ray_id $x $y [expr $width * 0.93] [expr $height * 0.93] 0.0 0 0.9 0 1.0\n"
+    return "\n$s\n"
+  }
+
+  # Creates the shape that the radar is using to display phosphorus circles
+  # Shape_id is the shape number used to hold the shape definitions
+  proc CreateRadarCircleShape { shape_id } {
+    set s ""
+    #append s "shape pattern add $shape_id\n"
+    append s "shape pattern add $shape_id Unit Radar Circles\n"
+    append s "shape pattern radial $shape_id 0 0 0.0 0 0 0.5\n"
+
+    append s "shape pattern stoprgb $shape_id 0.000 0 1 0 0.1\n"
+
+    append s "shape pattern stoprgb $shape_id 0.210 0 1 0 0.1\n"
+    append s "shape pattern stoprgb $shape_id 0.240 0 1 0 0.4\n"
+    append s "shape pattern stoprgb $shape_id 0.245 0 1 0 1.0\n"
+    append s "shape pattern stoprgb $shape_id 0.255 0 1 0 1.0\n"
+    append s "shape pattern stoprgb $shape_id 0.260 0 1 0 0.4\n"
+    append s "shape pattern stoprgb $shape_id 0.280 0 1 0 0.1\n"
+
+    append s "shape pattern stoprgb $shape_id 0.460 0 1 0 0.1\n"
+    append s "shape pattern stoprgb $shape_id 0.490 0 1 0 0.4\n"
+    append s "shape pattern stoprgb $shape_id 0.495 0 1 0 1.0\n"
+    append s "shape pattern stoprgb $shape_id 0.505 0 1 0 1.0\n"
+    append s "shape pattern stoprgb $shape_id 0.510 0 1 0 0.4\n"
+    append s "shape pattern stoprgb $shape_id 0.540 0 1 0 0.1\n"
+
+    append s "shape pattern stoprgb $shape_id 0.710 0 1 0 0.1\n"
+    append s "shape pattern stoprgb $shape_id 0.740 0 1 0 0.4\n"
+    append s "shape pattern stoprgb $shape_id 0.745 0 1 0 1.0\n"
+    append s "shape pattern stoprgb $shape_id 0.755 0 1 0 1.0\n"
+    append s "shape pattern stoprgb $shape_id 0.760 0 1 0 0.4\n"
+    append s "shape pattern stoprgb $shape_id 0.780 0 1 0 0.1\n"
+
+    append s "shape pattern stoprgb $shape_id 0.950 0 1 0 0.1\n"
+    append s "shape pattern stoprgb $shape_id 0.980 0 1 0 0.4\n"
+    append s "shape pattern stoprgb $shape_id 0.990 0 1 0 1.0\n"
+    append s "shape pattern stoprgb $shape_id 1.000 0 1 0 1.0\n"
+
+    return "\n$s\n"
+  }
+
+command end
+tcl exec RadarLib.tcl
+tcl eval CreateRadar "Main" 5 12 20 3 19 33 800 288 192 192
+tcl eval SetRadarSpeed Main 72
+tcl eval RadarSetRange Main 2000
+tcl eval RadarAddVessel Main "Vostok" vostok 7 17 35 0 500 1 1 0
+tcl eval RadarAddVessel Main "BlueRIB" bluerib 6 17 36 -250 200 0.5 0.5 1
+tcl eval RadarAddVessel Main "Hjortoe" hjortoe 9 17 37 250 -200 1 0 1
+tcl eval RadarAddVessel Main "Sapphire" sapphire 8 18 34 0 0 1 0 0
+
+
+# Add UpdateRadar to RunAtFrameRate so UpdateRadar is called once for every frame
+command pop RunAtFrameRate
+command push RunAtFrameRate tcl eval UpdateRadar
+command push RunAtFrameRate loop
+

@@ -1,0 +1,155 @@
+# Basic Sapphire Mosaic Settings
+# 9 by 9 feeds in a 960x540 window at 12 fps
+#
+# Copyright by Peter Maersk-Moller 2012-2013 - All rights reserved
+# verbose
+require version 0.4.4
+
+maxplaces images 32
+maxplaces shapeplaces 64
+maxplaces shapes 60
+
+# Define allowed remote host IP addresses. If omitted then only 127.0.0.1 will be accepted.
+system host allow 127.0.0.1 192.168.1.0/24 193.88.237.0/24
+
+# Listen on port 9998 for command control connections
+system control port 9998
+
+# Set system Geometry to WIDTH HEIGHT
+system geometry 960 540 ARGB
+tcl eval set system(width) 960 ; set system(height) 540
+
+# Set system frame rate to N or NN.NN
+system frame rate 24
+tcl eval set system(framerate) 12
+
+# Set output control socket
+system socket /tmp/mosaic1
+
+# Commands to be executed at every me interval
+command create PreShow
+  loop
+command end
+overlay pre PreShow
+
+# Commands to be executed at every me interval, but only if we have a consumer
+command create Show
+  tcl eval UpdateScenes
+  text overlay 11..19
+  loop
+command end
+overlay finish Show
+
+text font 0 Eurostile Normal 10
+text font 1 Eurostile Bold 10
+text font 2 Eurostile Bold 12
+text font 3 Eurostile Bold 14
+text font 4 Eurostile Bold 16
+
+text string 11 Feed #1 - Sputnik
+text string 12 Feed #2 - Sputnik
+text string 13 Feed #3 - Sputnik/Teradek
+text string 14 Feed #4 - Tracking
+text string 15 Feed #5 - Mission Control
+text string 16 Feed #6 - Starboard View
+text string 17 Feed #7 - Vostok Stern
+text string 18 Feed #8 - Alex handheld
+text string 19 Feed #9 - Playback
+
+text place 11 11 3 160 4 1 1 1 1
+text place 12 12 3 480 4 1 1 1 1
+text place 13 13 3 800 4 1 1 1 1
+text place 14 14 3 160 184 1 1 1 1
+text place 15 15 3 480 184 1 1 1 1
+text place 16 16 3 800 184 1 1 1 1
+text place 17 17 3 160 364 1 1 1
+text place 18 18 3 480 364 1 1 1
+text place 19 19 3 800 364 1 1 1
+text align 11 center top
+text align 12 center top
+text align 13 center top
+text align 14 center top
+text align 15 center top
+text align 16 center top
+text align 17 center top
+text align 18 center top
+text align 19 center top
+text backgr 11 5 5 4 4 0 0 0 0.5
+text backgr 12 5 5 4 4 0 0 0 0.5
+text backgr 13 5 5 4 4 0 0 0 0.5
+text backgr 14 5 5 4 4 0 0 0 0.5
+text backgr 15 5 5 4 4 0 0 0 0.5
+text backgr 16 5 5 4 4 0 0 0 0.5
+text backgr 17 5 5 4 4 0 0 0 0.5
+text backgr 18 5 5 4 4 0 0 0 0.5
+text backgr 19 5 5 4 4 0 0 0 0.5
+
+include slib/feeds.slib
+include slib/basic-shapes.slib
+include slib/clocks.slib
+include slib/scenes.slib
+
+# Create 9 feeds
+tcl eval FeedCreate "Feed #1" 1 320 180 /tmp/feed1-control-pipe
+tcl eval FeedCreate "Feed #2" 2 320 180 /tmp/feed2-control-pipe
+tcl eval FeedCreate "Feed #3" 3 320 180 /tmp/feed3-control-pipe
+tcl eval FeedCreate "Feed #4" 4 352 288 /tmp/feed4-control-pipe
+tcl eval FeedCreate "Feed #5" 5 320 180 /tmp/feed5-control-pipe
+tcl eval FeedCreate "Feed #6" 6 320 180 /tmp/feed6-control-pipe
+tcl eval FeedCreate "Feed #7" 7 320 180 /tmp/feed7-control-pipe
+tcl eval FeedCreate "Feed #8" 8 352 288 /tmp/feed8-control-pipe
+tcl eval FeedCreate "Feed #9" 9 320 180 /tmp/feed9-control-pipe
+tcl eval FeedPAR 4 12 11
+tcl eval FeedPAR 8 12 11
+#tcl eval FeedDeadImage 0 1 frames/CS_TV_720p_background.bgra
+tcl eval FeedDeadImage 1 100 frames/dead-320x180.bgra
+tcl eval FeedDeadImage 2 100 frames/dead-320x180.bgra
+tcl eval FeedDeadImage 3 100 frames/dead-320x180.bgra
+tcl eval FeedDeadImage 4 100 frames/dead-352x288.bgra
+tcl eval FeedDeadImage 5 100 frames/dead-320x180.bgra
+tcl eval FeedDeadImage 6 100 frames/dead-320x180.bgra
+tcl eval FeedDeadImage 7 100 frames/dead-320x180.bgra
+tcl eval FeedDeadImage 8 100 frames/dead-352x288.bgra
+tcl eval FeedDeadImage 9 100 frames/dead-320x180.bgra
+
+# Create a clock
+tcl eval TextClockCreate Counter 1 480 270 4 0.7
+tcl eval TextClockAlpha 1 1
+tcl eval TextClockAddLabel 1 T-
+tcl eval TextClockBackground 1 0 0 0 0.55
+# Show counter (0=counter, 1=localtime)
+tcl eval TextClockLocaltime 1 1
+# Count down
+tcl eval TextClockDir 1 0
+# start clock
+tcl eval TextClockRun 1 1
+
+
+# Scene 0
+tcl eval SceneCreate "Mosaic" 0 0 0 - - 0
+
+# Scene 0
+tcl eval SceneCreate "Mosaic" 1 0 0 - - 0
+tcl eval AddFrame2Scene 1 1   0   0 320 180 30 31 11 12
+tcl eval AddFrame2Scene 1 2 320   0 320 180 32 33 13 14
+tcl eval AddFrame2Scene 1 3 640   0 320 180 34 35 15 16
+tcl eval AddFrame2Scene 1 4   0 180 320 180 36 37 17 18
+tcl eval AddFrame2Scene 1 5 320 180 320 180 38 39 19 20
+tcl eval AddFrame2Scene 1 6 640 180 320 180 40 41 21 22
+tcl eval AddFrame2Scene 1 7   0 360 320 180 42 43 23 24
+tcl eval AddFrame2Scene 1 8 320 360 320 180 44 45 25 26
+tcl eval AddFrame2Scene 1 9 640 360 320 180 46 47 27 28
+tcl eval SetFeed4Frame 1 1 1 1 1
+tcl eval SetFeed4Frame 1 2 2 1 1
+tcl eval SetFeed4Frame 1 3 3 1 1
+tcl eval SetFeed4Frame 1 4 4 1 1
+tcl eval SetFeed4Frame 1 5 5 1 1
+tcl eval SetFeed4Frame 1 6 6 1 1
+tcl eval SetFeed4Frame 1 7 7 1 1
+tcl eval SetFeed4Frame 1 8 8 1 1
+tcl eval SetFeed4Frame 1 9 9 1 1
+tcl eval AddOverlayText2Scene 1 2 3 1
+tcl eval AddTextClock2Scene 1 1 1
+tcl eval SetTextClock4Scene 1 1 820 450
+
+tcl eval SceneSetState 1 1

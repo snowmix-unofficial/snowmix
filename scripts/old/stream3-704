@@ -1,0 +1,8 @@
+#!/bin/bash
+
+# Start stream #3 from axis3 (Hjortoe HH)
+rm -f /tmp/axis3.*
+
+# Build a pipeline for receiving data from axis3:
+gst-launch-0.10 -v udpsrc port=4448 caps="application/x-rtp, media=(string)video, payload=(int)96, clock-rate=(int)90000, encoding-name=(string)MP4V-ES, profile-level-id=(string)245, config=(string)000001B0F5000001B50900000100000001200088401928B02240A21F, a-framerate=(string)30.0, a-mpeg4-esid=(string)201, clock-base=(uint)1918588220, seqnum-base=(uint)40098, npt-start=(guint64)0, play-speed=(double)1, play-scale=(double)1" ! rtpmp4vdepay ! mpeg4videoparse ! ffdec_mpeg4 ! ffmpegcolorspace ! videoscale ! 'video/x-raw-yuv,width=704,height=576,format=(fourcc)YUY2' ! tee name=t1 ! shmsink socket-path=/tmp/axis3.master shm-size=10000000 wait-for-connection=0 t1. ! queue leaky=2 ! shmsink socket-path=/tmp/axis3.mosaic shm-size=10000000 wait-for-connection=0
+

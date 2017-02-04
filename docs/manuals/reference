@@ -1,0 +1,84 @@
+#!/bin/sh
+
+MANUAL_NAME="Text"
+MANUAL_DESC="This is the reference manual for Snowmix for the text commands for creating text strings, defining text fonts, placing texts and manipulating placed texts."
+
+
+make_top()
+{
+  echo "Reference manual - $1"
+  echo "========="
+  echo
+  echo "$2. See also:"
+  echo
+  echo "* Reference manual for [general commands](Reference General)."
+  echo "* Reference manual for [command macros](Reference Command)."
+  echo "* Reference manual for [audio feeds](Reference Audio Feeds). Please see the manual page on [Audio](Audio)."
+  echo "* Reference manual for [audio mixers](Reference Audio Mixers). Please see the manual page on [Audio](Audio)."
+  echo "* Reference manual for [audio sinks](Reference Audio Sinks). Please see the manual page on [Audio](Audio)."
+  echo "* Reference manual for [feed commands](Reference Feeds)."
+  echo "* Reference manual for [text commands](Reference Text) commands. Please also see - [Video Text](Video Text) as well the [Snowmix Tutorials](Tutorials) on text."
+  echo "* Reference manual for [image commands](Reference Images]."
+  echo "* Reference manual for [shape commands](Reference Shapes). Please also see the manual page on [Shapes](Shapes)."
+  echo "* Reference manual for [placed shapes](Reference Placed Shapes)."
+  echo "* Reference manual for [Cairo Graphics Primitives](Reference Cairo Graphics) used for [shapes](Reference Shapes]."
+  echo "* Reference manual for [virtual feeds commands](Reference Virtual Feeds)."
+  echo "* Reference list of [Reserved Commands](Reserved Commands)."
+  echo
+}
+
+make_overview()
+{
+  echo "Overview"
+  echo "-----"
+  echo 
+  grep -v '^#' $1 | cut -f1,3 -d: | sed 's/:/ - /g' | sed 's/^/- /'
+  echo 
+  echo 
+}
+
+make_top "$MANUAL_NAME" "$MANUAL_DESC"
+make_overview reftext
+exit
+
+-  shape place - place a shape
+-  shape place alpha - change the alpha value for a placed shape.
+-  shape place coor - change the set of coordinate for a placed shape.
+-  shape place offset - change the offset for a placed shape.
+-  shape place rgb - change the base color for a placed shape.
+-  shape place rotation - change the rotation for a placed shape.
+-  shape place scale - change the scale for a placed shape.
+-  shape place shape - change the shape for a placed shape.
+-  shape place move - animate setting for placed shapes.
+
+
+
+shape place
+-----
+
+**Name**
+
+  shape place - place a shape
+
+**Synopsis**
+
+  shape place &#91;&lt;place id> &#91;&lt;shape id> &lt;x> &lt;y> &lt;scale x> &lt;scale y> &#91;&lt;rotation> &#91;&lt;red> &lt;green> &lt;blue> &#91;&lt;alpha>]]]]]
+
+**Description**
+
+  The **shape place** command, when given without any parameters will list placed shapes. If given with only the *shape id* parameter, the shape identified by the *shape id* parameter will be deleted, if it exists. If the command is given with the parameters *place id*, *shape id*, *x*, *y*, *scale_x* and *scale_y* and optionally the parameters *rotation*, *red*, *green*, *blue*, and *alpha*, assuming valid parameter values a place holder for the placed shape is created and can subsequently be overlayed using the command *shape overlay*.
+
+The parameter *shape id* must reference a shape that has been created with the command *shape add*. Valid values for the coordinate parameters *x* and *y* are defined by Cairo Graphics. The same applies for the scale parameters. Valid value for rotation any value that can be hold in a double. Valid values for *red*, *green* and *blue* as well as alpha are values between 0 and1.
+
+  The default values for rotation is 0. The default value for red, green, blue and alpha is respectively 0, 0, 0 and 1.
+
+
+**Example**
+
+        shape place
+        shape place 3
+        shape place 3 2 100 100 10 12.5 0.0 1.0 1.0 1.0 0.5
+
+The first example list the placed shapes. The second example deletes the placed shape identified by placed id 3. The last example creates a placed shape with place id 3 referencing shape with shape id 2 and place it at 100,100. The shape is scaled to 10x12.5, has 0 rotation and uses white as its background source, if nothing else is set in the shape. The alpha value is set to 0.5 meaning half transparent.
+
+**See also**

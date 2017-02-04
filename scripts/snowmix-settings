@@ -1,0 +1,133 @@
+#!/bin/bash
+#
+# ################### Settings to be changed ####################
+#
+# Settings for Snowmix. IP and port address for running Snowmix
+if [ "X$SNOWMIX_IP" = X ] ; then SNOWMIX_IP=127.0.0.1 ; fi
+if [ "X$SNOWMIX_PORT" = X ] ; then SNOWMIX_PORT=9999 ; fi
+if [ X$audio_sink_id = X ] ; then audio_sink_id=1 ;fi
+GSTREAMER_SETTINGS=$SNOWMIX/scripts/gstreamer-settings
+# ################### Settings to be changed ####################
+
+# Check that gsteramer-settings is set
+if [ X$GSTREAMER_SETTINGS_SET != Xyes ] ; then
+  . $GSTREAMER_SETTINGS
+fi
+system=`uname -s`
+if [ $system = Darwin ] ; then
+  osvariant=darwin
+else
+  if [ -f /etc/os-release ] ; then
+    osvariant=`grep '^ID=' /etc/os-release | cut -f2 -d= | tr 'A-Z' 'a-z'`
+  else
+    if [ $system = FreeBSD ] ; then
+      osvariant=freebsd
+    else
+      osvariant=unknown
+    fi
+  fi
+fi
+case $osvariant in
+  chakra )
+    NC='nc -q 0'
+  ;;
+  debian ) 
+    NC='nc -q 1'
+  ;;
+  fedora | ubuntu | darwin ) 
+    NC='nc'
+  ;;
+  freebsd )
+    NC='nc -N'
+  ;;
+  * )
+    NC='nc'
+  ;;
+esac
+
+echo "Checking for running Snowmix."
+echo | $NC $SNOWMIX_IP $SNOWMIX_PORT 2>/dev/null
+if [ $? -eq 0 ] ; then
+  snowmix=running
+  echo "Snowmix is running."
+else 
+  snowmix=''
+  echo "Snowmix is NOT listening on host $SNOWMIX_IP port $SNOWMIX_PORT"
+  return
+fi
+
+# ################### Settings NOT to be changed ####################
+#snowmix=`netstat -na |grep ':9999 ' |grep LISTEN |cut -c1-3`
+tmpfile=/tmp/snowmix-settings.$$
+
+frameratefraction()
+{
+  echo $1 | awk '{ rate=$1 ;
+         factor=1;
+         intrate=int(rate);
+         while (factor*rate > intrate) {
+           factor = factor * 10;
+           intrate = int(rate*factor);
+         }
+         printf("%d/%d\n",intrate,factor);
+       }'
+}
+
+
+# If audio_feed_id is set, then we collect info
+if [ X$audio_feed_id != X ] ; then
+  feed_rate=`echo audio feed rate | $NC $SNOWMIX_IP $SNOWMIX_PORT | grep 'STAT: audio feed '$audio_feed_id' ' | cut -f6 -d' '`
+  feed_channels=`echo audio feed channels | $NC $SNOWMIX_IP $SNOWMIX_PORT | grep 'STAT: audio feed '$audio_feed_id' ' | cut -f6 -d' '`
+fi
+
+# If audio_sink_id is set, then we collect info
+if [ X$audio_sink_id != X ] ; then
+  rate=`echo audio sink rate | $NC $SNOWMIX_IP $SNOWMIX_PORT | grep 'STAT: audio sink '$audio_sink_id' ' | cut -f6 -d' '`
+  channels=`echo audio sink channels | $NC $SNOWMIX_IP $SNOWMIX_PORT | grep 'STAT: audio sink '$audio_sink_id' ' | cut -f6 -d' '`
+fi
+
+# if feed_id is set, we collect feed info
+if [ X$feed_id != X ] ; then
+  get_feed_socket()
+  {
+    awk 'BEGIN { feed=-1; socket="" }
+	/^STAT\: Feed ID / { feed=$4; }
+	/^STAT\:   Socket\: / { if (feed == feed_id) socket=$3; }
+	END { printf("%s\n", socket) }
+	' feed_id=$1 <$2
+  }
+  get_feed_width()
+  {
+    awk 'BEGIN { feed=-1; width="" }
+	/^STAT\: Feed ID / { feed=$4; }
+	/^STAT\:   Geometry\: / { if (feed == feed_id) width=$3; }
+	END { printf("%s\n", width) }
+	' feed_id=$1 <$2
+  }
+  get_feed_height()
+  {
+    awk 'BEGIN { feed=-1; height="" }
+	/^STAT\: Feed ID / { feed=$4; }
+	/^STAT\:   Geometry\: / { if (feed == feed_id) height=$4; }
+	END { printf("%s\n", height) }
+	' feed_id=$1 <$2
+  }
+  echo feed list verbose | $NC $SNOWMIX_IP $SNOWMIX_PORT >$tmpfile
+  feed_control_pipe=`get_feed_socket $feed_id $tmpfile`
+  feed_width=`get_feed_width $feed_id $tmpfile`
+  feed_height=`get_feed_height $feed_id $tmpfile`
+  rm $tmpfile
+fi
+
+echo 'system info' | $NC $SNOWMIX_IP $SNOWMIX_PORT  >$tmpfile
+geometry=`grep 'STAT:  System geometry' $tmpfile |cut -f3 -d: |cut -f2 -d' '|tr 'x' ' '`
+framerate=`grep 'STAT:  Frame rate' $tmpfile |cut -f3 -d: |cut -f2 -d' '`
+ctrsocket=`grep 'STAT:  Output ctr sock name' $tmpfile |cut -f3 -d: |cut -f2 -d' '`
+system_width=`echo $geometry |cut -f1 -d' '`
+system_height=`echo $geometry |cut -f2 -d' '`
+ratefraction=`frameratefraction $framerate`
+rm $tmpfile
+
+AUDIOFORMAT=$AUDIO', '$afid' endianness=1234,signed=true,width=16,depth=16,rate='$rate',channels='$channels
+AUDIOFORMAT=$AUDIOS16LE',rate='$rate',channels='$channels
+#VIDEOFORMAT=$VIDEOBGRA', width=(int)'$feed_width', height=(int)'$feed_height', framerate=(fraction)'$ratefraction

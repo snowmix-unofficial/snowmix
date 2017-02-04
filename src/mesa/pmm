@@ -1,0 +1,39 @@
+gcc -c slider.c -o slider.o `pkg-config --cflags gtk+-3.0 gtkglext-1.0 gtkglext-x11-1.0`
+slider.c: In function ‘update’:
+slider.c:66:43: error: ‘GtkWidget’ has no member named ‘window’
+slider.c:66:66: error: ‘GtkWidget’ has no member named ‘allocation’
+slider.c:67:43: error: ‘GtkWidget’ has no member named ‘window’
+slider.c: In function ‘build_translation_control’:
+slider.c:238:3: warning: ‘gtk_hbox_new’ is deprecated (declared at /usr/include/gtk-3.0/gtk/deprecated/gtkhbox.h:62): Use 'gtk_box_new' instead [-Wdeprecated-declarations]
+slider.c: In function ‘build_rotation_control’:
+slider.c:294:3: warning: ‘gtk_hbox_new’ is deprecated (declared at /usr/include/gtk-3.0/gtk/deprecated/gtkhbox.h:62): Use 'gtk_box_new' instead [-Wdeprecated-declarations]
+slider.c: In function ‘build_control’:
+slider.c:349:3: warning: ‘gtk_vbox_new’ is deprecated (declared at /usr/include/gtk-3.0/gtk/deprecated/gtkvbox.h:60): Use 'gtk_box_new' instead [-Wdeprecated-declarations]
+slider.c: In function ‘realize’:
+slider.c:387:3: error: unknown type name ‘GdkGLContext’
+slider.c:388:3: error: unknown type name ‘GdkGLDrawable’
+slider.c:391:14: warning: assignment makes pointer from integer without a cast [enabled by default]
+slider.c:392:15: warning: assignment makes pointer from integer without a cast [enabled by default]
+slider.c: In function ‘configure’:
+slider.c:419:3: error: unknown type name ‘GdkGLContext’
+slider.c:420:3: error: unknown type name ‘GdkGLDrawable’
+slider.c:425:14: warning: assignment makes pointer from integer without a cast [enabled by default]
+slider.c:426:15: warning: assignment makes pointer from integer without a cast [enabled by default]
+slider.c:427:17: error: ‘GtkWidget’ has no member named ‘allocation’
+slider.c:428:18: error: ‘GtkWidget’ has no member named ‘allocation’
+slider.c: In function ‘expose’:
+slider.c:456:3: error: unknown type name ‘GdkGLContext’
+slider.c:457:3: error: unknown type name ‘GdkGLDrawable’
+slider.c:461:14: warning: assignment makes pointer from integer without a cast [enabled by default]
+slider.c:462:15: warning: assignment makes pointer from integer without a cast [enabled by default]
+slider.c: In function ‘main’:
+slider.c:491:3: error: unknown type name ‘GdkGLConfig’
+slider.c:499:42: error: ‘GDK_GL_MODE_RGB’ undeclared (first use in this function)
+slider.c:499:42: note: each undeclared identifier is reported only once for each function it appears in
+slider.c:499:60: error: ‘GDK_GL_MODE_ALPHA’ undeclared (first use in this function)
+slider.c:499:80: error: ‘GDK_GL_MODE_DEPTH’ undeclared (first use in this function)
+slider.c:499:100: error: ‘GDK_GL_MODE_DOUBLE’ undeclared (first use in this function)
+slider.c:515:3: warning: ‘gtk_vbox_new’ is deprecated (declared at /usr/include/gtk-3.0/gtk/deprecated/gtkvbox.h:60): Use 'gtk_box_new' instead [-Wdeprecated-declarations]
+slider.c:558:86: error: ‘GDK_GL_RGBA_TYPE’ undeclared (first use in this function)
+slider.c:569:37: error: ‘GtkWidget’ has no member named ‘window’
+make: *** [slider.o] Error 1

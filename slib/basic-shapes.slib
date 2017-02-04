@@ -1,0 +1,106 @@
+# Basic Shape Settings
+# Copyright by Peter Maersk-Moller 2012-2013 - All rights reserved
+# shape require at least version 0.4.1
+require version 0.5.1
+
+maxplaces shape patterns 32
+
+# Basic patterns
+# None so far.
+
+# Basic shapes. Shapes covering one pixel is suggested to be named 'Unit Something'
+
+# Basic shape : Circle
+shape add 1 Unit Circle
+shape arc_cw 1 0 0 0.5 0 2PI
+
+# Basic shape : Rectangle
+shape add 2 Unit Rectangle
+shape rectangle 2 -0.5 -0.5 1 1
+
+# Basic shape : Diamond
+shape add 3 Unit Diamond
+shape moveto 3 0.5 0
+shape linerel 3 -0.5 0.5
+shape linerel 3 -0.5 -0.5
+shape linerel 3 0.5 -0.5
+shape linerel 3 0.5 0.5
+
+shape add 4 Unit Square
+shape moverel 4 -0.5 -0.5
+shape linerel 4 1.0 0.0
+shape linerel 4 0.0 1.0
+shape linerel 4 -1.0 0.0
+#shape closepath 4
+
+#shape add 5 Unit Triangle
+#shape moveto 5 -0.5 0.5
+#shape lineto 5 0.5 0.5
+#shape lineto 5 0.0 -0.5
+#shape lineto 5 -0.5 0.5
+#shape add 5
+shape add 5 Unit Triangle
+shape moverel 5 -0.5 0.5
+shape linerel 5 1.0 0.0
+shape linerel 5 -0.5 -1.0
+shape linerel 5 -0.5 1.0
+
+shape add 6 Unit Star-4
+shape moveto 6 0.5 0
+shape arc_cw 6  0.5 -0.5 0.5 PI/2 PI
+shape arc_cw 6 -0.5 -0.5 0.5 0 PI/2
+shape arc_cw 6 -0.5  0.5 0.5 -1PI/2 0
+shape arc_cw 6  0.5  0.5 0.5 -1PI -1PI/2
+
+shape add 7 Unit Square Round
+shape moverel 7 0.5 0.0
+shape linerel 7 0.0 -0.45
+#shape arcrel_ccw 7 -0.05 0.0 0.05 0 -1PI/2
+shape curverel 7 0.0 0.00 0.00 -0.05 -0.03 -0.05
+shape linerel 7 -0.94 0.0
+#shape linerel 7 -0.9 0.0
+#shape arcrel_ccw 7 0.0 0.05 0.05 -1PI/2 -1PI
+shape curverel 7 0.0 0.0 -0.03 0.0 -0.03 0.05
+shape linerel 7 0.0 0.9
+shape curverel 7 0.0 0.00 0.00 0.05 0.03 0.05
+shape linerel 7 0.94 0.0
+#shape arcrel_ccw 7 0.05 0.0 0.05 1PI 1PI/2
+#shape linerel 7 0.9 0.0
+shape curverel 7 0.0 0.0 0.03 0.0 0.03 -0.05
+#shape arcrel_ccw 7 0.0 -0.05 0.05 1PI/2 0
+shape linerel 7 0.0 -0.45
+
+shape add 8 Unit Round Line
+shape moverel 8 -0.5 0
+shape linerel 8 1.0 0
+shape line cap 8 round
+
+shape add 9 Unit Freehand
+shape moveto 9 0.0 0.0
+shape linerel 9 1.0 0.0
+shape linerel 9 0.0 1.0
+shape linerel 9 -1.0 0.0
+shape linerel 9 0.0 -1.0
+
+shape add 11 Unit Loading
+shape newpath 11
+shape moveto 11 1 0
+shape scale 11 0.5 0.5
+shape inshape 11 8
+shape scale 11 2 2
+shape source alphaadd 11 -0.09
+shape source rgba 11 0 0 0 1
+shape fill 11
+shape moveto 11 0 0
+shape rotation 11 1PI/6
+shape inshape 11 11
+
+shape add 12 Unit Loading symbol
+shape newpath 12
+shape moveto 12 0 0
+shape scale 12 0.2 0.2
+shape line width 12 0.3
+shape recursion 12 14
+shape inshape 12 11
+
+message basic-shapes.slib : Library loaded.

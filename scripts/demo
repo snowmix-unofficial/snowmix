@@ -1,0 +1,321 @@
+#!/bin/bash
+
+# Check for SNOWMIX variable and the snowmix and gstreamer settings
+if [ "X$SNOWMIX" = X -o ! -d $SNOWMIX ] ; then
+  echo "You need to se the environment variable SNOWMIX to the base of the Snowmix directory"
+  exit 1
+fi
+if [ "X$SNOWMIX_PORT" = X ] ; then export SNOWMIX_PORT=9999 ;fi
+if [ "X$SNOWMIX_IP" = X ] ; then export SNOWMIX_IP=127.0.0.1 ;fi
+
+
+system=`uname -s`
+if [ $system != Linux ] ; then
+  if [ $system = Darwin ] ; then
+    echo 'Experimental Darwin mode'
+  else
+    if [ $system = FreeBSD ] ; then
+      echo 'Experimental FreeBSD mode'
+      term=konsole
+    else
+      echo This demo script has been tailored for Linux system only
+      echo To use this demo, you will need to edit the demo file for your system
+      exit 1
+    fi
+  fi
+else
+  terminals='xfce4-terminal gnome-terminal lxterminal lxterm xterm'
+  term=''
+  for terminal in $terminals ; do
+    echo "Looking for $terminal."
+    term=`which $terminal` 2>/dev/null
+    if [ X$term = X ] ; then continue ; fi
+    echo "Found $terminal."
+    break
+  done
+  if [ X$term = X ] ; then
+    echo "No terminals found. Exiting."
+    exit 1
+  fi
+fi
+
+check_packages()
+{
+  for pkg in tcl8.6 tk8.6 bwidget ; do
+    echo Checking for package $pkg
+    installed=`dpkg --get-selections $pkg`
+    if [ "X$installed" = X ] ; then
+      if [ "X$pkg" = Xtcl8.6 ] ; then
+        old=$pkg
+        pkg=tcl8.5
+        echo Checking for package $pkg
+        installed=`dpkg --get-selections $pkg`
+        if [ "X$installed" != X ] ; then echo Package $pkg found ; continue ; fi
+        pkg=$old
+      fi
+      if [ "X$pkg" = Xtk8.6 ] ; then
+        old=$pkg
+        pkg=tk8.5
+        echo Checking for package $pkg
+        installed=`dpkg --get-selections $pkg`
+        if [ "X$installed" != X ] ; then echo Package $pkg found ; continue ; fi
+        pkg=$old
+      fi
+      echo "Missing $pkg. You need to install $pkg"
+      echo "You can install $pkg by executing the following command"
+      echo "  sudo apt-get install $pkg"
+      exit 1
+    fi
+  done
+}
+
+get_shm()
+{
+  if [ -d /run/shm -a ! -L /run/shm ] ; then shmdir=/run/shm
+  else
+    if [ -d /dev/shm -a ! -L /dev/shm ] ; then shmdir=/dev/shm
+    else
+      echo 'needs /dev/shm or /run/shm' 1>&2
+    fi
+  fi
+  shm=`df -k |grep $shmdir | awk '{printf("%d\n", $4/1024)}'`
+  if [ X$shm = X ] ; then shm=0 ; fi
+  if [ $shm -lt $1 ] ; then
+    echo 'not enough shared memory. Delete some files in /run/shm/' 1>&2
+    exit 1
+  fi
+  echo $shm
+}
+
+
+inifile=""
+with_audio=0
+with_scene=0
+feed_list=4
+gl_test=0
+select_inifile()
+{
+  echo "	#################################" >/dev/tty
+  echo "	1) basic_feeds & snowaudio" >/dev/tty
+  echo "	2) text_tutorial & snowaudio" >/dev/tty
+  echo "	3) tm65-virtual_feeds & snowaudio" >/dev/tty
+  echo "	4) sapphire-basis & snowaudio & snowscene" >/dev/tty
+  echo "	5) gl_test2 (Needs OpenGL support)" >/dev/tty
+#  echo "	6) shape-test (test shape tab in snowcub. select shape place 4)" >/dev/tty
+  echo -e "	Please select one of the demos (1/2/3/4/5/q) : \c" >/dev/tty
+  read reply
+  case $reply in
+      1) echo basic_feeds
+         inifile=basic_feeds
+         with_audio=1
+         ;;
+      2) echo text_tutorial
+         inifile=text_tutorial
+         with_audio=1
+         ;;
+      3) echo tm65-virtual_feeds
+         inifile=tm65-virtual_feeds
+         with_audio=1
+         ;;
+      4) echo sapphire-basis
+         inifile=sapphire-basis
+         with_audio=1
+         with_scene=1
+         feed_list=1
+         ;;
+      5) echo gl_test2
+         inifile=gl_test2
+         with_audio=0
+         gl_test=1
+         ;;
+      6) echo shape-test
+         inifile=shape-test
+         with_audio=1
+         ;;
+      *) echo "Quitting" >/dev/tty
+         echo quit
+         ;;
+  esac
+}
+
+pid_list=""
+
+if [ $system = Linux ] ; then
+  if [ -f /etc/os-release ] ; then
+    osvariant=`grep '^ID=' /etc/os-release | cut -f2 -d= | tr 'A-Z' 'a-z'`
+  else
+    if [ -f /etc/lsb-release ] ; then
+      osvariant=`grep '^DISTRIB_DESCRIPTION=' /etc/lsb-release | cut -f2 -d= | cut -f1 -d' ' 
+| tr 'A-Z' 'a-z' | sed 's/\"//g'`
+    fi
+  fi
+#/etc/lsb-release:DISTRIB_DESCRIPTION="Linaro 12.11"
+  if [ -f /etc/lsb-release ] ; then
+    lsbvariant=-`grep '^DISTRIB_ID=' /etc/lsb-release | cut -f2 -d= | tr 'A-Z' 'a-z'`
+  fi
+  case $osvariant in
+    ubuntu | linaro | debian )
+      check_packages
+    ;;
+    chakra | arch )
+    ;;
+    *)
+    ;;
+  esac
+  get_shm 20
+fi
+
+select_inifile
+if [ X$inifile = Xquit -o X$inifile = X ] ; then
+  exit
+fi
+echo continuing
+if [ $system = FreeBSD ] ; then
+  with_audio=0
+fi
+
+# cd $SNOWMIX/src
+echo Starting Snowmix
+tty=`tty`
+if [ $system = Linux -o $system = FreeBSD ] ; then
+  # echo "rm /tmp/log" >/tmp/snowmix.$$
+  # echo "snowmix ini/$inifile.ini 2>&1 | tee 1>/tmp/log 2>&1" >>/tmp/snowmix.$$
+  # echo "rm /tmp/snowmix.$$" >>/tmp/snowmix.$$
+#  cat /tmp/snowmix.$$
+  # $term -e "sh /tmp/snowmix.$$" &
+  $term -e "snowmix ini/$inifile.ini" &
+  snowmix_pid=$!
+else
+  if [ $system = Darwin ] ; then
+    # osascript -e 'tell app "Terminal" to do script "snowmix ../ini/'$inifile.sini'"' 
+    osascript -e 'tell app "Terminal" to do script "snowmix ini/'$inifile.ini'"' &
+    snowmix_pid=$!
+  else
+    echo "System <$system> not supported"
+    exit 1
+  fi
+fi
+if [ $gl_test = 1 ] ; then
+  error=1
+  while [ $error != 0 ] ; do
+    sleep 1
+    echo |nc localhost 9999 |grep Snowmix 1>/dev/null 2>&1
+    error=$?
+  done
+  echo 'gl help' |nc localhost 9999 |grep Unknown
+  if [ $? = 0 ] ; then
+    echo "OpenGL not supported. Please see http://snowmix.sourceforge.net/Intro/compileandinstall.html#opengl to include OpenGL support"
+    echo 'quit' | nc localhost 9999
+    exit
+  fi
+fi
+
+
+#if [ X$inifile != Xtext_tutorial -a X$inifile != Xgl_test2 ] ; then
+#  if [ $system != Darwin ] ; then
+#    (
+#      #cd ../tcl
+#      sleep 4
+#      snowcub.tcl $SNOWMIX_IP $SNOWMIX_PORT >/dev/null 2>&1
+#    )&
+#    sleep 3
+#  else
+#    echo "The snowcub.tcl will lock on Mac OS X. Skipping it."
+#  fi
+#fi
+
+sleep 3
+if [ $with_audio = 1 ] ; then app=av_output2screen ; else app=output2screen ; fi
+if [ $system = Linux -o $system = FreeBSD ] ; then
+  echo $term -e $app
+  $term -e $app &
+  pid_list=$!
+else
+  if [ $system = Darwin ] ; then
+    #echo osascript -e 'tell app "Terminal" to do script "cd '$SNOWMIX'/scripts ; ./output2screen"' 
+    echo osascript -e 'tell app "Terminal" to do script "'$app'"' 
+    #osascript -e 'tell app "Terminal" to do script "cd '$SNOWMIX'/scripts ; ./output2screen"' 
+    osascript -e 'tell app "Terminal" to do script "'$app'"' &
+    pid_list=$!
+  else
+    echo System not supported
+    exit 1
+  fi
+fi
+
+if [ $with_scene = 1 ] ; then
+  which snowscene.tcl
+  if [ $? != 0 ] ; then
+    echo "Warning. snowscene.tcl was not installed"
+  else
+    sleep 2
+    (
+      sleep 2
+      snowscene.tcl 127.0.0.1 9999
+    )&
+    sleep 2
+    pid_list="$pid_list $!"
+    echo "pid to kill for snowscene $!"
+  fi
+fi
+
+if [ $with_audio = 1 ] ; then
+  which snowaudio.tcl
+  if [ $? != 0 ] ; then
+    echo "Warning. snowaudio.tcl was not installed"
+  else
+    sleep 2
+    (
+      sleep 2
+      snowaudio.tcl 127.0.0.1 9999
+    )&
+    pid_list="$pid_list $!"
+    echo "pid to kill for snowaudio $!"
+  fi
+fi
+
+sleep 6
+	#for id in 4 1 2 3 ; do
+	#for id in 4 1  ; do
+	for id in $feed_list  ; do
+          if [ $system = Linux ] ; then
+            get_shm 20
+	    #$term -iconic -e sh input2feed $id&
+	    if [ $with_audio = 1 ] ; then
+              #$term -e "sh $SM/scripts/pmm"&
+              $term -e "input2feed $id $id"&
+            else
+              $term -e "input2feed $id"&
+            fi
+	  else
+            if [ $system = Darwin ] ; then
+	      if [ $with_audio = 1 ] ; then
+                #osascript -e 'tell app "Terminal" to do script "cd '$SNOWMIX'/scripts ; ./input2feed '$id' '$id'"' 
+                osascript -e 'tell app "Terminal" to do script "input2feed '$id' '$id'"'  &
+              else
+                #osascript -e 'tell app "Terminal" to do script "cd '$SNOWMIX'/scripts ; ./input2feed '$id'"' 
+                osascript -e 'tell app "Terminal" to do script "input2feed '$id'"'  &
+              fi
+            else
+              echo System not supported
+              exit
+            fi
+          fi
+    pid_list="$pid_list $!"
+	  sleep 5
+	done
+#if [ X$inifile = Xshape-test ] ; then
+#sleep 5
+#  bash saphire_simulation
+#fi
+
+#echo "Pids to kill $pid_list"
+#echo "Snowmix term pid $snowmix_pid"
+#read reply
+#for pid in $pid_list ; do
+#  echo "Killing pid $pid"
+#  kill -9 $pid
+#done
+#echo 'quit' | nc localhost 9999
+#sleep 2
+#kill -9 $snowmix_pid

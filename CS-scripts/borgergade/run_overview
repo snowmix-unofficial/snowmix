@@ -1,0 +1,65 @@
+#!/bin/bash
+pid_dir=/var/run/stream/
+
+
+function get_pidfiles
+{
+  for file in $pid_dir/* ; do
+    echo $file
+  done
+
+}
+
+function get_pids
+{
+  files=`get_pidfiles`
+  for file in $files ; do
+    cat $file
+  done
+}
+
+function stop_program
+{
+  clear
+  files=`get_pidfiles`
+  i=1
+  for file in $files ; do
+    basename=`basename $file | sed -e 's/\.[0-9]*$//g'`
+    echo "$i $basename"
+    i=`expr $i + 1`
+  done
+  echo -e "\nProgram to stop (1....) or back (return) ? \c"
+  read reply
+  if [ X$reply = X ] ; then return ; fi
+}
+
+function get_programs
+{
+  files=`get_pidfiles`
+  for file in $files ; do
+    basename=`basename $file | sed -e 's/\.[0-9]*$//g'`
+    echo $basename
+  done
+}
+while true ; do
+  clear
+  programs=`get_programs | tr '\n' ' '`
+  echo "Programs running : $programs"
+
+  echo -e "\nOptions (S=stop, Q=quit, K=kill) \c"
+  read reply
+  reply=`echo $reply | tr 'A-Z' 'a-z'`
+  if [ X$reply = Xq ] ; then
+    exit
+  fi 
+  if [ X$reply = Xs ] ; then
+    stop_program
+  fi 
+done
+
+get_pidfiles
+echo
+get_pids
+echo
+get_programs
+echo

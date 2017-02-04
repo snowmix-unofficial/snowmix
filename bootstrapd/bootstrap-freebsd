@@ -1,0 +1,30 @@
+#!/bin/bash
+
+# Copyright 2013-2015 - Peter Maersk-Moller
+
+if [ "X$BASH" != X ] ; then 
+  echo="echo -e"
+else
+  echo=echo
+fi
+
+#tools="aclocal awk autoconf libtoolize automake bc head pkg-config"
+packages="automake libtool sdl png libosmesa freeglut pkgconf tcl86 tk86 bwidget gstreamer1 gstreamer1-plugins-core gstreamer1-plugins-good gstreamer1-plugins-bad gstreamer1-plugins-ugly gstreamer1-plugins-x264 gstreamer1-libav"
+
+echo "This is the FreeBSD bootstrap script"
+echo "To generate the configure script and subsequently to make the Makefiles"
+echo "you need the following packages: $packages"
+echo "You also need a C++ compiler environment"
+echo
+$echo "Press return to continue \c"
+read reply
+$echo "Do you want me to check for missing packages and possible install the packages (Y/N)? \c"
+read reply
+if [ X$reply = Xy -o X$reply = XY ] ; then
+  for package in $packages ; do
+    sudo pkg install $package
+  done
+else
+  echo "Skipping package check. You are on your own then."
+fi
+exit 0

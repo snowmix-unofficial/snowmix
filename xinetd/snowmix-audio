@@ -1,0 +1,712 @@
+# Snowmix xinetd configuration
+#
+#	Port	Transport Codec  Format  Rate      Channels
+#	---------------------------------------------------
+#	9100	TCP	  PCM	 SI16    44100     1
+#	9102	TCP	  PCM	 SI16    44100     1
+#	9104	TCP	  PCM	 SI16    44100     1
+#	9106	TCP	  PCM	 SI16    44100     1
+#	9108	TCP	  PCM	 SI16    44100     1
+#	9110	TCP	  PCM	 SI16    44100     1
+#	9112	TCP	  PCM	 SI16    44100     1
+#	9114	TCP	  PCM	 SI16    44100     1
+#	9116	TCP	  PCM	 SI16    44100     1
+#
+#	9200	TCP	  PCM	 SI16    44100     2
+#	9202	TCP	  PCM	 SI16    44100     2
+#	9204	TCP	  PCM	 SI16    44100     2
+#	9206	TCP	  PCM	 SI16    44100     2
+#	9208	TCP	  PCM	 SI16    44100     2
+#	9210	TCP	  PCM	 SI16    44100     2
+#	9212	TCP	  PCM	 SI16    44100     2
+#	9214	TCP	  PCM	 SI16    44100     2
+#	
+#	9100	UDP	  Vorbis RTP     44100     1
+#	9102	UDP	  Vorbis RTP     44100     1
+#	9104	UDP	  Vorbis RTP     44100     1
+#	9106	UDP	  Vorbis RTP     44100     1
+#	9108	UDP	  Vorbis RTP     44100     1
+#	9110	UDP	  Vorbis RTP     44100     1
+#	9112	UDP	  Vorbis RTP     44100     1
+#	9114	UDP	  Vorbis RTP     44100     1
+#	9116	UDP	  Vorbis RTP     44100     1
+#	9118	UDP	  Vorbis RTP     44100     1
+#
+#	9200	UDP	  Vorbis RTP     44100     2
+#	9202	UDP	  Vorbis RTP     44100     2
+#	9204	UDP	  Vorbis RTP     44100     2
+#	9206	UDP	  Vorbis RTP     44100     2
+#	9208	UDP	  Vorbis RTP     44100     2
+#	9210	UDP	  Vorbis RTP     44100     2
+#	9212	UDP	  Vorbis RTP     44100     2
+#	9214	UDP	  Vorbis RTP     44100     2
+#	9216	UDP	  Vorbis RTP     44100     2
+#	9218	UDP	  Vorbis RTP     44100     2
+#
+#	5001	UDP	  Vorbis RTP     24000     1
+#	5002	UDP	  Vorbis RTP     24000     1
+#	5003	UDP	  Vorbis RTP     24000     1
+#	5004	UDP	  Vorbis RTP     24000     1
+#	5005	UDP	  Vorbis RTP     24000     1
+
+service snowmix-audio-feed-1
+{
+	disable		= no
+	type		= UNLISTED
+	id		= snowmix-audio-feed-1-stream
+	socket_type	= stream
+	protocol	= tcp
+	user		= stream
+	wait		= no
+	instances	= 1
+	server		= /home/stream/Projects/Snowmix-0.4.1/xinetd/xinetd-audio-feed
+	#server_args	= port format rate channels
+	server_args	= 9100 si16 44100 1
+	port		= 9100
+	only_from	= 193.88.237.0/24 192.168.10.0/24 127.0.0.1/32 192.168.1.0/24
+}
+service snowmix-audio-feed-2
+{
+	disable		= no
+	type		= UNLISTED
+	id		= snowmix-audio-feed-2-stream
+	socket_type	= stream
+	protocol	= tcp
+	user		= stream
+	wait		= no
+	instances	= 1
+	server		= /home/stream/Projects/Snowmix-0.4.1/xinetd/xinetd-audio-feed
+	server_args	= 9102 si16 44100 1
+	port		= 9102
+	only_from	= 193.88.237.0/24 192.168.10.0/24 127.0.0.1/32 192.168.1.0/24
+}
+service snowmix-audio-feed-3
+{
+	disable		= no
+	type		= UNLISTED
+	id		= snowmix-audio-feed-3-stream
+	socket_type	= stream
+	protocol	= tcp
+	user		= stream
+	wait		= no
+	instances	= 1
+	server		= /home/stream/Projects/Snowmix-0.4.1/xinetd/xinetd-audio-feed
+	server_args	= 9104 si16 44100 1
+	port		= 9104
+	only_from	= 193.88.237.0/24 192.168.10.0/24 127.0.0.1/32 192.168.1.0/24
+}
+
+service snowmix-audio-feed-4
+{
+	disable		= no
+	type		= UNLISTED
+	id		= snowmix-audio-feed-4-stream
+	socket_type	= stream
+	protocol	= tcp
+	user		= stream
+	wait		= no
+	instances	= 1
+	server		= /home/stream/Projects/Snowmix-0.4.1/xinetd/xinetd-audio-feed
+	server_args	= 9106 si16 44100 1
+	port		= 9106
+	only_from	= 193.88.237.0/24 192.168.10.0/24 127.0.0.1/32 192.168.1.0/24
+}
+
+service snowmix-audio-feed-5
+{
+	disable		= no
+	type		= UNLISTED
+	id		= snowmix-audio-feed-5-stream
+	socket_type	= stream
+	protocol	= tcp
+	user		= stream
+	wait		= no
+	instances	= 1
+	server		= /home/stream/Projects/Snowmix-0.4.1/xinetd/xinetd-audio-feed
+	server_args	= 9108 si16 44100 1
+	port		= 9108
+	only_from	= 193.88.237.0/24 192.168.10.0/24 127.0.0.1/32 192.168.1.0/24
+}
+
+service snowmix-audio-feed-6
+{
+	disable		= no
+	type		= UNLISTED
+	id		= snowmix-audio-feed-6-stream
+	socket_type	= stream
+	protocol	= tcp
+	user		= stream
+	wait		= no
+	instances	= 1
+	server		= /home/stream/Projects/Snowmix-0.4.1/xinetd/xinetd-audio-feed
+	server_args	= 9110 si16 44100 1
+	port		= 9110
+	only_from	= 193.88.237.0/24 192.168.10.0/24 127.0.0.1/32 192.168.1.0/24
+}
+
+service snowmix-audio-feed-7
+{
+	disable		= no
+	type		= UNLISTED
+	id		= snowmix-audio-feed-7-stream
+	socket_type	= stream
+	protocol	= tcp
+	user		= stream
+	wait		= no
+	instances	= 1
+	server		= /home/stream/Projects/Snowmix-0.4.1/xinetd/xinetd-audio-feed
+	server_args	= 9112 si16 44100 1
+	port		= 9112
+	only_from	= 193.88.237.0/24 192.168.10.0/24 127.0.0.1/32 192.168.1.0/24
+}
+
+service snowmix-audio-feed-8
+{
+	disable		= no
+	type		= UNLISTED
+	id		= snowmix-audio-feed-8-stream
+	socket_type	= stream
+	protocol	= tcp
+	user		= stream
+	wait		= no
+	instances	= 1
+	server		= /home/stream/Projects/Snowmix-0.4.1/xinetd/xinetd-audio-feed
+	server_args	= 9114 si16 44100 1
+	port		= 9114
+	only_from	= 193.88.237.0/24 192.168.10.0/24 127.0.0.1/32 192.168.1.0/24
+}
+
+service snowmix-audio-feed-9
+{
+	disable		= no
+	type		= UNLISTED
+	id		= snowmix-audio-feed-9-stream
+	socket_type	= stream
+	protocol	= tcp
+	user		= stream
+	wait		= no
+	instances	= 1
+	server		= /home/stream/Projects/Snowmix-0.4.1/xinetd/xinetd-audio-feed
+	server_args	= 9116 si16 44100 1
+	port		= 9116
+	only_from	= 193.88.237.0/24 192.168.10.0/24 127.0.0.1/32 192.168.1.0/24
+}
+
+service snowmix-audio-feed-2-1
+{
+	disable		= no
+	type		= UNLISTED
+	id		= snowmix-audio-feed-2-1-stream
+	socket_type	= stream
+	protocol	= tcp
+	user		= stream
+	wait		= no
+	instances	= 1
+	server		= /home/stream/Projects/Snowmix-0.4.1/xinetd/xinetd-audio-feed
+	#server_args	= port format rate channels
+	server_args	= 9200 si16 44100 2
+	port		= 9200
+	only_from	= 193.88.237.0/24 192.168.10.0/24 127.0.0.1/32 192.168.1.0/24
+}
+service snowmix-audio-feed-2-2
+{
+	disable		= no
+	type		= UNLISTED
+	id		= snowmix-audio-feed-2-2-stream
+	socket_type	= stream
+	protocol	= tcp
+	user		= stream
+	wait		= no
+	instances	= 1
+	server		= /home/stream/Projects/Snowmix-0.4.1/xinetd/xinetd-audio-feed
+	server_args	= 9202 si16 44100 2
+	port		= 9202
+	only_from	= 193.88.237.0/24 192.168.10.0/24 127.0.0.1/32 192.168.1.0/24
+}
+service snowmix-audio-feed-2-3
+{
+	disable		= no
+	type		= UNLISTED
+	id		= snowmix-audio-feed-2-3-stream
+	socket_type	= stream
+	protocol	= tcp
+	user		= stream
+	wait		= no
+	instances	= 1
+	server		= /home/stream/Projects/Snowmix-0.4.1/xinetd/xinetd-audio-feed
+	server_args	= 9204 si16 44100 2
+	port		= 9204
+	only_from	= 193.88.237.0/24 192.168.10.0/24 127.0.0.1/32 192.168.1.0/24
+}
+
+service snowmix-audio-feed-2-4
+{
+	disable		= no
+	type		= UNLISTED
+	id		= snowmix-audio-feed-2-4-stream
+	socket_type	= stream
+	protocol	= tcp
+	user		= stream
+	wait		= no
+	instances	= 1
+	server		= /home/stream/Projects/Snowmix-0.4.1/xinetd/xinetd-audio-feed
+	server_args	= 9206 si16 44100 2
+	port		= 9206
+	only_from	= 193.88.237.0/24 192.168.10.0/24 127.0.0.1/32 192.168.1.0/24
+}
+
+service snowmix-audio-feed-2-5
+{
+	disable		= no
+	type		= UNLISTED
+	id		= snowmix-audio-feed-2-5-stream
+	socket_type	= stream
+	protocol	= tcp
+	user		= stream
+	wait		= no
+	instances	= 1
+	server		= /home/stream/Projects/Snowmix-0.4.1/xinetd/xinetd-audio-feed
+	server_args	= 9208 si16 44100 2
+	port		= 9208
+	only_from	= 193.88.237.0/24 192.168.10.0/24 127.0.0.1/32 192.168.1.0/24
+}
+
+service snowmix-audio-feed-2-6
+{
+	disable		= no
+	type		= UNLISTED
+	id		= snowmix-audio-feed-2-6-stream
+	socket_type	= stream
+	protocol	= tcp
+	user		= stream
+	wait		= no
+	instances	= 1
+	server		= /home/stream/Projects/Snowmix-0.4.1/xinetd/xinetd-audio-feed
+	server_args	= 9210 si16 44100 2
+	port		= 9210
+	only_from	= 193.88.237.0/24 192.168.10.0/24 127.0.0.1/32 192.168.1.0/24
+}
+
+service snowmix-audio-feed-2-7
+{
+	disable		= no
+	type		= UNLISTED
+	id		= snowmix-audio-feed-2-7-stream
+	socket_type	= stream
+	protocol	= tcp
+	user		= stream
+	wait		= no
+	instances	= 1
+	server		= /home/stream/Projects/Snowmix-0.4.1/xinetd/xinetd-audio-feed
+	server_args	= 9212 si16 44100 2
+	port		= 9212
+	only_from	= 193.88.237.0/24 192.168.10.0/24 127.0.0.1/32 192.168.1.0/24
+}
+
+service snowmix-audio-feed-2-8
+{
+	disable		= no
+	type		= UNLISTED
+	id		= snowmix-audio-feed-2-8-stream
+	socket_type	= stream
+	protocol	= tcp
+	user		= stream
+	wait		= no
+	instances	= 1
+	server		= /home/stream/Projects/Snowmix-0.4.1/xinetd/xinetd-audio-feed
+	server_args	= 9214 si16 44100 2
+	port		= 9214
+	only_from	= 193.88.237.0/24 192.168.10.0/24 127.0.0.1/32 192.168.1.0/24
+}
+
+service snowmix-audio-feed-udp-1-1
+{
+	disable		= no
+	type		= UNLISTED
+	id		= snowmix-audio-feed-udp-1-1-stream
+	socket_type	= dgram
+	protocol	= udp
+	user		= stream
+	wait		= yes
+	instances	= 1
+	server		= /home/stream/Projects/Snowmix-0.4.1/xinetd/xinetd-audio-feed
+	#server_args	= port format rate channels
+	server_args	= 9100 vorbis/rtp 44100 1
+	port		= 9100
+	only_from	= 193.88.237.0/24 192.168.10.0/24 127.0.0.1/32 192.168.1.0/24
+}
+
+service snowmix-audio-feed-udp-1-2
+{
+	disable		= no
+	type		= UNLISTED
+	id		= snowmix-audio-feed-udp-1-2-stream
+	socket_type	= dgram
+	protocol	= udp
+	user		= stream
+	wait		= yes
+	instances	= 1
+	server		= /home/stream/Projects/Snowmix-0.4.1/xinetd/xinetd-audio-feed
+	#server_args	= port format rate channels
+	server_args	= 9102 vorbis/rtp 44100 1
+	port		= 9102
+	only_from	= 193.88.237.0/24 192.168.10.0/24 127.0.0.1/32 192.168.1.0/24
+}
+
+service snowmix-audio-feed-udp-1-3
+{
+	disable		= no
+	type		= UNLISTED
+	id		= snowmix-audio-feed-udp-1-2-stream
+	socket_type	= dgram
+	protocol	= udp
+	user		= stream
+	wait		= yes
+	instances	= 1
+	server		= /home/stream/Projects/Snowmix-0.4.1/xinetd/xinetd-audio-feed
+	#server_args	= port format rate channels
+	server_args	= 9104 vorbis/rtp 44100 1
+	port		= 9104
+	only_from	= 193.88.237.0/24 192.168.10.0/24 127.0.0.1/32 192.168.1.0/24
+}
+
+service snowmix-audio-feed-udp-1-4
+{
+	disable		= no
+	type		= UNLISTED
+	id		= snowmix-audio-feed-udp-1-4-stream
+	socket_type	= dgram
+	protocol	= udp
+	user		= stream
+	wait		= yes
+	instances	= 1
+	server		= /home/stream/Projects/Snowmix-0.4.1/xinetd/xinetd-audio-feed
+	#server_args	= port format rate channels
+	server_args	= 9106 vorbis/rtp 44100 1
+	port		= 9106
+	only_from	= 193.88.237.0/24 192.168.10.0/24 127.0.0.1/32 192.168.1.0/24
+}
+
+service snowmix-audio-feed-udp-1-5
+{
+	disable		= no
+	type		= UNLISTED
+	id		= snowmix-audio-feed-udp-1-5-stream
+	socket_type	= dgram
+	protocol	= udp
+	user		= stream
+	wait		= yes
+	instances	= 1
+	server		= /home/stream/Projects/Snowmix-0.4.1/xinetd/xinetd-audio-feed
+	#server_args	= port format rate channels
+	server_args	= 9108 vorbis/rtp 44100 1
+	port		= 9108
+	only_from	= 193.88.237.0/24 192.168.10.0/24 127.0.0.1/32 192.168.1.0/24
+}
+
+service snowmix-audio-feed-udp-1-6
+{
+	disable		= no
+	type		= UNLISTED
+	id		= snowmix-audio-feed-udp-1-6-stream
+	socket_type	= dgram
+	protocol	= udp
+	user		= stream
+	wait		= yes
+	instances	= 1
+	server		= /home/stream/Projects/Snowmix-0.4.1/xinetd/xinetd-audio-feed
+	#server_args	= port format rate channels
+	server_args	= 9110 vorbis/rtp 44100 1
+	port		= 9110
+	only_from	= 193.88.237.0/24 192.168.10.0/24 127.0.0.1/32 192.168.1.0/24
+}
+
+service snowmix-audio-feed-udp-1-7
+{
+	disable		= no
+	type		= UNLISTED
+	id		= snowmix-audio-feed-udp-1-7-stream
+	socket_type	= dgram
+	protocol	= udp
+	user		= stream
+	wait		= yes
+	instances	= 1
+	server		= /home/stream/Projects/Snowmix-0.4.1/xinetd/xinetd-audio-feed
+	#server_args	= port format rate channels
+	server_args	= 9112 vorbis/rtp 44100 1
+	port		= 9112
+	only_from	= 193.88.237.0/24 192.168.10.0/24 127.0.0.1/32 192.168.1.0/24
+}
+
+service snowmix-audio-feed-udp-1-8
+{
+	disable		= no
+	type		= UNLISTED
+	id		= snowmix-audio-feed-udp-1-8-stream
+	socket_type	= dgram
+	protocol	= udp
+	user		= stream
+	wait		= yes
+	instances	= 1
+	server		= /home/stream/Projects/Snowmix-0.4.1/xinetd/xinetd-audio-feed
+	#server_args	= port format rate channels
+	server_args	= 9114 vorbis/rtp 44100 1
+	port		= 9114
+	only_from	= 193.88.237.0/24 192.168.10.0/24 127.0.0.1/32 192.168.1.0/24
+}
+
+service snowmix-audio-feed-udp-1-9
+{
+	disable		= no
+	type		= UNLISTED
+	id		= snowmix-audio-feed-udp-1-9-stream
+	socket_type	= dgram
+	protocol	= udp
+	user		= stream
+	wait		= yes
+	instances	= 1
+	server		= /home/stream/Projects/Snowmix-0.4.1/xinetd/xinetd-audio-feed
+	#server_args	= port format rate channels
+	server_args	= 9116 vorbis/rtp 44100 1
+	port		= 9116
+	only_from	= 193.88.237.0/24 192.168.10.0/24 127.0.0.1/32 192.168.1.0/24
+}
+
+service snowmix-audio-feed-udp-1-10
+{
+	disable		= no
+	type		= UNLISTED
+	id		= snowmix-audio-feed-udp-1-10-stream
+	socket_type	= dgram
+	protocol	= udp
+	user		= stream
+	wait		= yes
+	instances	= 1
+	server		= /home/stream/Projects/Snowmix-0.4.1/xinetd/xinetd-audio-feed
+	#server_args	= port format rate channels
+	server_args	= 9118 vorbis/rtp 44100 1
+	port		= 9118
+	only_from	= 193.88.237.0/24 192.168.10.0/24 127.0.0.1/32 192.168.1.0/24
+}
+
+service snowmix-audio-feed-udp-2-1
+{
+	disable		= no
+	type		= UNLISTED
+	id		= snowmix-audio-feed-udp-2-1-stream
+	socket_type	= dgram
+	protocol	= udp
+	user		= stream
+	wait		= yes
+	instances	= 1
+	server		= /home/stream/Projects/Snowmix-0.4.1/xinetd/xinetd-audio-feed
+	#server_args	= port format rate channels
+	server_args	= 9200 vorbis/rtp 44100 2
+	port		= 9200
+	only_from	= 193.88.237.0/24 192.168.10.0/24 127.0.0.1/32 192.168.1.0/24
+}
+
+service snowmix-audio-feed-udp-2-2
+{
+	disable		= no
+	type		= UNLISTED
+	id		= snowmix-audio-feed-udp-2-2-stream
+	socket_type	= dgram
+	protocol	= udp
+	user		= stream
+	wait		= yes
+	instances	= 1
+	server		= /home/stream/Projects/Snowmix-0.4.1/xinetd/xinetd-audio-feed
+	#server_args	= port format rate channels
+	server_args	= 9202 vorbis/rtp 44100 2
+	port		= 9202
+	only_from	= 193.88.237.0/24 192.168.10.0/24 127.0.0.1/32 192.168.1.0/24
+}
+
+service snowmix-audio-feed-udp-2-3
+{
+	disable		= no
+	type		= UNLISTED
+	id		= snowmix-audio-feed-udp-2-2-stream
+	socket_type	= dgram
+	protocol	= udp
+	user		= stream
+	wait		= yes
+	instances	= 1
+	server		= /home/stream/Projects/Snowmix-0.4.1/xinetd/xinetd-audio-feed
+	#server_args	= port format rate channels
+	server_args	= 9204 vorbis/rtp 44100 2
+	port		= 9204
+	only_from	= 193.88.237.0/24 192.168.10.0/24 127.0.0.1/32 192.168.1.0/24
+}
+
+service snowmix-audio-feed-udp-2-4
+{
+	disable		= no
+	type		= UNLISTED
+	id		= snowmix-audio-feed-udp-2-4-stream
+	socket_type	= dgram
+	protocol	= udp
+	user		= stream
+	wait		= yes
+	instances	= 1
+	server		= /home/stream/Projects/Snowmix-0.4.1/xinetd/xinetd-audio-feed
+	#server_args	= port format rate channels
+	server_args	= 9206 vorbis/rtp 44100 2
+	port		= 9206
+	only_from	= 193.88.237.0/24 192.168.10.0/24 127.0.0.1/32 192.168.1.0/24
+}
+
+service snowmix-audio-feed-udp-2-5
+{
+	disable		= no
+	type		= UNLISTED
+	id		= snowmix-audio-feed-udp-2-5-stream
+	socket_type	= dgram
+	protocol	= udp
+	user		= stream
+	wait		= yes
+	instances	= 1
+	server		= /home/stream/Projects/Snowmix-0.4.1/xinetd/xinetd-audio-feed
+	#server_args	= port format rate channels
+	server_args	= 9208 vorbis/rtp 44100 2
+	port		= 9208
+	only_from	= 193.88.237.0/24 192.168.10.0/24 127.0.0.1/32 192.168.1.0/24
+}
+
+service snowmix-audio-feed-udp-2-6
+{
+	disable		= no
+	type		= UNLISTED
+	id		= snowmix-audio-feed-udp-2-6-stream
+	socket_type	= dgram
+	protocol	= udp
+	user		= stream
+	wait		= yes
+	instances	= 1
+	server		= /home/stream/Projects/Snowmix-0.4.1/xinetd/xinetd-audio-feed
+	#server_args	= port format rate channels
+	server_args	= 9210 vorbis/rtp 44100 2
+	port		= 9210
+	only_from	= 193.88.237.0/24 192.168.10.0/24 127.0.0.1/32 192.168.1.0/24
+}
+
+service snowmix-audio-feed-udp-2-7
+{
+	disable		= no
+	type		= UNLISTED
+	id		= snowmix-audio-feed-udp-2-7-stream
+	socket_type	= dgram
+	protocol	= udp
+	user		= stream
+	wait		= yes
+	instances	= 1
+	server		= /home/stream/Projects/Snowmix-0.4.1/xinetd/xinetd-audio-feed
+	#server_args	= port format rate channels
+	server_args	= 9212 vorbis/rtp 44100 2
+	port		= 9212
+	only_from	= 193.88.237.0/24 192.168.10.0/24 127.0.0.1/32 192.168.1.0/24
+}
+
+service snowmix-audio-feed-udp-2-8
+{
+	disable		= no
+	type		= UNLISTED
+	id		= snowmix-audio-feed-udp-2-8-stream
+	socket_type	= dgram
+	protocol	= udp
+	user		= stream
+	wait		= yes
+	instances	= 1
+	server		= /home/stream/Projects/Snowmix-0.4.1/xinetd/xinetd-audio-feed
+	#server_args	= port format rate channels
+	server_args	= 9214 vorbis/rtp 44100 2
+	port		= 9214
+	only_from	= 193.88.237.0/24 192.168.10.0/24 127.0.0.1/32 192.168.1.0/24
+}
+
+service snowmix-audio-feed-udp-2-9
+{
+	disable		= no
+	type		= UNLISTED
+	id		= snowmix-audio-feed-udp-2-9-stream
+	socket_type	= dgram
+	protocol	= udp
+	user		= stream
+	wait		= yes
+	instances	= 1
+	server		= /home/stream/Projects/Snowmix-0.4.1/xinetd/xinetd-audio-feed
+	#server_args	= port format rate channels
+	server_args	= 9216 vorbis/rtp 44100 2
+	port		= 9216
+	only_from	= 193.88.237.0/24 192.168.10.0/24 127.0.0.1/32 192.168.1.0/24
+}
+
+service snowmix-audio-feed-udp-2-10
+{
+	disable		= no
+	type		= UNLISTED
+	id		= snowmix-audio-feed-udp-2-10-stream
+	socket_type	= dgram
+	protocol	= udp
+	user		= stream
+	wait		= yes
+	instances	= 1
+	server		= /home/stream/Projects/Snowmix-0.4.1/xinetd/xinetd-audio-feed
+	#server_args	= port format rate channels
+	server_args	= 9218 vorbis/rtp 44100 2
+	port		= 9218
+	only_from	= 193.88.237.0/24 192.168.10.0/24 127.0.0.1/32 192.168.1.0/24
+}
+
+service snowmix-audio-feed-udp-intercom-1
+{
+	disable		= no
+	type		= UNLISTED
+	id		= snowmix-audio-feed-udp-intercom-1
+	socket_type	= dgram
+	protocol	= udp
+	user		= stream
+	wait		= yes
+	instances	= 1
+	server		= /home/stream/Projects/Snowmix-0.4.1/xinetd/xinetd-audio-feed
+	#server_args	= port format rate channels
+	server_args	= 5001 intercom 24000 1
+	port		= 5001
+	only_from	= 193.88.237.0/24 192.168.10.0/24 127.0.0.1/32 192.168.1.0/24
+}
+
+service snowmix-audio-feed-udp-intercom-2
+{
+	disable		= no
+	type		= UNLISTED
+	id		= snowmix-audio-feed-udp-intercom-2
+	socket_type	= dgram
+	protocol	= udp
+	user		= stream
+	wait		= yes
+	instances	= 1
+	server		= /home/stream/Projects/Snowmix-0.4.1/xinetd/xinetd-audio-feed
+	#server_args	= port format rate channels
+	server_args	= 5002 intercom 24000 1
+	port		= 5002
+	only_from	= 193.88.237.0/24 192.168.10.0/24 127.0.0.1/32 192.168.1.0/24
+}
+
+service snowmix-audio-feed-udp-intercom-3
+{
+	disable		= no
+	type		= UNLISTED
+	id		= snowmix-audio-feed-udp-intercom-1
+	socket_type	= dgram
+	protocol	= udp
+	user		= stream
+	wait		= yes
+	instances	= 1
+	server		= /home/stream/Projects/Snowmix-0.4.1/xinetd/xinetd-audio-feed
+	#server_args	= port format rate channels
+	server_args	= 5003 intercom 24000 1
+	port		= 5003
+	only_from	= 193.88.237.0/24 192.168.10.0/24 127.0.0.1/32 192.168.1.0/24
+}
+

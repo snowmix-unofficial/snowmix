@@ -1,0 +1,88 @@
+<div class="content">
+
+	<div class="item">
+
+		<h1>Support and Discussion.</h1>
+                <div class="descr">Updated for Snowmix 0.5.1</div>
+
+		<h3>Introduction</h3>
+		<br/>
+
+		<p>Free support is available in the
+		<a href="https://sourceforge.net/p/snowmix/discussion/Snowmix_Support_Forum/">Support Forum</a>. This is also
+		the place where you can dicuss general and specific Snowmix related issues and topics.</p>
+
+		<p>In the support forum you can get help for free for most issues regarding Snowmix
+		and related scripts. However if your issue is strictly related to
+		<a href="http://gstreamer.freedesktop.org/">GStreamer</a>, then please consider
+		sender your question to <a href="http://gstreamer.freedesktop.org/lists/">their mailing list</a>.</p>
+		<div align="right"><a href="">Top</a></div>
+	</div>
+
+	<div class="item">
+		<h3>Posting anonymously.</h3>
+		<br/>
+
+		<p>You can post anonymously in the support forum. However when you do so, please add
+		a call-name or alike so it is easier to reference to. When you post anonymously, the
+		posting has to be cleared by a moderator due to SourceForge rules, before it appear in
+		the forum. This can take hours or sometimes days. So if you want a faster turn-around,
+		create an account on SourceForge and login before posting.</p>
+
+		<div align="right"><a href="">Top</a></div>
+	</div>
+
+	<div class="item">
+		<h3>Attaching files.</h3>
+		<br/>
+
+		<p>If you have problems with a specific setup, it helps if you in your postings list
+		or attach your ini file configuration, scripts and any input and output GStreamer
+		pipelines you are using. Please also indicate your specific version of GStreamer.</p>
+
+		<div align="right"><a href="">Top</a></div>
+	</div>
+
+	<div class="item">
+		<h3>Extraordinary help.</h3>
+		<br/>
+
+		<p>If you on rare occasions get help and assistance from the
+		<a href="http://sourceforge.net/u/pmaersk/">author</a>that goes way
+		beyond tips, tricks and directions and you feel this help has a great value for you
+		and if you can afford it, feel free to donate a thing from this list below:</p>
+
+		<ul>
+			<li>HiDes <a href="http://www.hides.com.tw/product_cg74469_eng.html">UT100C DVB-T Modulater</a> - Tx only</li>
+			<li>RealTek RTL2832 based DVB-T tuner.</li>
+			<li>2GB RAM modules for an old Lenovo Thinkpad T61</li>
+			<li>Raspberry PI camera.</li>
+			<li>Arduino shields, Ethernet etc.</li>
+			<li>Raspberry Pi - 2</li>
+			<li>Logitech C920 Camera.</li>
+			<li>Soldering Iron of good quality.</li>
+			<li>Stocks of unused electronics</li>
+			<li>PayPal donations</li>
+
+		</ul>
+
+		<p>One should also never underestimate the effect and usefulness of
+		a direct offer of bribe, should you need assistance :-)</p>
+
+		<div align="right"><a href="">Top</a></div>
+	</div>
+
+	<div class="item">
+
+		<h3>Paid Support</h3>
+		<br/>
+
+		<p>If you need assistance beyond what the free support forum can reasonably offer,
+		then <a href="[HOME]Intro/faq.html#consultancy">paid consultancy is available</a>
+		within the areas of Snowmix, Streaming, Audio and Video Coding, Network Architecture
+		and more. You can contact the author 
+		<a href="http://sourceforge.net/u/pmaersk/">Peter Maersk-Moller privately here</a>.</p>
+
+		<div align="right"><a href="">Top</a></div>
+	</div>
+</div>

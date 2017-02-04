@@ -1,0 +1,101 @@
+# Basic image Settings
+# Copyright by Peter Maersk-Moller 2013 - All rights reserved
+# verbose
+#require version 0.4.4
+require version 0.5.1
+
+# Functions provided in this Snowmix Library
+# ImageInit {} : Intializes this library and is run automatically
+# ImageList {} : Prints a single line with numbers of defined images
+
+command create libimages.tcl
+
+  # commands : exist id | geometry id | list | shape
+  proc ImageInfo { command args } {
+    # exist <image no>
+    if {[string match exist $command] && [llength $args] > 0} {
+      set id [lindex $args 0]
+      if {![string is integer -strict $id] || $id < 0} { return 0 }
+      set ids [snowmix info image load ids]
+      if {[lsearch $ids $id] < 0} { return 0 }
+      return 1
+    # exist <image no>
+    } elseif {[string match geometry $command] && [llength $args] > 0} {
+      set id [lindex $args 0]
+      if {![string is integer -strict $id] || $id < 0} { return }
+      set geometry [lindex [lindex [snowmix info image load $id] 0] 1]
+      if {[llength $geometry] < 1} { return }
+      return $geometry
+    } elseif {[string match list $command]} {
+      return [snowmix info image load ids]
+    } elseif {[string match shape $command]} {
+      return -1
+    } elseif {[string match buttons $command]} {
+      return
+    } elseif {[string match overlay_proc $command]} {
+      return 
+    }
+    return 0
+  }
+
+  proc ImageInit {} {
+    global image system
+
+    # List of images loaded
+    set image(images) ""
+    # maximum number of images
+    set image(maximages) $system(maxplaces,loaded_images)
+
+    # index list for loaded images
+    set image(index,load) [snowmix info image load format]
+    set i 0
+    foreach key $image(index,load) {
+      set image(index,load,$key) $i
+      incr i
+    }
+
+    # maximum image geometry
+    set image(maxwidth) $system(width)
+    set image(maxheight) $system(height)
+    #set image(maxwidth) [expr round($system(width))]
+    #set image(maxheight) [expr round($system(height))]
+
+    ImageUpdateList
+
+    if {[llength [info proc SceneAddFrameType]]} {
+      SceneAddFrameType image  ImageInfo
+    } else {
+      snowmix message "images.slib : WARNING. Could not add image type to scene frame types"
+    }
+
+    snowmix message "images.slib  : Images initialized."
+    return
+  }
+
+  proc ImageUpdateList {} {
+    global image
+    if {[catch { set image_list [snowmix info image load all] }]} {
+      set image_list ""
+    }
+
+    foreach im $image_list {
+      set id [lindex $im $image(index,load,id)]
+      set geometry [lindex $im $image(index,load,geometry)]
+      set image(width,$id) [lindex $geometry 0]
+      set image(height,$id) [lindex $geometry 1]
+      set image(name,$id) [lindex $im $image(index,load,geometry)]
+    }
+  }
+
+  proc ImagesList {} {
+    global image
+    set ids [snowmix info image load ids]
+    snowmix message "Images $ids\n"
+    return
+  }
+
+  ImageInit
+  snowmix message "images.slib  : Library loaded."
+command end
+
+tcl exec libimages.tcl

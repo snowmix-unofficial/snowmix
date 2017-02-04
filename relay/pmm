@@ -1,0 +1,69 @@
+CAnalyzerRTP::CAnalyzerRTP(const char* name, u_int32_t analyzer_id, u_int32_t verbose) : CAnalyzer(name, id, verbose) {
+	m_verbose		= 0;
+	m_packets		= 0;
+	m_invalid_packets	= 0;
+	m_version		= -1;	// -1 == no packets received
+	m_out_of_seq		= 0;
+	m_last_payload_type	= 0;
+	m_last_seq_no		= 0;
+	m_last_timestamp	= 0;
+	m_last_SSRC		= 0;
+	m_last_CSRC		= 0;
+}
+
+CAnalyzerRTP::~CAnalyzerRTP() {
+}
+
+int CAnalyzerRTP::NewPacket(u_int8_t *packet, u_int32_t packet_len) {
+	if (!packet) return -1;
+
+	if (packet_len < 12) {
+		if (m_verbose > 1) fprintf(stderr, "Invalid RTP len %u for packet %u\n", packet_len, m_packets);
+		m_invalid_packets++;
+		return -2;
+	}
+	m_packets++;
+
+	u_int16_t seq_no = ntohs(*((u_int16_t*) (packet+2)));
+	int version = (0xc0 & (*packet));
+	bool padding = (0x20 & (*packet));
+	bool extension = (0x10 & (*packet));
+	bool csrc_count = (0x0f & (*packet));
+	bool marker = (0x80 & (*(packet+1)));
+	unsigned int payload_type = (0x7f & (*(packet+1)));
+	u_int32_t timestamp = ntohl(*((u_int32_t*) (packet+4)));
+	u_int32_t SSRC = ntohl(*((u_int32_t*) (packet+8)));
+	u_int32_t* p_CSRC = (u_int32_t*) (packet+12);
+
+	if (extension) {
+		
+	}
+	if (padding || marker || csrc_count) {
+	}
+
+	if (m_version < 0) {
+		// This is the first valid packet
+		m_version = version;
+		m_last_payload_type = payload_type;
+		m_last_seq_no = seq_no;
+		m_last_timestamp = timestamp;
+		m_last_SSRC = SSRC;
+		m_last_CSRC = ntohl(*p_CSRC);
+	} else {
+		if (version != m_version) {
+			fprintf(stderr, "RTP version shift from %d to %d\n",
+				m_version, version);
+			m_version = version;
+		}
+		if (m_last_payload_type != payload_type) {
+			fprintf(stderr, "RTP payload shift from %d to %d\n",
+				m_last_payload_type, payload_type);
+			m_last_payload_type = payload_type;
+		}
+	}
+	m_last_timestamp = timestamp;
+	m_last_SSRC = SSRC;
+	m_last_CSRC = *p_CSRC;
+
+	return 0;
+}

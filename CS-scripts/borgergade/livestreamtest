@@ -1,0 +1,50 @@
+#!/bin/sh
+
+LS_USER=raketvenner1
+LS_PASS=Togavinstue2152
+LS_CHANNEL=csstesta
+LS_STREAMID=test-`date +%s`
+LS_BITRATE=446
+LS_AUTOLIVE=true
+LS_AUTOVOD=true
+LS_AUTOPILOT=false
+LS_AUTORECORD=false
+LS_TITLE=Test%20Stream%201
+# Space chars in title are written as %20
+
+HOST="rtmp://publish.livestream.com"
+
+APP="mogulus/$LS_CHANNEL/username=$LS_USER/password=$LS_PASS/isAutoLive=$LS_AUTOLIVE/autoVOD=$LS_AUTOVOD/autoAutopilot=$LS_AUTOPILOT/autoRecord=$LS_AUTORECORD/iphone=true/bitRate=$LS_BITRATE/title=$LS_TITLE/aspectWidth=16/aspectHeight=9/macID=00-1f-3b-bb-df-bb"
+URL="mogulus/$LS_CHANNEL/$LS_CHANNEL-$LS_STREAMID"
+ 
+gst-launch-0.10 -v \
+   audiotestsrc ! 'audio/x-raw-int, rate=(int)44100, channels=(int)2' ! \
+	tee name=audio					!\
+	queue ! faac bitrate=96000			!\
+	'audio/mpeg,mpegversion=4,stream-format=raw'	!\
+        flvmux streamable=true name=flvmux		 \
+	videotestsrc pattern=18				!\
+	'video/x-raw-yuv, framerate=(fraction)25/1, width=(int)512, height=(int)288' ! \
+	tee name=video					!\
+	queue						!\
+	videoscale					!\
+	ffmpegcolorspace				!\
+	x264enc pass=cbr threads=0 bitrate=446 tune=zerolatency ! \
+        flvmux.	flvmux.					!\
+	queue						!\
+	rtmpsink sync=false location="$HOST/${URL}_540 app=$APP" \
+	audio.						!\
+	queue						!\
+	faac bitrate=64000				!\
+	'audio/mpeg,mpegversion=4,stream-format=raw'	!\
+        flvmux streamable=true name=mobile		 \
+	video.						!\
+	queue						!\
+	videoscale					!\
+	ffmpegcolorspace				!\
+	x264enc pass=cbr threads=0 bitrate=160 tune=zerolatency ! \
+        mobile. mobile.					!\
+	queue						!\
+	rtmpsink sync=false location="$HOST/${URL}_190 app=$APP"
+
+

@@ -1,0 +1,97 @@
+#/bin/sh
+
+find_group_process_by_name()
+{
+  ps ajx |grep $1 |grep '/bin/' | awk '{ printf("%s\n", $3);}' | uniq
+}
+
+list_group_by_process_number()
+{
+  if [ $# -eq 1 ] ; then
+    ps j -g $1 |cut -c7-18,58-300
+  fi
+}
+
+list_groups()
+{
+  echo "Video Groups"
+  for groupid in $video_feeds ; do
+    list_group_by_process_number $groupid | awk '{ printf(" - %s\n", $0);}'
+  done
+  echo "-------------------------------------------------------"
+  echo "Audio Groups"
+  for groupid in $audio_feeds ; do
+    list_group_by_process_number $groupid | awk '{ printf(" - %s\n", $0);}'
+  done
+  echo "-------------------------------------------------------"
+  echo "Press return (Q to quit)\c"
+  read reply
+  if [ X$reply = XQ -o X$reply = Xq ] ; then
+    exit
+  fi
+}
+
+list_groups_for_kill()
+{
+  echo 'Groups to kill'
+  for groupid in $video_feeds; do
+    echo "Video group $groupid : \c"
+    ps j -g $groupid | grep 'xinetd-video-feed' | cut -c58-300
+    echo
+  done
+  for groupid in $audio_feeds; do
+    echo "Audio group $groupid : \c"
+    ps j -g $groupid | grep 'xinetd-audio-feed' | cut -c58-300
+    echo
+  done
+  echo "Group to kill ? :\c"
+  read reply
+  if [ X$reply != X ] ; then
+    echo " Killing Group : $reply"
+    kill -- -$reply
+  fi
+  echo "Press return (Q to quit)\c"
+  read reply
+  if [ X$reply = XQ -o X$reply = Xq ] ; then
+    exit
+  fi
+}
+
+while true ; do
+  reset
+  video_feeds=`find_group_process_by_name xinetd-video-feed | tr '\n' ' '`
+  audio_feeds=`find_group_process_by_name xinetd-audio-feed | tr '\n' ' '`
+  echo "Video Feeds Group process : \c"
+  for pid in $video_feeds ; do
+    port=`ps --pid $pid ej |tail -1 |cut -c58-300 |cut -f3 -d' '`
+    echo "$pid ($port), \c"
+  done
+  echo
+  echo "Audio Feeds Group process : \c"
+  for pid in $audio_feeds ; do
+    port=`ps --pid $pid ej |tail -1 |cut -c58-300 |cut -f3 -d' '`
+    echo "$pid ($port), \c"
+  done
+  echo
+  echo "-------------------------------------------------------"
+  echo "Select (L=list, K=kill, Q=quit KV=KillVideo KA=KillAudio) :\c"
+  read reply
+  echo "\n-------------------------------------------------------"
+  if [ X$reply = XQ -o X$reply = Xq ] ; then
+    exit
+  fi
+  if [ X$reply = XL -o X$reply = Xl ] ; then
+    list_groups
+  fi
+  if [ X$reply = XK -o X$reply = Xk ] ; then
+    list_groups_for_kill
+  fi
+  if [ X$reply = XKV -o X$reply = Xkv ] ; then
+    echo 'Killing all xinetd video servers : \c'
+    for pid in $video_feeds ; do
+      kill -- -$pid
+      echo "$pid \c"
+    done
+    echo
+  fi
+done

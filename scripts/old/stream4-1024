@@ -1,0 +1,88 @@
+#!/bin/bash
+
+# Start stream #4 from Logitec C920 (Kommandobro)
+rm -f /tmp/logitech1.*
+
+FORMAT='video/x-raw-rgb,bpp=32,width=1024,height=576,format=(fourcc)ARGB'
+#FORMAT='video/x-raw-yuv,width=1024,height=576,format=(fourcc)YUY2'
+FORMAT2='video/x-raw-rgb, bpp=(int)32, width=(int)1024, height=(int)576, format=(fourcc)ARGB, framerate=(fraction)25/1, depth=(int)32, endianness=(int)4321, red_mask=(int)-16777216, green_mask=(int)16711680, blue_mask=(int)65280, alpha_mask=(int)255'
+MIXERFORMAT='video/x-raw-rgb, bpp=(int)32, depth=(int)32, endianness=(int)4321, red_mask=(int)65280, green_mask=(int)16711680, blue_mask=(int)-16777216, width=(int)1024, height=(int)576, framerate=(fraction)24/1, pixel-aspect-ratio=(fraction)1/1, interlaced=(boolean)false'
+
+MIXERFORMAT='video/x-raw-rgb, bpp=(int)32, depth=(int)32, endianness=(int)4321, red_mask=(int)65280, green_mask=(int)16711680, blue_mask=(int)-16777216, width=(int)1024, height=(int)576, framerate=(fraction)24/1, pixel-aspect-ratio=(fraction)1/1, interlaced=(boolean)false'
+SRC="filesrc location=../test/LES_TDS_launch.mp4 ! decodebin2 "
+SOCK1=/tmp/logitech1.master
+SOCK2=/tmp/logitech1.mosaic
+SHMSIZE='shm-size=10000000'
+SHMOPTION="wait-for-connection=0"
+SHMSINK1="shmsink socket-path=$SOCK1 $SHMSIZE $SHMOPTION"
+SHMSINK2="shmsink socket-path=$SOCK2 $SHMSIZE $SHMOPTION"
+
+
+#	filesrc location=../test/LES_TDS_launch.mp4 ! \
+#	decodebin2 ! \
+#	shmsink socket-path=$SOCK1 shm-size=10000000 wait-for-connection=0 t1. ! \
+while true ; do
+# Build a pipeline for receiving data from Logitech1:
+gst-launch-0.10 -v 			\
+	$SRC			! \
+	ffmpegcolorspace	! \
+	videoscale		! \
+	ffmpegcolorspace	! \
+	$MIXERFORMAT		! \
+	tee name=t1 		! \
+	$SHMSINK1 t1. ! \
+	queue leaky=2 ! \
+	$SHMSINK2
+	sleep 2
+
+done
+
+exit 
+  ffmpegcolorspace !		\
+  $FORMAT2 ! \
+  ffmpegcolorspace !		\
+  xvimagesink
+
+
+
+
+
+# Build a pipeline for receiving data from Logitech1:
+# gst-launch-0.10 -v udpsrc port=4000 caps="application/x-rtp, media=(string)video, clock-rate=(int)90000, encoding-name=(string)H264" ! rtph264depay ! ffdec_h264 ! ffmpegcolorspace ! videoscale ! 'video/x-raw-yuv,width=1024,height=576,format=(fourcc)YUY2' ! tee name=t1 ! shmsink socket-path=/tmp/logitech1.master shm-size=10000000 wait-for-connection=0 t1. ! queue leaky=2 ! shmsink socket-path=/tmp/logitech1.mosaic shm-size=10000000 wait-for-connection=0
+
+:r stream1-704
+
+#!/bin/bash
+
+# Start stream #1 from axis1 (Raket Cam).
+
+MIXERFORMAT='video/x-raw-rgb, bpp=(int)32, depth=(int)32, endianness=(int)4321, red_mask=(int)65280, green_mask=(int)16711680, blue_mask=(int)-16777216, width=(int)704, height=(int)576, framerate=(fraction)24/1, pixel-aspect-ratio=(fraction)1/1, interlaced=(boolean)false'
+SRC='v4l2src device=/dev/video1 '
+SRC="filesrc location=../test/LES_TDS_launch.mp4 ! decodebin2 "
+SOCK1=/tmp/axis1.master
+SOCK2=/tmp/axis1.mosaic
+SHMSIZE='shm-size=10000000'
+SHMOPTION="wait-for-connection=0"
+SHMSINK1="shmsink socket-path=$SOCK1 $SHMSIZE $SHMOPTION"
+SHMSINK2="shmsink socket-path=$SOCK2 $SHMSIZE $SHMOPTION"
+rm -f $SOCK1 $SOCK2
+
+while true
+do
+	# Build a pipeline for sending data to mixer:
+	gst-launch-0.10 -v 		  \
+		$SRC			! \
+		ffmpegcolorspace	! \
+		videoscale		! \
+		ffmpegcolorspace	! \
+		$MIXERFORMAT		! \
+		tee name=t1		! \
+		$SHMSINK1 t1.	 	  \
+		queue leaky=2		! \
+		$SHMSINK2 
+	sleep 2
+done
+exit 0
+
+gst-launch-0.10 -v udpsrc port=4444 caps="application/x-rtp, media=(string)video, payload=(int)96, clock-rate=(int)90000, encoding-name=(string)MP4V-ES, profile-level-id=(string)245, config=(string)000001B0F5000001B50900000100000001200088401928B02240A21F, a-framerate=(string)30.0, a-mpeg4-esid=(string)201, clock-base=(uint)1918588220, seqnum-base=(uint)40098, npt-start=(guint64)0, play-speed=(double)1, play-scale=(double)1" ! rtpmp4vdepay ! mpeg4videoparse ! ffdec_mpeg4 ! ffmpegcolorspace ! videoscale ! 'video/x-raw-yuv,width=704,height=576,format=(fourcc)YUY2' ! tee name=t1 ! shmsink socket-path=/tmp/axis1.master shm-size=10000000 wait-for-connection=0 t1. ! queue leaky=2 ! shmsink socket-path=/tmp/axis1.mosaic shm-size=10000000 wait-for-connection=0
+

@@ -1,0 +1,222 @@
+#!/bin/bash
+
+# Copyright 2013-2015 - Peter Maersk-Moller
+
+if [ "X$BASH" != X ] ; then 
+  echo="echo -e"
+else
+  echo=echo
+fi
+
+# Check for Eurostile font.
+# It is not strictly needed, but without it some examples may misplace text
+eurostile=`find /usr/share/fonts -name "Eurosti.???"`
+if [ X"$eurostile" != X ] ; then
+  echo Found Eurostile font. Good
+else
+  echo "Eurostile font was not found in /usr/share/fonts."
+  echo " It is not strictly needed, but without it the Snowmix demo may misplace texts"
+  echo " So to continue, please install the Eurostile font. To do that, you will need"
+  echo " to copy the file fonts/Eurosti.ttf to /usr/share/fonts/truetype/ as root."
+  echo " You can do that by executing the following command:"
+  echo
+  echo "  sudo cpfonts/Eurosti.ttf to /usr/share/fonts/truetype/"
+  echo
+  $echo " Do you want to execute the command to install Eurostile (Y/N) ?\c"
+  read reply
+  if [ "$reply" = Y -o "$reply" = y ] ; then
+    echo "sudo cp fonts/Eurosti.ttf /usr/share/fonts/truetype/"
+    sudo cp fonts/Eurosti.ttf /usr/share/fonts/truetype/
+  else
+    echo "Please install Eurostile font your self."
+  fi
+  echo Please run the script bootstrap again
+  exit 1
+fi
+echo
+
+GST_PACKAGES="gstreamer1.0-tools gstreamer1.0-plugins-base gstreamer1.0-plugins-good gstreamer1.0-plugins-bad gstreamer1.0-plugins-ugly gstreamer1.0-libav"
+# Check for GStreamer 1.0
+which gst-launch-1.0 1>/dev/null 2>&1
+if [ $? != 0 ] ; then
+  $echo "GStreamer 1.0 is not installed. Do you wish to install it (Y/N)? \c"
+  read reply
+  if [ "$reply" = Y -o "$reply" = y ] ; then
+    echo "Will install : $GST_PACKAGES"
+    $echo "Press return to install \c"
+    read reply
+    echo "sudo apt-get install $GST_PACKAGES"
+    sudo apt-get install $GST_PACKAGES
+    echo "Please rerun bootstrap again"
+    exit 1
+  else
+    which gst-launch-0.10 1>/dev/null 2>&1
+    if [ $? != 0 ] ; then
+      echo "Neither gstreamer-1.0 nor gstreamer-0.10 is installed."
+      echo "Although Snowmix can compile without, you may not be able to "
+      echo "input streams to Snowmix or output streams from Snowmix."
+      $echo "Press return to continue \c"
+      read reply
+    else
+      echo "You have gstreamer-0.10. This version is no longer supported"
+      echo "although some examples may work. It is recommended that you"
+      echo "install gstreamer-1.0. Press return to continue. \c"
+      read reply
+    fi
+  fi
+fi
+
+gstlaunch=`which gst-launch-1.0`
+if [ X$gstlaunch != X ] ; then
+  version=`$gstlaunch --version | grep gst-launch | cut -f3 -d' '`
+  major=`echo $version | tr '.' ' ' | cut -f2 -d' '`
+  minor=`echo $version | tr '.' ' ' | cut -f3 -d' '`
+  if [ $major -eq 2 -a $minor -lt 2 ] ; then
+    gstlaunch=`which gst-launch-0.10`
+    if [ X$gstlaunch = X ] ; then
+      echo "Could not find gstreamer 0.10. You need to install gstreamer greater than 1.2.2"
+      echo "or gstreamer 0.10 to continue."
+      exit 1
+    fi
+    echo "Found gstreamer 1.$major.$minor. You need version greater than 1.2.2 to scale "
+    echo "and convert video to BGRA without using too much CPU."
+    echo 'Scripts will use found version 0.10.'
+  fi
+else
+  gstlaunch=`which gst-launch-0.10`
+  if [ X$gstlaunch = X ] ; then
+    echo 'Could not find gstreamer 0.10 or 1.0. You need to install that to input and output to Snowmix.'
+    echo 'Please install gstreamer-tools manually and rerun this script.'
+    exit 1
+  fi
+  echo 'Found gstreamer 0.10. Will use gstreamer 0.10 in the scripts.'
+fi
+$echo 'Press return to continue \c'
+read reply
+
+echo
+
+# Check for required packages
+# GL/glut.h
+# sudo apt-get install freeglut3-dev
+packages_required='build-essential automake autoconf libtool g++ pkg-config libgtk-3-dev gtk+-3.0 libsdl1.2-dev libosmesa6-dev gstreamer1.0-tools libgstreamer1.0-dev'
+
+#packages_required='build-essential automake autoconf libtool g++ pkg-config libsdl1.2-dev libpango1.0-dev libpng12-dev libosmesa6-dev libglew-dev'
+packages_required='build-essential automake autoconf libtool g++ pkg-config libsdl1.2-dev libpango1.0-dev libpng12-dev libosmesa6-dev freeglut3-dev'
+install_pkg=""
+which dpkg 1>/dev/null 2>/dev/null
+if [ X$? != X0 ] ; then
+  echo "dpkg was not found. Without it required packages can not be verified to have been installed"
+  exit 1
+fi
+for pkg in $packages_required ; do
+  installed=`dpkg --get-selections $pkg 2>/dev/null`
+  if [ "X$installed" = X ] ; then
+    install_pkg="$install_pkg$pkg "
+    echo "Checking for package $pkg. MISSING !"
+  else 
+    echo "Checking for package $pkg. Installed"
+  fi
+done
+if [ X != "X$install_pkg" ] ; then
+  echo "You are missing the following packages : $install_pkg"
+  echo "You need to install these packages. If you are running Ubuntu"
+  echo "you can execute the following command to install them: "
+  echo
+  echo "  sudo apt-get install $install_pkg"
+  echo
+  $echo "Do you wan to install the missing packages (Y/N) ?\c"
+  read reply
+  if [ "$reply" = Y -o "$reply" = y ] ; then
+    echo sudo apt-get install $install_pkg
+    sudo apt-get install $install_pkg
+    echo Now please rerun the script bootstrap
+  else
+    echo 'You need the listed packages to compile Snowmix. Please install them manually and '
+    echo 'rerun this script or rerun this script and answer yes to have the missing packages installed.'
+  fi
+  exit 1
+fi
+echo
+# Check for Tcl/Tk and BWidget
+system=`uname -s`
+if [ $system = Linux ] ; then
+  for pkg in tcl tk bwidget tcl-dev ; do
+    $echo "Checking for package $pkg : \c"
+    installed=`dpkg --get-selections $pkg 2>/dev/null`
+    if [ "X$installed" != X ] ; then
+      echo "Package $pkg appear to be installed."
+      continue
+    fi
+    echo "Warning. Missing $pkg. You need to install $pkg to run snowcub.tcl"
+    echo "You can install $pkg by executing the following command later or install now"
+    echo "  sudo apt-get install $pkg"
+    $echo "Do you wish to install $pkg now ? (Y/N) \c"
+    read reply
+    if [ "$reply" = Y -o "$reply" = y ] ; then
+      echo "sudo apt-get install $pkg"
+      sudo apt-get install $pkg
+    fi
+  done
+else
+  echo "You will need to have tcl/tk/tcl-dev (8.5 or 8.6) and BWidget to compile and run Snowmix"
+  echo "Please make sure it is installed to compile successfully."
+  $echo "Press return to continue.\c"
+fi
+exit 0
+
+# Check for Tcl/Tk and BWidget
+system=`uname -s`
+if [ $system = Linux ] ; then
+  for pkg in tcl8.6 tk8.6 bwidget tcl8.6-dev ; do
+    $echo "Checking for package $pkg : \c"
+    installed=`dpkg --get-selections $pkg 2>/dev/null`
+    if [ "X$installed" = X ] ; then
+      echo " Not installed."
+      if [ "X$pkg" = Xtcl8.6 ] ; then
+        pkg=tcl8.5
+        $echo "Checking for package $pkg : \c"
+        installed=`dpkg --get-selections $pkg`
+        if [ "X$installed" != X ] ; then
+          echo "installed."
+          continue
+        fi
+        pkg=tcl8.6
+      fi
+      if [ "X$pkg" = Xtk8.6 ] ; then
+        pkg=tk8.5
+        $echo "Checking for package $pkg : \c"
+        installed=`dpkg --get-selections $pkg`
+        if [ "X$installed" != X ] ; then
+          echo "installed."
+          continue
+        fi
+        pkg=tk8.6
+      fi
+      if [ "X$pkg" = Xtcl8.6-dev ] ; then
+        pkg=tcl8.5-dev
+        $echo "Checking for package $pkg : \c"
+        installed=`dpkg --get-selections $pkg`
+        if [ "X$installed" != X ] ; then
+          echo "installed."
+          continue
+        fi
+        pkg=tcl8.6-dev
+      fi
+      echo "Warning. Missing $pkg. You need to install $pkg to run snowcub.tcl"
+      echo "You can install $pkg by executing the following command later or install now"
+      echo "  sudo apt-get install $pkg"
+      $echo "Do you wish to install $pkg now ? (Y/N) \c"
+      read reply
+      if [ "$reply" = Y -o "$reply" = y ] ; then
+        sudo apt-get install $pkg
+      fi
+    else
+      echo "installed."
+    fi
+  done
+else
+  echo "You will need to have tcl8.5/tk8.5 BWidget and tcl8.5-dev to compile and run Snowmix"
+  echo "Please make sure it is installed before you continue"
+fi
+exit 0

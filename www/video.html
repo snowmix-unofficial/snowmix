@@ -1,0 +1,129 @@
+<title>
+</title>
+
+<html>
+
+<script type="text/javascript">
+(function() {
+    var fullScreenApi = {
+            supportsFullScreen: false,
+            isFullScreen: function() { return false; },
+            requestFullScreen: function() {},
+            cancelFullScreen: function() {},
+            fullScreenEventName: '-',
+            prefix: ''
+        },
+        browserPrefixes = 'webkit moz o ms'.split(' ');
+ 
+    // check for native support
+    if (typeof document.cancelFullScreen != 'undefined') {
+        fullScreenApi.supportsFullScreen = true;
+    } else {
+        // check for fullscreen support by vendor prefix
+        for (var i = 0, il = browserPrefixes.length; i < il; i++ ) {
+            fullScreenApi.prefix = browserPrefixes[i];
+            if (typeof document[fullScreenApi.prefix + 'CancelFullScreen' ] != 'undefined' ) {
+                fullScreenApi.supportsFullScreen = true;
+                break;
+            }
+        }
+    }
+
+    // update methods to do something useful
+    if (fullScreenApi.supportsFullScreen) {
+        fullScreenApi.fullScreenEventName = fullScreenApi.prefix + 'fullscreenchange';
+        fullScreenApi.isFullScreen = function() {
+            switch (this.prefix) {
+                case '':
+                    return document.fullScreen;
+                case 'webkit':
+                    return document.webkitIsFullScreen;
+                default:
+                    return document[this.prefix + 'FullScreen'];
+            }
+        }
+        fullScreenApi.requestFullScreen = function(el) {
+            return (this.prefix === '') ? el.requestFullScreen() : el[this.prefix + 'RequestFullScreen']();
+        }
+        fullScreenApi.cancelFullScreen = function(el) {
+            return (this.prefix === '') ? document.cancelFullScreen() : document[this.prefix + 'CancelFullScreen']();
+        }
+    }
+
+    // export api
+    window.fullScreenApi = fullScreenApi;
+})();
+
+var c = document.getElementById('container');
+var p = document.getElementById('preformat');
+var t = document.getElementById('toggle');
+var v = document.getElementById('video');
+
+p.innerHTML = 
+    "Supports Fullscreen: "+fullScreenApi.supportsFullScreen + "<br>" +
+    "Fullscreen Event Name: "+fullScreenApi.fullScreenEventName + "<br>";
+
+function toggle() {
+    if(fullScreenApi.supportsFullScreen) {
+        if(fullScreenApi.isFullScreen()) {
+            fullScreenApi.cancelFullScreen();
+        } else {
+            fullScreenApi.requestFullScreen(c);
+        }
+    } else if (v.webkitSupportsFullscreen) {
+        v.webkitEnterFullscreen();
+    }
+    return false;
+};
+if(!fullScreenApi.supportsFullScreen) { 
+    v.addEventListener("loadedmetadata",function() {
+        try { 
+            var html = p.innerHTML;
+            html += "Legacy webkitSupportsFullscreen support: "+v.webkitSupportsFullscreen.toString();
+            p.innerHTML = html;
+            t.style.display = 'block';
+        } catch(error) {}
+    });
+    t.style.display = 'none';
+}
+</script>
+<style type="text/css">
+    .fullscreen {
+        margin: 0 auto;
+        width: 512px;
+        height: 288px;
+        background: #000;
+    }
+    .fullscreen video { margin: 0; }
+    .fullscreen:-webkit-full-screen { width: 100%; height: 100%; }
+    .fullscreen:-moz-full-screen { width: 100%; height: 100% }
+    .fullscreen:-ie-full-screen { width: 100%; height: 100% }
+    .fullscreen:-o-full-screen { width: 100%; height: 100% }
+    .fullscreen:full-screen { width: 100%; height: 100% }
+</style>
+<body>
+  <table>
+    <tr>
+      <td>
+        <div id="container" class="fullscreen">
+          <video id="video" width="100%" height="100%" controls>
+            <source src="http://193.88.237.22/recordings/mystream.m3u8" type="video/mp4">
+            Your browser does not support the video tag.
+          </video> 
+        </div>
+      </td>
+      <td>
+        <div id="container" class="fullscreen">
+          <video id="video1" width="100%" height="100%" controls>
+            <source src="http://193.88.237.22/recordings/mystream.m3u8" type="video/mp4">
+            Your browser does not support the video tag.
+          </video> 
+        </div>
+      </td>
+    </tr>
+  </table>
+  
+<p style="text-align: center; text-decoration:underline;" id="toggle" onclick="toggle();">toggle fullscreen</p>
+
+</body>
+</html>

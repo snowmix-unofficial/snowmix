@@ -1,0 +1,37 @@
+#!/bin/bash
+
+# Copyright 2013-2015 - Peter Maersk-Moller
+
+if [ "X$BASH" != X ] ; then
+  echo="echo -e"
+else
+  echo=echo
+fi
+
+
+PACKAGES='autoconf automake make libtool gcc gcc-c++ pkg-config libSDL-1_2-0 SDL-devel libpng16 libpng16-devel libcairo2 cairo-devel libpango-1_0-0 pango-devel tcl tk tcllib tcl-devel bwidget libOSMesa-devel libglut3 freeglut-devel'
+GSTPACKAGES='gstreamer gstreamer-utils gstreamer-plugins-base gstreamer-plugins-good gstreamer-plugins-bad gstreamer-plugins-ugly gstreamer-plugins-qt gstreamer-plugins-libav'
+
+echo
+echo "You will neeed the following packages to build Snowmix"
+echo "Packages : $PACKAGES"
+$echo "Do you want to check for packages and install them if they are missing(Y/N)? \c"
+read reply
+if [ "X$reply" = XY -o "X$reply" = Xy ] ; then
+  echo "Checking and installing possibly missing packages. Password may be required."
+  echo sudo zypper install $PACKAGES
+  sudo zypper install $PACKAGES
+fi
+
+echo
+echo "You will need the following GStreamer packages to input and output from Snowmix."
+echo "Packages : $GSTPACKAGES"
+$echo "Do you want to check for and install them if they are missing(Y/N)? \c"
+read reply
+if [ "X$reply" = XY -o "X$reply" = Xy ] ; then
+  echo "Looking for GStreamer"
+  echo sudo zypper install $GSTPACKAGES
+  sudo zypper install $GSTPACKAGES
+fi
+echo "OpenSUSE done"
+

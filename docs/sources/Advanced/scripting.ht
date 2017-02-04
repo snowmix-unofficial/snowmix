@@ -1,0 +1,41 @@
+<div class="content">
+
+	<div class="item">
+
+		<h1>Advanced Scripting</h1>
+		<div class="descr">Updated for Snowmix 0.5.0</div>
+		<br/>
+
+		<h3>Introduction</h3>
+		<br/>
+
+		<p>Snowmix offers both
+		<a href="[HOME]Examples/scripting.html">basic scripting</a>
+		and advanced scripting. This page will over time present how to do advanced scripting
+		and it is recommended that the concepts for basic scripting is well understood
+		before advanced scripting is undertaken.</p>
+		<br/>
+
+		<p>Advanced scripting in Snowmix means taking advantage of the built-in
+                <a href="https://sourceforge.net/p/snowmix/wiki/Tcl%20Interpreter/">Tcl Interpreter</a>.
+		and using it for executing complex command sets possibly depending of a
+		complex set of states. Determining the state, scripts executed by the built-in interpreter
+		may involve queries into internal Snowmix settings.</p>
+		
+	</div>
+
+	<div class="item">
+
+		<h3>Examples</h3>
+		<br/>
+
+		<p>The following examples of scripting is available:</p>
+		<ul>
+			<li>Basic scripting of a <a href="https://sourceforge.net/p/snowmix/wiki/Script%20Example%20Digital%20Counter">Digital Counter</a>.</li>
+			<li>Advanced scripting of <a href="https://sourceforge.net/p/snowmix/wiki/Script%20Example%20Anlogue%20Clock">Analogue Swiss Clock</a>.</li>
+		</ul>
+
+		<p>This page is under development. Please come back later or ask questions in the
+		<a href="https://sourceforge.net/p/snowmix/discussion/Snowmix_Support_Forum/">Discussion Forum</a>.</p>
+	</div>
+</div>

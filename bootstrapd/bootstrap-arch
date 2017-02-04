@@ -1,0 +1,39 @@
+#!/bin/bash
+
+# Copyright 2013-2016 - Peter Maersk-Moller
+
+PACKAGES="openbsd-netcat bc gstreamer gst-plugins-good gst-plugins-bad gst-plugins-ugly gst-libav pkg-config autoconf automake libtool awk gcc tcl tk"
+
+if [ "X$BASH" != X ] ; then
+  echo="echo -e"
+else
+  echo=echo
+fi
+echo "Arch/Chakra Linux bootstrap"
+
+echo "You may be requested to provide your password for the sudo command"
+echo "to install packages, if they are missing. The packages needed are:"
+echo $PACKAGES
+echo
+
+$echo "Do you want to update your pacman database first (recommended)(Y/N)? \c"
+read reply
+if [ "X$reply" = XY -o "X$reply" = Xy ] ; then
+  echo "Updating Pacman database"
+  echo "sudo pacman -Syy"
+  sudo pacman -Syy
+else
+  echo "Ok. Skipping updating database ..."
+fi
+
+$echo "Do you want to check for packages and possible install missing packages (Y/N) ? \c"
+read reply
+if [ "X$reply" = XY -o "X$reply" = Xy ] ; then
+  echo "Installing $PACKAGES."
+  echo "Your may be requested to type your password for sudo"
+  echo sudo pacman --needed -Syu $PACKAGES
+  sudo pacman --needed -Syu $PACKAGES
+else
+  echo "Ok. Skipping installing possibly missing packages."
+  echo
+fi

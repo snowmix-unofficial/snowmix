@@ -1,0 +1,698 @@
+<div class="content">
+
+	<div class="item">
+
+		<h1>Snowmix Glshapes Guide</h1>
+		<div class="descr">Updated for Snowmix 0.5.0</div>
+	</div>
+
+	<div class="item">
+
+		<h3>Introduction.</h3>
+		<br/>
+
+		<p>GL Shapes or glshapes enables use of
+		<a href="http://en.wikipedia.org/wiki/OpenGL">OpenGL</a> in Snowmix for
+		video mixing. With
+		<a href="https://www.opengl.org/">OpenGL</a> Snowmix can create 2D and 3D
+		effects possibly hardware accelerated. Hardware acceleration require the
+		hardware to support OpenGL on the system Snowmix is running. If hardware
+		acceleration is not supported, Snowmix will fall back to Off Screen CPU
+		based rendering for OpenGL support. Glshapes is alpha code in Snowmix version
+		0.5.0.</p>
+
+		<div align="center"><iframe width="640" height="360" src="https://www.youtube.com/embed/hgM-01S4HdY?feature=player_detailpage" frameborder="0" allowfullscreen></iframe></div>
+		<br/>
+		<p>OpenGL 3D example</p>
+		<br/>
+		<h3>Overview</h3>
+
+		<p><ul>
+			<li><a href="#including">Including Glshapes Support</a>.
+			<li><a href="#context">GL Context</a>.
+			<li><a href="#shapes">GL Shapes</a>.
+			<li><a href="#textures">GL Textures</a>.
+			<li><a href="#vectors">GL Vectors</a>.
+			<li><a href="#lights">GL Lights and Materials</a>.
+			<li><a href="#vbos">Vertex Buffer Objects</a>.
+			<li><a href="#vaos">Vertex Array Objects</a>.
+			<li><a href="#placedglshapes">Placed GL Shapes</a>.
+			<li><a href="#copyingback">Copying Back From the GPU</a>.
+			<li><a href="#links">OpenGL Links and Ressources</a>.
+		</ul></p>
+
+                <p>OpenGL has not been tested on the ARMv7 platform. Most implementations
+                with ARMv7 offers OpenGL ES as opposed to regular OpenGL. Quite likely only
+                few changes to Snowmix will be necessary to get Snowmix to work with OpenGL ES,
+                but this is currently untested.</p>
+
+		<div align="right"><a href="">Top</a></div>
+	</div>
+
+	<div class="item">
+
+		<a name="including"><h3>Including Glshapes Support.</h3></a>
+		<br/>
+
+		<p>Because Glshapes is alpha-code in Snowmix version 0.5.0, you need to
+		compile or recompile Snowmix to include support for Glshapes. To do this
+		you will need to execute the following commands:</p>
+
+		<code>$ cd TO_WHERE_THE_SNOWMIX_CODE_TREE_RESIDES
+$ ./bootstrap
+$ ./configure --enable-snowmixosmesa --enable-snowmixx11 --enable-snowmixglu --prefix=/usr/local
+$ make clean
+$ make
+$ sudo make install</code>
+
+		<p>You should now have installed a Snowmix binary that supports Glshapes. To check
+		this, you can start Snowmix and execute the order <i>gl info</i> and see some
+		information on the support of Glshapes. However note that information on OpenGL
+		version etc. is not available until a glshape has been overlayed or to be more
+		precise, not until a OpenGL context has been created.</p>
+		<div align="right"><a href="">Top</a></div>
+	</div>
+
+	<div class="item">
+
+		<a name="context"><h3>GL Context.</h3></a>
+		<br/>
+
+		<p>The GL Context is an OpenGL context within Snowmix enabling OpenGL graphics.
+		Snowmix supports two kind of OpenGL contexts namingly the
+		<a href="http://www.mesa3d.org/osmesa.html">OSMesa</a> and the
+		<a href="http://en.wikipedia.org/wiki/GLX">GLX/X-Windows</a>.
+		The OSMesa context is CPU based. The GLX context is
+		<a href="http://en.wikipedia.org/wiki/Graphics_processing_unit">GPU assisted</a>
+		and requires a local graphic adapter supporting OpenGL. Further more the local
+		machine has to support and run
+		<a href="http://en.wikipedia.org/wiki/X_Window_System">X-Windows</a> as well as
+		allowing Snowmix to open a window within its X-Window session.</p>
+
+		<p>Using a GPU can offer great performance, not only because a GPU can have a
+		very high performance executing otherwise complicated heavy load CPU tasks,
+		but also because it can do so in parallel with the CPU perhaps doing other tasks.
+		However it comes at a cost of not only complexicity and the cost of learning a
+		new skill being OpenGL programming, but it also usually require transferring large
+		amount of data from CPU memory to GPU and back again. While the transfer to the
+		GPU is DMA and queue based, transferring from GPU to CPU memory is currently CPU intensive.</p>
+
+		<p>You select which context you want to use by including the command <i>glshape context</i>
+		in your ini file or be executing it through a control connection. The command should be used
+		before the first glshape is overlayed. The syntax of the command is:</p>
+
+		<code>glshape context [(osmesa|glx|auto)]</code>
+
+		<p>The actual context is created when the first placed glshape is overlayed/executed. When the
+		context is created, the <i>glshape</i> id 1 is executed, if it exist.
+		After the context is created, then for every frame period the first time
+		a placed glshape is overlayed/executed, the <i>glshape</i> id 2 is executed,
+		if it exists.
+
+		<p>In Snowmix version 0.5.0, the OSMesa context is using the Snowmix main mixer frame
+		as its drawing context while the GLX context is using buffers in the GPU. For the OSMesa
+		context this means that whatever you have mixed/drawn in the main mixer frame before
+		overlaying a placed glshape, the context will draw ontop of that. The GLX context
+		is different. Not only will you for that context have to copy data from the main
+		mixer frame to the GPU, which can be done using textures, but you will also have to
+		copy the result back to either the main mixer frame or to a loaded image for later usage.</p>
+
+		<h3>Note to Mac OS X users</h3>
+		<br/>
+
+		<p>For Snowmix version 0.5.0, the OSMesa Context may not work. This may just be a
+		linking issue, but the root cause has not been found yet.</p>
+
+		<div align="right"><a href="">Top</a></div>
+	</div>
+
+	<div class="item">
+
+		<a name="shapes"><h3>GL Shapes.</h3></a>
+		<br/>
+
+		<p>Snowmix allows defintion of glshapes being a list of primarily OpenGL graphic
+		primitives/commands similar to creating list of Cairo Graphics primitives/commands
+		for regular
+		<a href="https://sourceforge.net/p/snowmix/wiki/Reference%20Shapes/">Snowmix Shapes</a>.</p>
+
+		<p> A GL shape is defined by its unique glshape ID. Each glshape needs a glshape
+		place holder defined with the command <i>glshape add</i>. This is shown in the example below:</p>
+
+		<code>glshape add 1 My first glshape</code>
+
+		<p>Here the glshape place holder 1 is defined and given the name 'My first glshape'.
+		After the glshape has been created, it can now be added commands to its list. The
+		commands are primarily OpenGL primtives with only a few exceptions.
+		The commands all have the form:</p>
+
+		<code>glshape COMMAND_NAME &lt;shape id&gt; ......</code>
+
+		<p>Such commands will add the command to end of the glshape command list
+		identified by the <i>shape id</i>. It is important to understand that commands
+		added to a glshape are parsed and added to a glshape command list, but they
+		are not executed at that moment. For the commands in a glshapes command list
+		to be executed, a glshape has to be placed <strong>and</strong> overlayed. Below
+		is an example of creating a glshape command list with commands:</p>
+
+		<code>glshape add 1 My first glshape
+glshape loadidentity 1
+glshape matrixmode 1 projection
+glshape enable 1 blend</code>
+
+		<p>The glshape command list can be inspected using the command</p>
+
+		<code>glshape list &lt;glshape id&gt;</code>
+
+		<p>as shown below:</p>
+
+		<code>gl list 1
+STAT:  shape 1 ops 3 name My first glshape
+STAT:  -  1 loadidentity
+STAT:  -  2 matrixmode projection 
+STAT:  -  3 enable mode blend  
+STAT:</code>
+
+		<p>The command <i>glshape moveentry</i> can be used to move commands within a
+		glshape command list as well as used for deleting a specific command in a
+		glshape command list.</p>
+
+		<p>The command <i>glshape modify</i> can be used to change numbers and setting
+		of some commands in a glshape command list.</p>
+
+		<p>The command <i>glshape entry</i> can be used to set the entry active
+		or inactive or set active for a limited number of frames/references. When an entry
+		is inactive, it will be skipped when the shape is executed.</p>
+
+		<p>If the glshape 1 is later executed, that is if the glshape is placed and overlayed,
+		the following OpenGL C/C++ commands are excuted in whatever context is active at that moment:</p>
+
+		<ul>
+			<li><a href="https://www.opengl.org/sdk/docs/man2/xhtml/glLoadIdentity.xml">glLoadIdentity();</a>
+			<li><a href="(https://www.opengl.org/sdk/docs/man2/xhtml/glMatrixMode.xml">glMatrixMode(GL_PROJECTION);</a>
+			<li><a href="https://www.opengl.org/sdk/docs/man2/xhtml/glEnable.xml">glEnable(GL_BLEND);</a>
+		</ul>
+
+		<p>A glshape definition can later be used as the basis for a placed glshape like a regular
+		<a href="https://sourceforge.net/p/snowmix/wiki/Reference%20Shapes/">shape</a>
+		is used for a
+		<a href="https://sourceforge.net/p/snowmix/wiki/Reference%20Placed%20Shapes/">placed shape</a> in Snowmix.</p>
+
+		<p>Please also see the section
+		<a href="[HOME]Documentation/reserved.html#glshape">GL Shape Commands</a>
+		on the page <a href="[HOME]Documentation/reserved.html">Reserved Commands</a>.</p>
+
+		<h3>Special Shapes</h3>
+		<br/>
+
+		<p>There a few special glshape IDs. These are 0, 1 and 2. Glshape ID 0 is reserved
+		for internal on-the-fly creation use. The glshape ID 1 is executed, if it exists,
+		when the OpenGL Context is created. See the <a href="#context">GL Context</a>
+		section for specifics. The glshape ID 2 is executed, if it exists, once for
+		every frame imidiately before the first glshape is overlayed/executed and
+		only then. The idea for glshape ID 1 is to place commands in that glshape
+		you wish to have executed upon initialization of the context. Such commands
+		could include setting up projection, coordinate system etc. The idea for
+		glshape ID 2 is to place commands in that shape you want to have executed
+		for each frame period such as clearing the drawing buffer before starting
+		drawing with OpenGL primitives.</p>
+
+		<div align="right"><a href="">Top</a></div>
+	</div>
+
+	<div class="item">
+
+		<a name="textures"><h3>GL Textures.</h3></a>
+		<br/>
+
+		<p>Textures for Glshapes in Snowmix are images the shader can use as a surface on 2D and
+		3D objects. Snowmix supports 2D and Cube textures. The source of textures in Snowmix are
+		images, video feed frames and the main mixer frame. Textures are used to move image data
+		from CPU memory into the graphical context or GPU.</p>
+
+		<h3>Defining a texture</h3>
+		<br/>
+
+		<p>To use a texture in Snowmix, a place holder within Snowmix has to be created.
+		This is done using the command <i>glshape texture add</i>. Each texture place holder
+		is identified by its unique texture Id, which is an integer number starting from 0.
+		In the following example, 3 textures are created. First the place holders for the
+		textures are created:</p>
+
+		<code>glshape texture add 1 Texture for Mixer Frame
+glshape texture add 2 Texture for Video Feed #1
+glshape texture add 3 Texture for Loaded Image #5</code>
+
+		<p>The syntax for the command is as follows:</p>
+
+		<code>glshape texture add [&lt;texture id> [&lt;texture name>]]</code>
+
+		<p>The command <i>texture add</i> can not be added to a glshape command list
+		although technically it is possible to workaround this limitation.</p>
+
+		<p>A texture place holder is deleted using the command <i>glshape texture add</i>
+		with <strong>only</strong> the <i>texture id</i> argument.</p>
+
+		<h3>Setting the source for a texture</h3>
+		<br/>
+
+		<p> Before using a texture, the source of the texture must be defined. This is
+		done using the command <i>glshape texture source</i>. In the example below, the
+		source is set for the 3 texture place holder we just defined above:</p>
+
+		<code>glshape texture source 1 frame 0
+glshape texture source 2 feed 1
+glshape texture source 3 image 5</code>
+
+		<p>In this example we defined texture 1 to be sourced by the mixer frame 0
+		(only one exist). We also set texture 2 and 3 to be sourced by <i>feed</i> 1
+		and <i>image</i> 5 respectively. Feed 1 and image 5 <strong>must</strong> exist
+		at this point. The source of a texture can be removed setting the source to
+		none as shown in this example:</p>
+
+		<code>glshape texture source 2 none</code>
+
+		<p>The syntax for the <i>texture source</i> command is as follows:</p>
+
+		<code>glshape texture source [&lt;texture id> (feed &lt;feed id>|frame &lt;frame id>|image &lt;image id>)|none [&lt;id>]]</code>
+
+		<p>There is no simple OpenGL equivalent to the <i>glshape texture source</i> command.
+		The command <i>glshape texture source</i>
+		can not be added to a glshape command list although it is possible to
+		workaround this limitation.</p>
+
+
+		<h3>Binding a texture</h3>
+		<br/>
+
+		<p>The actual moving of image data from CPU memory to the context or GPU is not taking
+		place until a texture is bound. This is done using the command <i>glshape texture bind</i>.
+		The command needs to part of a glshape command list and that glshape has
+		to be placed and overlayed. Below is shown the full syntax for the
+		<i>glshape texture bind</i> command:</p>
+
+		<code>glshape texture bind &lt;glshape id> &lt;texture id> [&lt;min> &lt;mag>] [2d | cube]</code>
+
+
+		<p>When a glshape is executed, meaning it is referenced within a placed
+		glshape and that placed glshape is overlayed, and then it reaches the
+		<i>texture bind</i> command, it will allocate an internal texture in
+		the context, for the GLX context in the GPU. Such a ressource is limited by the
+		amount of RAM available for the context/GPU. After an internal texture has been
+		generated, the image data is loaded to the texture in the context possibly the GPU.
+		The texture bind allocation is equivalent to the the following OpenGl commands:</p>
+
+		<ul>
+			<li><a href="https://www.khronos.org/opengles/sdk/docs/man/xhtml/glGenTextures.xml">glGenTexture();</a>
+			<li><a href="https://www.khronos.org/opengles/sdk/docs/man/xhtml/glBindTexture.xml">glBindTexture();</a>
+			<li><a href="https://www.khronos.org/opengles/sdk/docs/man/xhtml/glTexImage2D.xml">glTexImage2D();</a> or
+			<a href="https://www.opengl.org/sdk/docs/man2/xhtml/gluBuild2DMipmaps.xml">gluBuild2DMipmaps(GL_TEXTURE_2D...);</a>
+			<li><a href="https://www.opengl.org/sdk/docs/man2/xhtml/gluBuild2DMipmaps.xml">glTexParameter(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, min);</a>
+			<li><a href="https://www.opengl.org/sdk/docs/man2/xhtml/gluBuild2DMipmaps.xml">glTexParameter(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, mag);</a>
+		</ul>
+
+		<p>In the following example glshape 1 is set to create a texture, source it, bind
+		it and use it on a four sided polygon, a quad. This glshape can then later be placed
+		and overlayed. When a placed glshape is overlayed, its command list is
+		executed line by line. See the following example with line numbers included for understanding:</p>
+
+		<code>1 :  glshape add 1 This is a list of shape commands
+2  : glshape enable 1 texture_2d           # Enable 2D textures.
+3  : glshape texture bind 1 3 linear nearest  # Bind texture 3 as current texture
+4  : glshape begin 1 quads                 # Begin a 4 point polygon
+5  :  #glshape normal 1 0 0 1              # Setting the normal for the quad, here commented out
+6  :   glshape texcoord 1 0 0              # Using current texture lower left
+7  :   glshape vertex 1 -0.5 -0.5 0        # Setting Lower left corner
+8  :   glshape texcoord 1 1 0              # Using current texture lower right
+9  :   glshape vertex 1 0.5 -0.5 0         # Setting Lower right corner
+10 :   glshape texcoord 1 1 1              # Using current texture upper right
+11 :   glshape vertex 1 0.5 0.5 0          # Setting Upper right corner
+12 :   glshape texcoord 1 0 1              # Using current texture upper left
+13 :   glshape vertex 1 -0.5 0.5 0         # Setting Upper left corner
+14 : glshape end 1                         # Ends the definition of the quad polygon
+15 : glshape disable 1 texture_2d          # Disabling the 2D Texture feature</code>
+
+		<p>The first line defines a glshape place holder with the Id 1 and the
+		name 'This is a list of shape commands'.</p>
+
+		<p>The second line enables the OpenGL feature TEXTURE_2D using
+		<a href="https://www.opengl.org/sdk/docs/man2/xhtml/glEnable.xml">glEnable\(GL_TEXTURE_2D);</a>.</p>
+
+		<p>The third line defines texture 3 to be bound as the current texture. When the shape list
+		is executed, this is the line that will initiate image data to e send from the CPU memory to
+		the context or GPU. See above for the relation between the <i>texture bind</i> command and
+		OpenGL commands.</p>
+
+		<p>In the 4th line a definition of a <i>quad</i> polygons is defined. In this case we
+		only define one, but it could contain definition of more than one. A valid <i>begin</i>
+		definition must later end with an <i>end</i> definition. The command is equivalent to
+		the OpenGL command
+		<a href="https://www.opengl.org/sdk/docs/man2/xhtml/glBegin.xml">glBegin(GL_QUADS)</a>.</p>
+	
+		<p>The 5th line is defining the normal of the quad defined. The normal is a vector usually
+		perpendicular to plane of the quad. In this case, the normal definition is commented out.
+		The command is equivalent to the OpenGL command
+		<a href="https://www.opengl.org/sdk/docs/man2/xhtml/glNormal.xml">glNormal(x,y,z)</a>.</p>
+
+		<p>The next four <i>vertex</i> commands defines the four 3D (x,y,z) coordinates of
+		the quad. Note that the points are defined counter clockwise. The commands are
+		equivalent to
+		<a href="https://www.opengl.org/sdk/docs/man2/xhtml/glVertex.xml">glVertex(x,y,..)</a>.</p>
+
+		<p>Before each <i>vertex</i> command is a <i>texcoord</i> command defining how the
+		texture is intended to be merged onto the quad. Each <i>texcoord</i> commands takes a
+		set of 2d coordinates <i>s</i> and <i>r</i>, where s=0 means the left side of the image
+		and r=0 means the bottom of the image. These values are fraction of the image and must
+		be between 0 and 1. The OpenGL equivalent is
+		<a href="https://www.opengl.org/sdk/docs/man2/xhtml/glTexCoord.xml">glTexCoord(s,r,..)</a>.</p>
+
+		<p>In the 14th line we have the corresponding <i>end</i> command to the previous <i>begin</i>
+		command. The OpenGL equivalent is
+		<a href="https://www.opengl.org/sdk/docs/man2/xhtml/glBegin.xml">glEnd()</a>.</p>
+
+		<p>Finally the command list ends by disabling the feature TEXTURE_2D. The OpenGL equivalent is
+		<a href="https://www.opengl.org/sdk/docs/man2/xhtml/glDisable.xml">glDisable\(GL_TEXTURE_2D);</a>.</p>
+	
+		<p>The above defined shape can be listed using the command <i>gl list 1</i>:</p>
+
+        	<code>gl list 1
+STAT:  shape 1 ops 13 name This is a list of shape commands
+STAT:  -  1 enable mode texture_2d
+STAT:  -  2 texture bind id 3 min linear mag nearest type 2d : Texture 3 Texture for Loaded Image #5, image 5
+STAT:  -  3 begin quads
+STAT:  -  4  texcoord2 0.0000,0.0000
+STAT:  -  5  vertex3 -0.5000,-0.5000,0.0000
+STAT:  -  6  texcoord2 1.0000,0.0000
+STAT:  -  7  vertex3 0.5000,-0.5000,0.0000
+STAT:  -  8  texcoord2 1.0000,1.0000
+STAT:  -  9  vertex3 0.5000,0.5000,0.0000
+STAT:  - 10  texcoord2 0.0000,1.0000
+STAT:  - 11  vertex3 -0.5000,0.5000,0.0000
+STAT:  - 12 end
+STAT:  - 13 disable mode texture_2d
+STAT:</code>
+
+		<p>The above example can be rewritten into two shapes adding flexibility:</p>
+
+		<code>1  :  glshape add This a Quad shape with texcoords
+2  :  glshape begin 1 quads                 # Begin a 4 point polygon
+3  :    #glshape normal 1 0 0 1             # Setting the normal for the quad
+4  :    glshape texcoord 1 0 0              # Using current texture lower left
+5  :    glshape vertex 1 -0.5 -0.5 0        # Setting Lower left corner
+6  :    glshape texcoord 1 1 0              # Using current texture lower right
+7  :    glshape vertex 1 0.5 -0.5 0         # Setting Lower right corner
+8  :    glshape texcoord 1 1 1              # Using current texture upper right
+9  :    glshape vertex 1 0.5 0.5 0          # Setting Upper right corner
+10 :   glshape texcoord 1 0 1              # Using current texture upper left
+11 :   glshape vertex 1 -0.5 0.5 0         # Setting Upper left corner
+12 : glshape end 1                         # Ends the definition of the quad polygon
+
+13 : glshape add 2 This is a glshape including another shape
+14 : glshape enable 2 texture_2d           # Enable 2D textures.
+15 : glshape texture bind 2 3 linear nearest  # Bind texture 3 as current texture
+16 : glshape inshape 2 1                   # include glshape 1
+17 : glshape disable 2 texture_2d          # Disabling the 2D Texture feature
+</code>
+
+		<p>The benefit is that it is quite easy to change the glshape included in line 16 to another glshape with another outline or otherwise other settings.</p>
+
+		<p>Please also see the section
+		<a href="[HOME]Documentation/reserved.html#glshape">GL Shape Commands</a>
+		on the page <a href="[HOME]Documentation/reserved.html">Reserved Commands</a>.</p>
+
+		<div align="right"><a href="">Top</a></div>
+	</div>
+
+	<div class="item">
+
+		<a name="vectors"><h3>GL Vectors.</h3></a>
+		<br/>
+
+		<p>In Snowmix Vector constants can be created (and changed) using the commands
+		<i>glshape vector add</i> and <i>glshape vector value</i>. The vectors can have
+		2, 3 and 4 dimensions. Internally the vectors are saved as either integers,
+		floats or doubles depending on the settings for compiling Snowmix. The vectors
+		are needed when defining light and materials. The syntax for the two vector commands are:</p>
+
+		<code>glshape vector add [&lt;vector id> [&lt;vector name>]]
+glshape vector value [&lt;vector id> &lt;x> &lt;y> [&lt;z> &lt;w>]]]</code>
+
+		<p>Both the add and the value commands when used without argument, will list the
+		created vectors name and values respectively. If the add command is used with the
+		vector id argument, but no name is given, the vector with that id will be deleted.
+		The maximum number of vectors Snowmix can have, is currently fixed and set in the
+		file src/opengl_video.h.</p>
+
+		<p>The GL vectors have no direct equivalent in OpenGL, but several OpenGL commands
+		are taking an array of values as arguments, which is what we are doing in Snowmix too.</p>
+
+		<p>Please also see the section
+		<a href="[HOME]Documentation/reserved.html#glshape">GL Shape Commands</a>
+		on the page <a href="[HOME]Documentation/reserved.html">Reserved Commands</a>.</p>
+
+		<div align="right"><a href="">Top</a></div>
+	</div>
+
+	<div class="item">
+
+		<a name="lights"><h3>GL Lights and Materials.</h3></a>
+		<br/>
+
+		<p>Yet to be written.</p>
+
+		<h3>Defining light constants</h3>
+		<br/>
+
+		<p>Yet to be written.</p>
+
+
+		<h3>Light commands</h3>
+		<br/>
+
+		<p>Yet to be written.</p>
+
+		<p>Please also see the section
+		<a href="[HOME]Documentation/reserved.html#glshape">GL Shape Commands</a>
+		on the page <a href="[HOME]Documentation/reserved.html">Reserved Commands</a>.</p>
+
+
+		<div align="right"><a href="">Top</a></div>
+	</div>
+
+	<div class="item">
+
+		<a name="vbos"><h3>Vertex Buffer Objects.</h3></a>
+		<br/>
+
+		<p>The OpenGL commands glBegin and glEnd are deprecated in OpenGL 3.0 though still supported.
+		In OpenGL 3.1 the commands has been removed. For now the commands will stay in Snowmix.
+		Instead of glBegin/glEnd a
+		<a href="http://en.wikipedia.org/wiki/Vertex_Buffer_Object">Vertex Buffer Object</a>
+		or VBO for short must be created and used. The benefit of VBO over the older
+		glBegin/glEnd method is that the data points for Vertex only has to be sent to the
+		GPU once and whenever they change if ever. An additional benefit of using a VBO over
+		the glBegin/glEnd commands is that in a VBO the data points can be reused thus
+		lowering the number of data points needed to be send from CPU to GPU. Reusing
+		datapoints is possible when a VBO defines more than one polygon and at least two
+		polygons share one or more datapoints.</p>
+
+		<p>Previous a Quad Vertex with texture was defined using the glBegin/glEnd equivalent.
+		Here the same quad is being defined as a VBO:</p>
+
+		<code>glshape vbo add 5 Quad with texture
+glshape vbo config 5 static quads t2 v3
+glshape vbo data 5 0.0 0.0 -0.5 -0.5 0.0  1.0 0.0 0.5 -0.5 0.0  1.0 1.0 0.5 0.5 0.0  0.0 1.0  -0.5 0.5 0.0
+glshape vbo indices 5 0 1 2 3</code>
+
+		<p>The first line adds/creates a VBO place holder with the vbo_id 5 and the name "Quad with texture".</p>
+
+		<p>The second line sets up the VBO 5 as a <i>static</i> VBO containing one or more
+		<a href="https://www.opengl.org/wiki/Primitive">quad</a> polygons
+		with the elements <i>t2</i> and <i>v3</i> meaning a 2-dimensional texture
+		(glTexCoord) on a 3-dimensional vertex (glVertex3). This means that each
+		dataset in the VBO consist of 5 data points. The first two datapoints are the
+		texture datapoints and the next 3 are the vertex datapoints.</p>
+
+		<p>The third line defines for VBO 5 four datapoint sets.</p>
+
+		<p>The fifth line defines defines how the VBO should use the datapoint sets by
+		defining an indexing. What is says is that when drawing/executing the VBO, the
+		context should use the datasets in the order 0, 1, 2, 3. In this case, there is no
+		benefit using indexing as there is only defined one quad. However if we add a
+		second plane into the z-plane that share the right side of the first quad, we
+		can add extra index points:</p>
+
+		<code>glshape vbo data 5 0.0 0.0 0.5 -0.5 1.0  0.0 1.0 0.5 0.5 1.0
+glshape vbo indices 5 1 4 5 2</code>
+
+		<p>Now when the VBO is used, two four-sided polygons sharing two points are drawn.
+		First the datasets 0,1,2,3 are used for the first quad and then the datasets 1,4,5,2
+		are used for the second polygon. In this case we saved 2 data sets at the expense of
+		extra index information. The benefit will increase with the number of adjacent
+		polygons sharing datapoints.</p>
+
+		<p>In a glshape a defined VBO can be referenced as shown in the following reusing
+		the example in GL texture section (see the GL Texture section):</p>
+
+		<code>13 : glshape add 2 This is a glshape including another shape, well now we include a vbo instead
+14 : glshape enable 2 texture_2d           # Enable 2D textures.
+15 : glshape texture bind 2 3 linear nearest  # Bind texture 3 as current texture
+16 : glshape vbo 2 5                       # include VBO 5
+17 : glshape disable 2 texture_2d          # Disabling the 2D Texture feature</code>
+
+		<p>When glshape 2 is overlayed, it will reference VBO 5. If this is
+		the first time the VBO is referenced, the VBO's datapoints will be sent to
+		the GPU. In future references when overlaying a glshape containing VBO 5,
+		fewer OpenGL calls are needed and less data has to be sent from CPU to GPU.</p>
+		<div align="right"><a href="">Top</a></div>
+	</div>
+
+	<div class="item">
+
+		<a name="vaos"><h3>Vertex Array Objects.</h3></a>
+		<br/>
+
+		<p>VBOs in Snowmix are, if supported by the OpenGL library on the platform,
+		automatically wrapped in a Vertex Array Object or VAO so when overlaying a
+		glshape containing a VBO, all Snowmix has to do is binding the VAO
+		containing the VBO. However the first time the VBO is referenced in a placed
+		glshape, the VBO is first defined for the VAO sending the VBO data 
+		to the GPU. It all happens automatically and is done with only a couple of
+		OpenGL calls minimizing CPU load significantly.</p>
+
+		<p>Adding a functionality to combine several VBOs in one VAO is under consideration.</p>
+
+		<p>VAOs seems to be supported on Ubuntu 14.04 LTS on a Thinkpad T61, but the result
+		may for you depend on your graphic driver. The command <i>gl info</i> reveals
+		for Ubuntu 14.04 on a Thinkpad T61 the following about the OpenGL driver for the GLX
+		Context and the OSMesa Context respectively:</p>
+
+		<code>...
+STAT:  OpenGL vendor   : Intel Open Source Technology Center
+STAT:  OpenGL renderer : Mesa DRI Intel(R) 965GM 
+STAT:  OpenGL Version  : 2.1 Mesa 10.1.3
+STAT:  OpenGL Shading  : 1.20
+
+STAT:  OpenGL vendor   : Brian Paul
+STAT:  OpenGL renderer : Mesa OffScreen
+STAT:  OpenGL Version  : 2.1 Mesa 10.1.3
+STAT:  OpenGL Shading  : 1.20
+...</code>
+
+		<p>The <a href="mesa3D.org">Mesa 3D</a> has in late July 2015 landed the updates for
+		Mesa 10.7 that adds full support for OpenGL 4.0 and most of 4.1 and 4.2. Mesa 10.7
+		is planned for release as Mesa 11.0 in September 2015. However the state of the
+		hardware drivers are lacking behind. You can read more <a href="http://www.phoronix.com/scan.php?page=article&item=mesa-opengl-40&num=1">here</a>. Furthermore, these updates will take some time to filter
+		down into official Linux distro releases.</p>
+
+		<p>On a MacbookPro Late 2011 with Yosemite 10.10.4, VAOs seems not to be supported and
+		Snowmix falls back to using VBOs without wrapping them in a VAO.</p>
+
+		<p>Please also see the section
+		<a href="[HOME]Documentation/reserved.html#glshape">GL Shape Commands</a>
+		on the page <a href="[HOME]Documentation/reserved.html">Reserved Commands</a>.</p>
+
+		<div align="right"><a href="">Top</a></div>
+	</div>
+
+	<div class="item">
+
+		<a name="placedglshapes"><h3>Placed GL Shapes.</h3></a>
+		<br/>
+
+		<p>Created glshapes can be placed and later overlayed. The command to place a glshape
+		is the <i>glshape place</i> command. The command has the following syntax:</p>
+
+		<code>glshape place [&lt;place id> [ &lt;shape id> &lt;x> &lt;y> &lt;z> [&lt;scale x> &lt;scale y> &lt;scale z>
+		[&lt;rotation> &lt;rx> &lt;ry> &lt;rz> [&lt;red> &lt;green> &lt;blue> [&lt;alpha>]]]]]</code>
+
+		<p>If used without any arguments, it list all placed glshapes. If used with
+		just the <i>&lt;place id></i> argument, it will delete the place holder of the
+		placed glshape, if it exists. If used with both a <i>&lt;place id></i> argument
+		and <i>&lt;shape id></i> argument and a 3D coordinate as argument, it will create a
+		place holder for a placed glshape with the id <i>&lt;place id></i>.</p>
+
+		<p>Note that the coordinate system will completely depend on how you setup
+		and use glshapes. By default, positive Y is up, which is the opposite of the
+		Cairo Graphic Context in Snowmix.</p>
+
+		<p>In addition to the arguments already explained, you can also specify the
+		scale, rotation, color and alpha of the placed glshape. The rotation is
+		different from rotation for regular placed shapes in Snowmix, because it
+		in addition to its angle, also needs a direction or vector in the form of a 3D
+		coordinate specifying the direction of the angle.</p>
+
+		<p>Snowmix has a number of commands for manipulating settings for a placed glshape.
+		You can list these commands by issuing the command <i>glshape place help</i> on
+		a Snowmix control connection.</p>
+
+		<p>Placed glshapes can be overlayed/executed using the command <i>glshape overlay</i>.
+		However this command, as overlay commands for texts, images, feeds and shapes, needs
+		to be executed as part of the command macro set with the command <i>overlay finish</i>.
+		The syntax of the overlay command is:</p>
+
+		<code>glshape [ place ] overlay (&lt;id> | &lt;id>..&lt;id> | &lt;id>..end | all) [(&lt;id> | &lt;id>..&lt;id> | &lt;id>..end | all)] .... </code>
+
+		<p>Please also see the section
+		<a href="[HOME]Documentation/reserved.html#placedglshape">Placed GL Shape Commands</a>
+		on the page <a href="[HOME]Documentation/reserved.html">Reserved Commands</a>.</p>
+
+		<div align="right"><a href="">Top</a></div>
+	</div>
+
+	<div class="item">
+
+		<a name="copyingback"><h3>Copying back from the GPU.</h3></a>
+		<br/>
+
+		<p>If you are using the GLX context and if you have overlayed/executed placed glshapes,
+		you will want to copy back the result to either a loaded image or to the main mixer frame.
+		The OSMesa context for Snowmix 0.5.0 in contrast to the GLX context, does not need that
+		because it is drawing in the main mixer frame, which may change later.  Copying back for
+		the GLX context is done using the command <i>glshape copyback</i>. This command will have
+		to part of the command macro that is set with the Snowmix command <i>overlay finish</i>.
+		The syntax of the command is:</p>
+
+		<code>glshape copyback [frame 0 | image &lt;image_id> &lt;x> &lt;y> &lt;width> &lt;height>]</code>
+
+		<p>If you for the command use no argument or the <i>frame 0</i> as arguments, then the
+		drawing buffer of the GPU is copied back to the Snowmix main mixer frame overwriting it.
+		That is probably what you want if the context is the GLX context. If your context is the
+		OSMesa context, you overwrite the Snowmix main mixer frame with it self which is unnecessary
+		and can have unpredictable results.</p>
+
+		<p>If you are using the <i>image</i> parameter including <i>&lt;image id></i> and more,
+		you can write the GPU drawing buffer of the GPU back to a loaded image and use it for further
+		mixing. If the loaded image did not exist, it will be created. If it did exist, it would be
+		deleted and a new is created. </p>
+
+		<p>Copying back from the GPU is rather CPU intensive and should only be used when
+		absolutely necessary, but of course, if you use glshapes in the GLX context, copying back
+		will be required. Also remember that bandwidth between GPU and the computers main memory
+		is a limited ressource. So if there are frame periods, where you don't generate any data
+		in the GPU, copying back should be avoided.</p>
+
+		<div align="right"><a href="">Top</a></div>
+	</div>
+
+	<div class="item">
+
+		<a name="links"><h3>OpenGL Links and Ressources.</h3></a>
+		<br/>
+
+		<p>Using glshapes for Snowmix requires understanding of how to use OpenGL. The following
+		are links to OpenGL ressources that can be usefull to obtain the required knowledge.</p>
+
+		<ul>
+			
+			<li><a href="http://www.videotutorialsrock.com/index.php">OpenGL Tutorials</a> with video and examples.
+			<li><a href="http://www.opengl-tutorial.org/">OpenGL Tutorials</a> on opengl-tutorial.org..
+			<li><a href="https://www.opengl.org/">OpenGL.org</a>.
+			<li><a href="https://www.khronos.org/opengl/">OpenGL at Khronos</a>.
+			<li><a href="http://www.arcsynthesis.org/gltut/index.html">Learning Modern 3D Graphics Programming</a>
+			<li><a href="http://www.polarhome.com:823/doc/library/SGI_bookshelves/SGI_Developer/books/OpenGLonSGI/sgi_html/index.html">OpenGL® on Silicon Graphics® Systems</a>
+		</ul>
+		<div align="right"><a href="">Top</a></div>
+	</div>
+
+</div>

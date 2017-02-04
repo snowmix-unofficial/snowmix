@@ -1,0 +1,27 @@
+# Snowmix minimal ini file with one feed.
+#
+# Copyright Peter Maersk-Moller (C) 2015. All rights reserved.
+#
+#
+system control port 9999
+system geometry 1024 576 BGRA
+system frame rate 25
+system socket /tmp/mixer1
+
+# Feed 0 is defined by default and it has the same size as the system (here 1024x576)
+feed idle 0 1
+
+# Define feed 1 as a 704x576 feed
+feed add 1 Camera 1
+feed geometry 1 704 576
+feed live 1
+feed idle 1 100 frames/dead-704x576.bgra
+feed socket 1 /tmp/feed-1-control-pipe
+
+# Set cutout/clip values. This is not needed if we uses virtual feeds or shape based feeds
+feed cutout 1 0 0 704 576
+feed shift 1 160 0
+
+# Feed 0 is by default in the stack to overlay. Tell Snowmix to overlay feed 1 as well.
+# The stack command is not needed if you are using virtual feeds or shape based feeds instead.
+stack  0 1

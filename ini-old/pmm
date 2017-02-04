@@ -1,0 +1,34 @@
+# Copyright by Peter Maersk-Moller 2012 - All rights reserved
+# verbose
+require version 0.4.0
+
+# include basis setup
+include ../ini/basis
+
+# Stack (overlay) feed 0-4 in the order given
+stack  0 
+
+
+# This is the definition of the command 'Show'. The command (script)
+# says first to execute command (script) Blink_Feed_2_State which is defined
+# below. It then overlays text place id 1 and 3, then 2 and 4 until end of
+# text place ids. Then text place id is placed last to place it ontop of
+# other text, in this case to overlay it the scrolling text
+# The 'loop' command is essential and tells Snowmix to loop the command,
+# to point at the start of the command before next frame..
+command create Show
+  loop
+command end
+command create PreShow
+  loop
+command end
+
+#command verbose
+
+
+# >>>>>>>>>>>>>>>>>> I M P O R T A N T <<<<<<<<<<<<<<<<<<<<<<<
+# This command tells Snowmix to run the command 'Show' for each frame after
+# feeds have been stacked as defined by the 'stack command'
+overlay finish Show
+overlay pre PreShow
+# >>>>>>>>>>>>>>>>>> I M P O R T A N T <<<<<<<<<<<<<<<<<<<<<<<

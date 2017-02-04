@@ -1,0 +1,34 @@
+##
+#
+#
+pid_dir=/var/run/stream
+
+############### Snowmix ###################################
+cd ../src
+nohup ./snowmix ../ini/sapphire-basis &
+pid=$!
+echo $pid >$pid_dir/snowmix.$pid
+date >> $pid_dir/snowmix.$pid
+echo "./snowmix ../ini/sapphire-basis" >> $pid_dir/snowmix.$pid
+cd ../scripts
+exit
+sleep 5
+
+
+# Get mixed video and audio and make it available on port 5010 5020 5030 as AV V A
+nohup bash make_stream 1>$pid_dir/make_stream.log 2>&1 &
+sleep 2
+
+#
+#
+# intercoms sends vorbis audio to port 5001,5002,5003
+nohup bash intercom  1>$pid_dir/intercom.log 2>&1 &
+sleep 1
+
+#
+# Get speaker from Stream01 8117 as vorbis in rtp and send it to localhost port 9116 using udp
+nohup bash getspeaker vorbis  1>$pid_dir/getspeaker.log 2>&1 &
+sleep 1
+
+# Get main encoded AV from server and send to borgergade
+nohup bash send2borgergade 1>$pid_dir/send2borgergade.log 2>&1 &

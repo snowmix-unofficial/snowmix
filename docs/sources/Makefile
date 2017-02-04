@@ -1,0 +1,3 @@
+
+all:
+	@./make_htmls

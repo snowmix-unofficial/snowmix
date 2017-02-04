@@ -1,0 +1,454 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
+"http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html>
+
+<head>
+<meta http-equiv="content-type" content="text/html; charset=iso-8859-1"/>
+<meta name="description" content="description"/>
+<meta name="keywords" content="keywords"/> 
+<meta name="author" content="author"/> 
+<link rel="stylesheet" type="text/css" href="../default.css" media="screen"/>
+<link rel="shortcut icon" href="../img/Snowmix-logo-transparent-128x101.ico">
+<title>Snowmix - The Swiss Army Knife of Open Source Live Video Mixing.</title>
+</head>
+
+<body>
+
+<div class="container">
+
+	<div class="main">
+
+		<div class="header">
+
+			<div class="title">
+
+				<a href="../index.html"><h1><img> Snowmix - Live Video Mixer</h1></a>
+				<h3>The Swiss Army Knife of Open Source Live Video Mixing.</h3>
+			</div>
+
+		</div>
+
+<div class="content">
+
+	<div class="item">
+
+		<h1>Changelog for Snowmix</h1>
+		<div class="descr">Updated for version 0.5.0</div>
+
+		<h3>Introduction</h3>
+
+		<p>This document tracks changes to the functionality of Snowmix and its
+		accompanying scripts and files. Changelog for older versions are availble here:</p>
+		<ul>
+			<li><a href="https://sourceforge.net/p/snowmix/wiki/Changelog/">Snowmix version 0.4.4-0.4.5</a>
+			<li><a href="https://sourceforge.net/p/snowmix/wiki/Changelog%200.4.0-0.4.3/">Snowmix version 0.4.0-0.4.3</a>
+			<li><a href="https://sourceforge.net/p/snowmix/wiki/Changelog-0.3.x/">Snowmix version 0.3.x</a>
+		</ul>
+
+	</div>
+
+
+	<div class="item">
+
+		<h3>Changelog for Snowmix 0.5.0</h3>
+
+		<br/>
+		<br/>
+
+		<ul>
+
+		<li><p>As announced in <a href="https://sourceforge.net/p/snowmix/wiki/End%20of%20Life%20Announcements/">EndOfLifeAnnouncements in earlier versions</a>, this version no longer
+	  	supports the following commands:<br/>
+
+		<table>
+			<tr>
+				<td>Removed command</td><td>Replacement command</td>
+			</tr>
+			<tr><td colspan=2>--------------------------------------------------------------------------------</td></tr>
+			<tr><td>cairoverlay</td>		<td>-- no replacement --</td></tr>
+			<tr><td>image place align</td>		<td>image align</td></tr>
+			<tr><td>image place alpha</td><td>           image alpha</td></tr>
+			<tr><td>image place anchor</td><td>          image anchor</td></tr>
+			<tr><td>image place clip</td><td>            image clip</td></tr>
+			<tr><td>image place coor</td><td>            image coor</td></tr>
+			<tr><td>image place filter</td><td>          image filter</td></tr>
+			<tr><td>image place image</td><td>           image image</td></tr>
+			<tr><td>image place matrix</td><td>          image matrix</td></tr>
+			<tr><td>image place move alpha</td><td>      image move alpha</td></tr>
+			<tr><td>image place move clip</td><td>       image move clip</td></tr>
+			<tr><td>image place move coor</td><td>       image move coor</td></tr>
+			<tr><td>image place move offset</td><td>     image move offset</td></tr>
+			<tr><td>image place move rotation</td><td>   image move rotation</td></tr>
+			<tr><td>image place move scale</td><td>      image move scale</td></tr>
+			<tr><td>image place offset</td><td>          image offset</td></tr>
+			<tr><td>image place rotation</td><td>        image rotation</td></tr>
+			<tr><td>image place scale</td><td>           image scale</td></tr>
+			<tr><td>overlay feed</td>		<td>feed overlay</td></tr>
+			<tr><td>overlay image</td>		<td>image overlay</td></tr>
+			<tr><td>overlay virtual feed</td>	<td>vfeed overlay</td></tr>
+			<tr><td>overlay text</td>		<td>text overlay</td></tr>
+			<tr><td>text place align</td><td>            text align</td></tr>
+			<tr><td>text place alpha</td><td>            text alpha</td></tr>
+			<tr><td>text place anchor</td><td>           text anchor</td></tr>
+			<tr><td>text place backgr alpha</td><td>     text backgr alpha</td></tr>
+			<tr><td>text place backgr clip</td><td>      text backgr clip</td></tr>
+			<tr><td>text place backgr linpat</td><td>    text backgr linpat</td></tr>
+			<tr><td>text place backgr round</td><td>     text backgr round</td></tr>
+			<tr><td>text place backgr alpha</td><td>     text backgr alpha</td></tr>
+			<tr><td>text place backgr move alpha</td><td>text backgr move alpha</td></tr>
+			<tr><td>text place backgr move clip</td><td> text backgr move clip</td></tr>
+			<tr><td>text place backgr rgb</td><td>       text backgr rgb</td></tr>
+			<tr><td>text place backgr</td><td>           text backgr</td></tr>
+			<tr><td>text place clip</td><td>             text clip</td></tr>
+			<tr><td>text place clipabs</td><td>          text clipabs</td></tr>
+			<tr><td>text place coor</td><td>             text coor</td></tr>
+			<tr><td>text place grow</td><td>             text grow</td></tr>
+			<tr><td>text place move alpha</td><td>       text move alpha</td></tr>
+			<tr><td>text place move clip</td><td>        text move clip</td></tr>
+			<tr><td>text place move coor</td><td>        text move coor</td></tr>
+			<tr><td>text place move rotation</td><td>    text move rotation</td></tr>
+			<tr><td>text place move scale</td><td>       text move scale</td></tr>
+			<tr><td>text place offset</td><td>           text offset</td></tr>
+			<tr><td>text place repeat move</td><td>      text repeat move</td></tr>
+			<tr><td>text place rgb</td><td>              text rgb</td></tr>
+			<tr><td>text place rotation</td><td>         text rotation</td></tr>
+			<tr><td>text place scale</td><td>            text scale</td></tr>
+		</table></p>
+
+		<li><p>As announced in <a href="https://sourceforge.net/p/snowmix/wiki/End%20of%20Life%20Announcements/">EndOfLifeAnnouncements in earlier versions</a>, this version no longer
+	  	execute returned strings from the Tcl Interpreter as Snowmix
+	  	commands. Version 0.4.4 introduced the embedded tcl command
+	  	<i>snowmix parse</i> to excute Snowmix commands from within the embedded
+	  	interpreter.</p>
+
+		<li><p>Adding new command <i>feed drop</i> to drop frames from the input FIFO
+	  	for feeds. It is not possible to drop more frames that the fifo
+	  	contains minus one. The syntax is:</p>
+
+		<code>feed drop &lt;feed id> &lt;n drops> </code>
+
+		<li><p>If a feed was connected but a frame never arrived, the feed would have
+	  	the state RUNNING. It should be STALLED. This is a bugfix.</p>
+
+		<li><p>A TCP connection to Snowmix's control port where the connection IP
+		address was not allowed (ie. not in the allow list) would cause
+		Snowmix to exit.</p>
+
+		<li><p>If verbose is set using the command <i>verbose 1</i>, a connecting
+		TCP connection to Snowmix will now cause the IP address to
+		be printed at console. Before the IP would be printed as an integer
+		and a hex.</p>
+
+		<li><p>The command <i>image move scale</i> could reduce the scale of an image
+		to zero. When a overlayed placed image was reduce to scale zero,
+		overlaying other images would be affected (they became invisible).
+		This is now fixed by ensuring the move command can not make the
+		scale become zero. This is a bugfix.</p>
+
+		<li><p>Testing for existence of a loaded image is now possible as it
+		has been and is possible to test for the existence of a command
+		macro. Example:</p>
+
+		<code>command create TestImage14
+  if exist(image,14)
+    message image 14 is loaded
+  else
+    message image 14 is not loaded
+  endif
+  loop
+command end</code>
+
+		<li><p>Image loaded and image placed now have a sequence number. This
+		number will for each image_id or place_id be incremented
+		when deleted or a new image is loaded. Currently the sequence
+		number for a placed image is currently not incremented.</p>
+
+		<li><p>Making CVideoMixer m_geometry_width and m_geometry_height
+		private and exposing the geometry through the calls
+		GetSystemWidth(), GetSystemHeight() and SystemGeometry().</p>
+
+		<li><p>In configure.ac. We now check for libcairo and fail if it is not
+		available. We now check for libpangocairo and fail if it is not
+		available. We now skip checking GTK+ if snowmixgui is not enabled.
+		We now skip checking for OSMesa if snowmixosmesa is not enabled.
+		We now skip checking for GLEW if snowmixglew is not enabled.</p>
+
+		<li><p>Adding command <i>shape newsubpath</i> to add the Cairo Graphic primitive
+	  	newsubpath. The syntax is:</p>
+
+		<code> shape newsubpath &lt;shape id> </code>
+
+		<li><p>When a shape includes a <i>shape arcrel_cw</i> or <i>shape arcrel_ccw</i>,
+		it is now checked if the there is a current point. If there is
+		no current point, a relative arc is not possible and a warning
+		is printed on the console. There is no current point right after
+		a <i>shape newpath</i>.</p>
+
+		<li><p>Support for CentOS Linux 7.0 added to bootstrap. However at
+		current state CentOS is missing AAC codec and H264 codec
+		for both GStreamer 0.10 and 1.0. Furthermore the 1.0 version
+		is at current state version 1.0.7, which is buggy. Version
+		1.2.4 or 1.4.x would be preferable.</p>
+
+		<li><p>Bootstrap for Fedora forced system update. Fixed. Now it is
+		optional. Package libpng12-devel changed to libpng-devel.</p>
+
+		<li><p>Renaming ini files creating two classes. The classes are sini
+		files and sinc files:</p>
+
+		<code>*.sini = snowmix ini file
+*.sinc = snowmix include file </code>
+
+ 		<li><p>The sini files are Snowmix ini files containing a "complete"
+		initialization for Snowmix while sinc files are files to
+		be included in sini files.</p>
+
+		<li><p>There was a double free error when deleting a loaded image.
+		This has now been fixed.</p>
+
+		<li><p>The script demo would only run the basic_feeds demo case.
+		any other choice would make the script exit. This is a bugfix.</p>
+
+		<li><p>Version 0.4.5 would print to Snowmix console when adding
+		or deleting fonts. Fixed.</p>
+
+		<li><p>The program snowcub.tcl is now installed as a symbolic link
+		typically in /usr/local/bin or /opt/local/bin to snowcub.tcl
+		in the tcl directory of the lib/Snowmix-0.4.6 typically in
+		/usr/local or /opt/local. The program can now be executed
+		anywhere assuming you have set enviroment variable PATH to
+		include the bin directory. The syntax for snowcub.tcl is
+		still:</p>
+
+		<code>snowcub.tcl [-- -FLAGS] [ IP:PORT ] </code>
+
+		<li><p>where FLAGS are any of the characters 'avsrto'. If IP:PORT
+		is not specified, it will use default settings which are
+		whatever the environment variables SNOWMIX_IP and SNOWMIX_PORT
+		is set to. If these variables are not set, snowcub.tcl will use
+		127.0.0.1 for IP and 9999 for PORT.</p>
+
+		<li><p>When snowmix starts, it will no longer write the node name
+		on the Snowmix consol. Use command <i>system info</i> to see the
+		node name. By default, the <i>system name</i> is set to the node
+		name of the system running Snowmix.</p>
+
+		<li><p>If Snowmix was started with an ini file without a reasonably
+		system frame rate, Snowmix would wait for a very long time in
+		deleting CVideoOutput class when the command <i>quit</i> was
+		given. This bug has now been fixed.</p>
+
+		<li><p>Snowmix is now installable and SHOULD be installed running the
+		command:</p>
+
+		<code>$ cd WHERE_YOU_UNPACKED_SNOWMIX_TO
+$ ./bootstrap
+$ make
+$ sudo make install</code>
+
+		<li><p>You only need sudo if you install Snowmix to a place that needs
+		sudo rights. By default Snowmix will be installed into
+		/usr/local. If you want to install it to somewhere else, you
+		can execute the following command after the bootstrap and before
+		the make:</p>
+
+		<code>$ ./configure --prefix=WHERE_EVER_YOU_WANT_TO_INSTALL_SNOWMIX </code>
+
+		<li><p>When Snowmix is installed it will install the following in the
+		prefix directory:</p>
+
+		<code>bin/snowmix
+lib/Snowmix-VERSION/frames/.....
+lib/Snowmix-VERSION/images/.....
+lib/Snowmix-VERSION/ini/.....
+lib/Snowmix-VERSION/scripts/.....
+lib/Snowmix-VERSION/slib/.....
+lib/Snowmix-VERSION/tcl/.....
+lib/Snowmix-VERSION/test/.....</code>
+
+		<li><p>and it will make symbolic links for all scripts in the scripts
+		directory in bin. The VERSION must be replaced by the version
+		number of Snowmix here 0.4.6. The symbolic links will potentially
+		overwrite programs in the bin directory with similar names. After
+		installation you will need to set the enviroment variable SNOWMIX
+		to point to the Snowmix diretory holding the frames, images etc.
+		directories. You do this by adding the following line to your
+		~/.profile or ~/.bashrc or ~/.bash_profile depending on you
+		system and choice of shell AND installation point:</p>
+
+		<code>export SNOWMIX=/usr/local/lib/Snowmix-0.4.6 </code>
+
+		<li><p>typical for Linux depending on your installation point. For
+		Mac OS X you will typically have to add the following to your
+		~/.bash_profile</p>
+
+		<code>export SNOWMIX=/opt/local/lib/Snowmix-0.4.6 </code>
+
+		<li><p>After adding the setting to your ~/.profile or ~/.bashrc or
+		your ~/.bash_profile depending on system and shell, you must
+		logout and login again for the settings to take effect.</p>
+
+		<li><p>Snowmix <strong>now requires</strong> the environment variable SNOWMIX to be set
+		to either the base directory of the Snowmix file tree or the
+		installation directory of Snowmix.</p>
+
+		<li><p>The SNOWMIX variable setting depends on the version of Snowmix
+		and where you choose to install Snowmix. The program snowmix will
+		exit if the environment variable SNOWMIX is not set to point to the
+		installation directory. After setting the enviroment variable,
+		and after logging out and in again, you can test it by executing
+		the commands in seperate windows:</p>
+
+		<code>$ snowmix ini/basic_feeds
+$ output2screen </code>
+
+		<li><p>Enforcing that control socket name for a <i>feed</i> file name MUST be
+		absolute by starting with a '/'</p>
+
+		<li><p>Enforcing the <i>system socket</i> path file name MUST be absolute by
+		starting with a '/'.</p>
+
+		<li><p>Snowmix now creates a search path with by default the following
+		3 paths in the listed order using environment variables:</p>
+
+		<code>Current working directory
+$HOME/$SNOWMIX_PREFIX
+$SNOWMIX</code>
+
+		<li><p>Snowmix will exit if the the environment variables HOME and
+		SNOWMIX is not set. If SNOWMIX_PREFIX is not set, Snowmix will
+		use the following default prefix:
+
+		<code>Unix		: '.snowmix'
+Mac OS X	: 'Snowmix'
+Windows		: 'Application Data/Snowmix' </code>
+
+		<li><p>Snowmix is not yet fully ported to Windows because GStreamer does not yet
+		support shmsink and shmsrc. Snowmix will in the $HOME/$SNOWMIX_PREFIX create
+		the following directories, if they do not exist.</p>
+
+		<code>frames	: for your personal Snowmix raw frames.
+images	: for your personal Snowmix png images.
+ini	: for your personal Snowmix ini files.
+scripts	: for your personal Snowmix scripts.
+slib	: for your personal Snowmix libraries.
+tcl	: for your personal Snowmix tcl scripts.
+test	: for your personal Snowmix test movies.</code>
+
+		<li><p>NOTE: Because of the search path feature, you may have to change
+		your ini file if it contains relative paths to loading images,
+		including files or writes audio sink to a file with relative
+		path. Typically you will change '../images/someimage.png' to
+		'images/someimages.png'. The following script can do it for
+		you:
+
+		<code># Use with caution
+cd YOUR_INI_FILE_DIRECTORY
+files=`ls`
+for file in $files ; do sed -e 's/\.\.\///g' < $file >tmpfile ; mv tmpfile $file ; done </code>
+
+		<li><p>You can use the 'ls' command to set the files you want the change
+		for. <strong>THINK AND USE WITH CAUTION.</strong></p>
+	  
+		<li><p>Snowmix will now use the search path when loading the intital
+		ini file unless file name is absolute, ie starting with a '/'.</p>
+
+		<li><p>Snowmix will list the search path on the Snowmix console when
+		starting Snowmix.</p>
+
+		<li><p>The command <i>system info</i> will now include information about the
+		absolute file name for the initial ini file.</p>
+
+		<li><p>Snowmix will now use the search path when including files using
+		the <i>include</i> command unless file name is absolute, ie starting
+		with a '/'.</p>
+
+		<li><p>Snowmix will now use the search path when loading images unless
+		the file name given is absolut, ie starting with a '/'. Further
+		more when using the command <i>image load</i> to list loaded images,
+		the absolute file name loaded will be listed.</p>
+
+		<li><p>Snowmix will now use the search path when opening a file for
+		writing for audio sink unless file name is absolute, ie. starting
+		with a '/'.</p>
+
+		<li><p>bootstrap for Mac OS X will now offer to install GStreamer 1.4.5
+		instead of 1.4.4.</p>
+
+		<li><p>The bootstrap script was calling a subscript with sh rather than
+		bash. This could result in minor printing confusion if /bin/sh
+		was not bash. Now testing for bash and uses bash over sh.</p>
+
+		<li><p>The bootstrap process will now look for libpng15 in addition
+		to libpng16 and libpng12.</p>
+
+		<li><p>The command <i>image source</i> missed the alignment parameter in its
+		call to OverlayFrame messing up parameters. This is a bugfix.</p>
+
+		<li><p>Banner message when connecting to Snowmix now adds a '.' in the end.</p>
+
+		<li><p>For the command *audio sink help* the audio volume was listed as going from 0..255.
+          Valid volume is from 0.0..4.0. This has now been corrected.</p>
+
+		</ul>
+
+	</div>
+</div>
+		<div class="sidenav">
+
+			<h1>Intro</h1>
+			<div class="sidenavintro">
+			<ul>
+				<li><a href="../Intro/about.html">About</a></li>
+				<li><a href="../Intro/news.html">News</a></li>
+				<li><a href="../Intro/faq.html">FAQ</a></li>
+				<li><a href="../Intro/screenshots.html">Screenshots</a></li>
+				<li><a href="../Intro/downloads.html">Downloads</a></li>
+				<li><a href="../Intro/requirements.html">Requirements</a></li>
+				<li><a href="../Intro/compileandinstall.html">Compile &amp; Install</a></li>
+				<li><a href="../Intro/support.html">Support &amp; Forum</a></li>
+			</ul>
+			</div>
+
+			<h1>Documentation</h1>
+			<ul>
+				<li><a href="../Documentation/reserved.html">Reserved Commands</a></li>
+				<li><a href="../Documentation/reference.html">Reference Manuals</a></li>
+				<li><a href="../Documentation/guides.html">Snowmix Guides</a></li>
+				<li><a href="../Documentation/releasenotes.html">Release Notes</a></li>
+				<li><a href="../Documentation/changelog.html">ChangeLog</a></li>
+				<li><a href="../Documentation/developmentplans.html">Development Plans</a></li>
+				<li><a href="../Documentation/endoflife.html">End of Life</a></li>
+			</ul>
+
+			<h1>Examples</h1>
+			<ul>
+				<li><a href="../Examples/index.html">Basic Configurations</a></li>
+				<li><a href="../Examples/index.html">Input with GStreamer</a></li>
+				<li><a href="../Examples/index.html">Output with Gstreamer</a></li>
+				<li><a href="../Examples/index.html">Basic Scripting</a></li>
+			</ul>
+
+			<h1>Advanced Topics</h1>
+			<ul>
+				<li><a href="../AdvancedTopics/index.html">Advanced Scripting</a></li>
+				<li><a href="../AdvancedTopics/index.html">Snowmix Libraries</a></li>
+			</ul>
+
+			<h1>Search</h1>
+			<form action="index.html">
+			<div>
+				<input type="text" name="search" class="styled" /> <input type="submit" value="" class="button" />
+			</div>
+			</form>
+
+		</div>
+	
+		<div class="clearer"><span></span></div>
+
+	</div>
+	<div class="footer">Copyright &copy; 2012-2015 Peter Maersk-Moller. - Inital weblayout &copy; 2006 <a href="index.html">Website.com</a>. Valid <a href="http://jigsaw.w3.org/css-validator/check/referer">CSS</a> &amp; <a href="http://validator.w3.org/check?uri=referer">XHTML</a>. Template design by <a href="http://templates.arcsin.se">Arcsin</a>
+	</div>
+</div>
+</body>
+</html>

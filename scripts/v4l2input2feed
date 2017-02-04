@@ -1,0 +1,108 @@
+#!/bin/bash
+#
+# IMPORTANT >>>>>You need to get port, ip and feed_id right<<<<<
+if [ "X$SNOWMIX" = X ] ; then
+  echo "You need to set the SNOWMIX environment variable to the base of the Snowmix installed directory"
+  exit 1
+fi
+if [ "X$SNOWMIX_PORT" = X ] ; then export SNOWMIX_PORT=9999 ;fi
+if [ "X$SNOWMIX_IP" = X ] ; then export SNOWMIX_IP=127.0.0.1 ;fi
+
+# Check for the snowmix and gstreamer settings
+if [ ! -f $SNOWMIX/scripts/gstreamer-settings -o ! -f $SNOWMIX/scripts/snowmix-settings ] ; then
+  echo "Can not find the scripts/gstreamer-settings or the scripts/snowmix-settings in the directory set by the SNOWMIX environment variable"
+  exit 1
+fi
+
+if [ $# -lt 1 ] ; then
+  echo parameter error. Usage $0 feed
+  exit 1
+fi
+
+# Set video feed and audio feed id
+feed_id=$1
+audio_feed_id=$1
+
+# Check for SM variable and the snowmix and gstreamer settings
+if [ X$SM = X -o ! -f $SM/scripts/gstreamer-settings -o ! -f $SM/scripts/snowmix-settings ] ; then
+  echo "You need to se the environment variable SM to the base of the Snowmix directory"
+  exit 1
+fi
+
+# Load the Snowmix and GStreamer settings
+. $SM/scripts/gstreamer-settings
+. $SM/scripts/snowmix-settings
+# This will set
+# a) feed_rate
+# b) feed_channels
+# c) feed_control_pipe
+# d) feed_width
+# e) feed_height
+# f) ctrsocket
+# g) system_width
+# h) system_height
+# i) ratefraction
+# j) snowmix
+# k) channels
+# l) rate
+
+
+if [ X$feed_control_pipe = X -o X$system_width = X -o X$system_height = X ] ; then
+  echo Failed to get control pipe or width or height from running snowmix
+  exit 1
+fi
+
+#echo "Snowmix Geometry        : $system_width x $system_height"
+#echo "Snowmix control socket  : $ctrsocket"
+echo "Video feed geometry     : $feed_width x $feed_height"
+echo "Video control socket    : $feed_control_pipe"
+echo "Video and audio feed id : $feed_id $audio_feed_id"
+
+if [ X$feed_rate = X -o X$feed_channels = X ] ; then
+  echo Failed to get rate or channels from running snowmix
+  echo Disabling audio
+else
+  echo "Audio rate and channels : $feed_rate $feed_channels"
+fi
+
+SHMSIZE='shm-size=40000000'
+SHMOPTION="wait-for-connection=0"
+SHMSINK1="shmsink socket-path=$feed_control_pipe $SHMSIZE $SHMOPTION"
+#SCALE="$VIDEOCONVERT ! videoscale ! $VIDEOCONVERT"
+SCALE="videoscale ! $VIDEOCONVERT"
+AUDIOFORMAT="$AUDIOS16LE"', rate=(int)'$feed_rate', channels=(int)'$feed_channels
+VIDEOFORMAT=$VIDEOBGRA', width=(int)'$feed_width', height=(int)'$feed_height', framerate=(fraction)'$ratefraction
+SRC='v4l2src device=/dev/video0'
+
+
+while true ; do
+    # Remove the named pipe if it exist
+    rm -f $feed_control_pipe
+    snowmix=`ps c |cut -c28-34 | grep snowmix | head -1`
+snowmix=snowmix
+    if [ X$snowmix != X ] ; then
+#      if [ X$feed_rate != X -a X$feed_channels != X ] ; then
+#	  echo $gstlaunch -q $SRC ! \
+#	  videorate ! $SCALE ! $VIDEOFORMAT ! $SHMSINK1 decoder. \
+#	  ! queue ! audioconvert ! audioresample ! $AUDIOFORMAT ! fdsink fd=1 sync=true
+#        (
+#	  echo 'audio feed ctr isaudio '$feed_id
+#	  $gstlaunch -q $SRC ! \
+#	  videorate ! $SCALE ! $VIDEOFORMAT ! $SHMSINK1 decoder. \
+#	  ! queue ! audioconvert ! audioresample ! $AUDIOFORMAT ! fdsink fd=1 sync=true
+#        ) | nc $SNOWMIX_IP $SNOWMIX_PORT
+#      else
+	  $gstlaunch -v $SRC	! \
+		queue		! \
+		videorate	! \
+		$SCALE		! \
+		$VIDEOFORMAT	! \
+		$SHMSINK1 
+#      fi
+    else
+      echo Snowmix is not running. Quitting $0
+      exit 1
+    fi
+    sleep 2
+done
+exit

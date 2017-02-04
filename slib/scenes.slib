@@ -1,0 +1,1455 @@
+# Sapphire Scene Settings
+# Copyright by Peter Maersk-Moller 2012-2013 - All rights reserved
+# verbose
+# require version 0.4.4
+require version 0.5.1
+
+# Functions in libscenes.tcl
+#
+# SceneInit { } : Initializes the library. Done by the library itself.
+# SceneCreate { name scene_id } : Create a new scene.
+# SceneSetBackground { scene_id image_id } : Sets background image to scene ('-' disables background image)
+# SceneAddFrame { scene_id frame_id xoff yoff width height } : Add a frame definition to a scene
+# SceneAddOverlayText {scene_id args} : Add extra placed text to be overlayed for a given scene.
+# SceneOverlayOrder { scene_id args } : Set/Get the order by which items in a Scene is overlayed.
+# SceneSetState { scene_id active } : Set the state of a scene as active/not active
+# ScenesList {} : Print a list of available scenes as scene IDs.
+# SceneList { scene_id } : Print info for individual scene.
+# SceneFade { scene_id fade } : Fade Scene up or down
+# SceneFadeSpeed { type scene_id frame_id args } : Get or set fade speed for scene or frame. Returns steps and delta for fade speed for get.
+# SceneAlpha {scene_id args} : Get/set Scene alpha, Frame alpha or alpha for Scene text
+# SceneAlphaLink {scene_id args } : Get/set alphalink for scene or frame
+
+# ######### Scene/Frame Functions #########
+# SceneAddFrameType { type info_proc } : Add a Frame type for Scenes. Init adds feed and image as type
+# SceneFrameTypesList {} :  List added frame types
+
+# ######### Frame Functions #########
+# SceneSetFrameSource { scene_id frame_id type type_id front active args } : Set a feed/image/graph/radar source for a frame (front or back)
+# SceneFrameBack2Front { scene_id frame_id fade } : Fade/Cut front source and back source up and switch source
+# SceneFrameFade { scene_id frame_id fade } : Fade up/down a frame for a scene.
+# SceneFrameText { scene_id frame_id type args } : Get/set frame text (name, time) for frame
+# ScenePlaceFrame { scene_id frame_id xoff yoff width height } : Place/resize added frame for a scene.
+# SceneSetFrameActive { scene_id frame_id active silent } : Set the active/passive state for a frame
+
+
+# ######### Special Functions #########
+# ScenesUpdate {} : To be called for every main mixer frame to draw active scene with frame(s). Setup by SceneInit
+# SceneFrameTypeInfoProc { type } : List the Info Procedure for a given frame type
+
+
+#
+#
+# SceneAddTextClock { scene_id clock_id clock_mode } : Add clock for a scene.
+# SceneTextClockToggle { scene_id clock_id } : Toggle visibility of a clock/timer for a scene.
+# SceneColorClock { scene_id clock_id text red green blue alpha } : Set color of clock
+# SceneSetTextClock { scene_id clock_id x y } : Place/replace clock for scene.
+
+#
+command create libscenes.tcl
+
+  # Add types to scene
+  proc SceneAddFrameType { type info_proc } {
+    global scene
+    if {[llength [info proc $info_proc]]} {
+      set scene(overlay_proc,type,$type) [$info_proc overlay_proc]
+      set scene(info_proc,type,$type) $info_proc
+      lappend scene(frametypes) $type
+      snowmix message "scenes.slib : Adding $type as frame type. Frame types = $scene(frametypes)"
+    } else {
+      snowmix message "scenes.slib : WARNING. Failed to add scene frame type $type"
+    }
+    return
+  }
+
+  # Setting frame_id>-1. Type is the frame_id. link=0 no link, link=1 copy front to back, link=-1 inverse copy
+  # Setting frame_id=-2 and link=1 will link alphabg to alpha for scene. 0 will remove the link
+  # Setting frame_id=-3 and link=1 will link alphatext. to alpha for scene. 0 will remove the link
+  proc SceneAlphaLink {scene_id args } {
+    global scene
+    if {![info exist scene(name,$scene_id)]} {
+      snowmix message "SceneAlphaLink failed."
+      return
+    }
+    set n [llength $args]
+    if {$n == 0} {
+      set list "{$scene(alphabg,link,$scene_id) $scene(alphatext,link,$scene_id)}"
+      foreach frame_id $scene(frames,$scene_id) {
+        lappend list "$frame_id $scene(alphalink,$scene_id,$frame_id)"
+      }
+      return $list
+    }
+    set frame_id [lindex $args 0]
+    set link [lindex $args 1]
+    if {$n != 2 || $frame_id < -3 || $frame_id == -1} {
+      snowmix message "SceneAlphaLink failed. $n, $link, $frame_id"
+      return
+    }
+    if {$link > 1} { set link 1 } elseif {$link < -1} { set link -1 }
+    # Alpha link can either be for frame or scene
+    if {$frame_id > -1 } {
+      # Alpha link is for frame.
+      if {![info exist scene(alphalink,$scene_id,$frame_id)] || $link > 1 || $link < -1} return
+      set scene(alphalink,$scene_id,$frame_id) $link
+puts "Setting alphalink for $scene_id $frame_id $link"
+      if {$link} {
+        set alphalist [snowmix info shape alpha $scene(place_front,$scene_id,$frame_id) $scene(place_back,$scene_id,$frame_id)]
+puts "Alphalist $alphalist"
+        set alphafront [lindex [lindex $alphalist 0] 1]
+        set alphaback [lindex [lindex $alphalist 1] 1]
+        SceneAlpha $scene_id $frame_id $alphafront $alphaback
+      }
+    } elseif {$frame_id == -2} {
+      set scene(alphabg,link,$scene_id) $link
+      if {$link} { SceneAlpha $scene_id $frame_id $scene(alpha,$scene_id) }
+    } elseif {$frame_id == -3} {
+      set scene(alphatext,link,$scene_id) $link
+      if {$link} { SceneAlpha $scene_id $frame_id $scene(alpha,$scene_id) }
+    } else return
+    #if {$link} { SceneAlpha $scene_id $frame_id $scene(alpha,$scene_id) }
+    return
+  }
+    
+
+  # Get/Set Scene alpha, alpha for background and alpha for text.
+  # frame_id=-1 scene alpha, frame_id=-2 scene alphabg, frame_id=-3 scene alphatext
+  # SceneAlpha scene_id [ frame_id alpha ]
+  proc SceneAlpha { scene_id args } {
+    global scene
+    if {![info exist scene(name,$scene_id)]} {
+      snowmix message "SceneAlpha failed."
+      return
+    }
+    # If we have no arguments, then we list the alpha values
+    if {![llength $args]} {
+      if {[info exist scene(back,place_id,$scene_id)]} {
+        set alphabg [lindex [lindex [snowmix info shape alpha $scene(back,place_id,$scene_id)] 0] 1]
+      } else { set alphabg 1 }
+      set list "{$scene(alpha,$scene_id) $alphabg $scene(alphatext,$scene_id)}"
+      foreach frame_id $scene(frames,$scene_id) {
+        set alphalist [snowmix info shape alpha $scene(place_front,$scene_id,$frame_id) $scene(place_back,$scene_id,$frame_id)]
+        set alphafront [lindex [lindex $alphalist 0] 1]
+        set alphaback [lindex [lindex $alphalist 1] 1]
+        lappend list "$frame_id $alphafront $alphaback"
+      }
+      return $list
+    }
+
+    set frame_id [lindex $args 0]
+    if {[llength $args] < 2 || $frame_id < -3} {
+      snowmix message "SceneAlpha failed."
+      return
+    }
+    set alpha [lindex $args 1]
+    # Is alpha for frame?
+    if {$frame_id > -1} {
+      if {![string match "-" $alpha]} {
+        if {$alpha < 0} { set alpha 0 } elseif { $alpha > 1 } { set alpha 1 }
+        if {[info exist scene(place_front,$scene_id,$frame_id)]} {
+          snowmix parse "shape place alpha $scene(place_front,$scene_id,$frame_id) $alpha"
+        }
+        if {[info exist scene(place_back,$scene_id,$frame_id)] && $scene(alphalink,$scene_id,$frame_id)} {
+          # Front and back alpha is linked
+          if {$scene(alphalink,$scene_id,$frame_id) < 0} {
+            # back alpha is inverse of front
+            set alpha [expr 1.0 - $alpha]
+          }
+          snowmix parse "shape place alpha $scene(place_back,$scene_id,$frame_id) $alpha"
+        }
+      }
+      if {[llength $args] > 2} {
+        set alpha [lindex $args 2]
+        if {![string match "-" $alpha] && [info exist scene(place_back,$scene_id,$frame_id)] && !$scene(alphalink,$scene_id,$frame_id)} {
+          if {$alpha < 0} { set alpha 0 } elseif { $alpha > 1 } { set alpha 1 }
+          snowmix parse "shape place alpha $scene(place_back,$scene_id,$frame_id) $alpha"
+        }
+      }
+      return
+    }
+
+    # Alpha is for scene and not frame
+    if {$alpha < 0} { set alpha 0 } elseif { $alpha > 1 } { set alpha 1 }
+    if {$frame_id == -1} {
+      if {$scene(alphabg,link,$scene_id)} {
+        if {[info exist scene(back,place_id,$scene_id)]} {
+          snowmix parse "shape place alpha $scene(back,place_id,$scene_id) $alpha"
+        }
+      }
+      if {$scene(alphatext,link,$scene_id)} { set scene(alphatext,$scene_id) $alpha }
+      set scene(alpha,$scene_id) $alpha
+    } elseif {$frame_id == -2} {
+      if {[info exist scene(back,place_id,$scene_id)]} {
+        snowmix parse "shape place alpha $scene(back,place_id,$scene_id) $alpha"
+      }
+    } elseif {$frame_id == -3} {
+      set scene(alphatext,$scene_id) $alpha
+    }
+    return
+  }
+
+  proc SceneFrameTypesList {} {
+    global scene
+    snowmix message "Scene types = $scene(frametypes)"
+    return
+  }
+
+  proc SceneFrameTypeInfoProc { type } {
+    global scene
+    if {[lsearch -exact $scene(frametypes) $type] > -1} {
+      set info_proc $scene(info_proc,type,$type)
+    } else {
+      set info_proc ""
+puts "No type $type"
+    }
+    snowmix message "InfoProc = $info_proc"
+    return
+  }
+
+  proc ScenePop { args } {
+    global scene
+    set len [llength $scene(stack)]
+    if { $len < 1 } return
+    set i [expr $len - 1]
+    set scene_id [lindex $scene(stack) $i]
+    set scene(stack) [lreplace $scene(stack) $i $i]
+    if {[llength $args]} {
+      set fade [lindex $args 0]
+      if {![string is integer $fade]} {
+        set fade 0
+      } else {
+        if { $fade >= 1 } {
+          set fade 1
+        } elseif { $fade <= -1 } {
+          set fade -1
+        } else { set fade 0 }
+      }
+    } else { set fade 0 }
+    SceneSetState $scene_id 1 $fade
+  }
+
+  proc ScenePush { scene_id args } {
+    global scene
+    if {![string is integer $scene_id] || ![info exist scene(active,$scene_id)]} return
+    set active_id -1
+    foreach id $scene(scenes) {
+      if {$scene(active,$id) > 0} {
+         set active_id $id
+        break
+      }
+    }
+    lappend scene(stack) $active_id
+    if {[llength $args]} {
+      set fade [lindex $args 0]
+      if {![string is integer $fade]} {
+        set fade 0
+      } else {
+        if { $fade >= 1 } {
+          set fade 1
+        } elseif { $fade <= -1 } {
+          set fade -1
+        } else { set fade 0 }
+      }
+    } else { set fade 0 }
+    SceneSetState $scene_id 1 $fade
+  }
+
+  proc SceneInit { } {
+    global scene system
+
+    snowmix message "scenes.slib Initializing"
+    set scene(scenes) ""
+    set scene(stack) ""
+    set scene(maxwidth) $system(width)
+    set scene(maxheight) $system(height)
+    set scene(fadeup,scene) [expr int(0.8*$system(frame_rate))]
+    set scene(fadedown,scene) $scene(fadeup,scene)
+    #set scene(fadepause,scene) $scene(fadeup,scene)
+    set scene(fadepause,scene) 1
+    set scene(fadeup,frame) $scene(fadeup,scene)
+    set scene(fadedown,frame) $scene(fadeup,scene)
+    set scene(fadepause,frame) $scene(fadeup,scene)
+
+    # The font for frame name and text is here fixed to font 4.
+    # FIXME. Needs to be dynamically allocated
+    set scene(name,font) 4
+    set scene(time,font) 4
+    snowmix parse "text font 4 Eurostile Bold 16"
+    
+    set scene(setactivesilent) 1
+
+    # Registrering the types feed and image
+    set scene(frametypes) ""
+    #            type  
+    if {[llength [info procs FeedInit]]} {
+      SceneAddFrameType feed  FeedInfo
+    }
+    if {[llength [info procs ImageInit]]} {
+      SceneAddFrameType image ImageInfo
+    }
+    # Creating Scene 0 and Scene 1
+    snowmix message "scenes.slib : Adding Scene 0 with no frame as fullscreen Fade To Black - FTB."
+    SceneCreate "FTB" 0
+    snowmix message "scenes.slib : Adding Scene 1 with fullscreen frame - $scene(maxwidth)x$scene(maxheight)."
+    SceneCreate "FullScreen" 1
+    # SceneAddFrame { scene_id frame_id xoff yoff width height }
+#    puts "SceneAddFrame 1 1 0 0 $scene(maxwidth) $scene(maxheight)"
+    # Make sure CVideoShape and CTextItems and CVideoImage are loaded
+    snowmix parses "shape "
+    snowmix parses "text "
+    snowmix parses "image "
+    SceneAddFrame 1 1 0 0 $scene(maxwidth) $scene(maxheight)
+
+    Add2Update post ScenesUpdate
+    snowmix message "scenes.slib : Library initialized"
+  }
+
+  # list scene ids of defined scenes
+  proc ScenesList {} {
+    global scene
+    snowmix message "Scenes = $scene(scenes)"
+    return
+  }
+
+  # List specific details of an individual scene
+  proc SceneList { scene_id } {
+    global scene
+    if {![info exist scene(name,$scene_id)]} {
+      snowmix message "Invalid scene_id."
+    }
+    set s "message Scene $scene_id active $scene(active,$scene_id) WxH $scene(width,$scene_id)x$scene(height,$scene_id) at 0,0 "
+    append s "name $scene(name,$scene_id)\n"
+    if {[info exist scene(back,image_id,$scene_id)]} {
+      append s "message - back : image $scene(back,image_id,$scene_id) "
+      append s "WxH $scene(back,width,$scene_id)x$scene(back,height,$scene_id) "
+      append s "at $scene(back,x,$scene_id),$scene(back,y,$scene_id) "
+      append s "shape $scene(back,shape_id,$scene_id) place "
+      append s "$scene(back,place_id,$scene_id)\n"
+    }
+    foreach frame_id $scene(frames,$scene_id) {
+      append s "message - frame $frame_id active "
+      append s "$scene(active,$scene_id,$frame_id) : "
+      append s "$scene(width,$scene_id,$frame_id)x"
+      append s "$scene(height,$scene_id,$frame_id) at "
+      append s "$scene(xoff,$scene_id,$frame_id),"
+      append s "$scene(yoff,$scene_id,$frame_id) source "
+      append s "$scene(source_front,$scene_id,$frame_id),"
+      append s "$scene(source_back,$scene_id,$frame_id) id "
+      append s "$scene(source_id_front,$scene_id,$frame_id),"
+      append s "$scene(source_id_back,$scene_id,$frame_id) shape "
+      append s "$scene(shape_front,$scene_id,$frame_id),"
+      append s "$scene(shape_back,$scene_id,$frame_id) place "
+      append s "$scene(place_front,$scene_id,$frame_id),"
+      append s "$scene(place_back,$scene_id,$frame_id)\n"
+    }
+    foreach clock_id $scene(clocks,$scene_id) {
+      #set clock_id $scene(clock_id,$scene_id)
+      append s "message - clock $clock_id active $scene(clock_mode,$scene_id,$clock_id) : "
+      append s "at $scene(clock_x,$scene_id,$clock_id),$scene(clock_y,$scene_id,$clock_id) text "
+      append s "$scene(clock_red,$scene_id,$clock_id) $scene(clock_green,$scene_id,$clock_id) "
+      append s "$scene(clock_blue,$scene_id,$clock_id) $scene(clock_alpha,$scene_id,$clock_id) bg "
+      append s "$scene(clock_bg_red,$scene_id,$clock_id) $scene(clock_bg_green,$scene_id,$clock_id) "
+      append s "$scene(clock_bg_blue,$scene_id,$clock_id) $scene(clock_bg_alpha,$scene_id,$clock_id)\n"
+    }
+    snowmix parse "$s\nmessage \n"
+    return
+  }
+ 
+  proc SceneCreate { name scene_id } {
+    global scene system
+    set width "-"
+    set height "-"
+    set x 0
+    set y 0
+    if {[string match "-" $width]} { set width $scene(maxwidth) }
+    if {[string match "-" $height]} { set height $scene(maxheight) }
+    if {[info exist scene(name,$scene_id)] || $width < 1 || $height < 1} {
+      snowmix message "Create scene failed."
+      return
+    }
+    lappend scene(scenes) $scene_id
+    set scene(name,$scene_id) "$name"
+    set scene(width,$scene_id) [expr round($width)]
+    set scene(height,$scene_id) [expr round($height)]
+    set scene(x,$scene_id) [expr round($x)]
+    set scene(y,$scene_id) [expr round($y)]
+    #set scene(background_shape,$scene_id) $shape
+    set scene(frames,$scene_id) ""
+    set scene(active,$scene_id) 0
+    set scene(alpha,$scene_id) 1
+    set scene(alphabg,$scene_id) 1
+    set scene(alphatext,$scene_id) 1
+    set scene(deltaalpha,$scene_id) 0
+    set scene(alphabg,link,$scene_id) 1
+    set scene(alphatext,link,$scene_id) 1
+    set scene(clocks,$scene_id) ""
+    set scene(overlay_text,$scene_id) ""
+    set scene(order,$scene_id) ""
+    set scene(name,font,$scene_id) $scene(name,font)
+    set scene(time,font,$scene_id) $scene(time,font)
+    if {$scene(setactivesilent)} return
+    snowmix message "SceneCreate $scene_id $name"
+    return
+  }
+
+  proc SceneOverlayOrder { scene_id args } {
+    global scene
+    if {![info exist scene(name,$scene_id)]} {
+      snowmix message "SceneOverlayOrder failed."
+      return
+    }
+    if {![llength $args]} {
+      return $scene(order,$scene_id)
+    }
+    foreach arg $args { lappend newlist $arg }
+    set scene(order,$scene_id) $newlist
+    return
+  }
+
+  proc SceneSetTextClock { scene_id clock_id x y } {
+    global scene
+    if {![info exist scene(name,$scene_id)]} {
+      snowmix message "SceneAddTextClock failed."
+      return
+    }
+    set scene(clock_x,$scene_id,$clock_id) $x
+    set scene(clock_y,$scene_id,$clock_id) $y
+    return
+  }
+
+  # Toggle visibility of clock
+  proc SceneTextClockToggle { scene_id clock_id } {
+    global scene
+    if {![info exist scene(name,$scene_id)]} {
+      snowmix message "SceneTextClockToggle failed."
+    }
+    if {[info exist scene(clock_mode,$scene_id,$clock_id)]} {
+      if {$scene(clock_mode,$scene_id,$clock_id)} {
+        set scene(clock_mode,$scene_id,$clock_id) 0
+      } else {
+        set scene(clock_mode,$scene_id,$clock_id) 1
+      }
+      snowmix message "Clock toggled to $scene(clock_mode,$scene_id,$clock_id)"
+    } else {
+      snowmix message "Clock $clock_id does not exist for scene $scene_id"
+    }
+    return
+  }
+
+  proc SceneAddTextClock { scene_id clock_id clock_mode } {
+    global scene
+    if {![info exist scene(name,$scene_id)]} {
+      snowmix message "SceneAddTextClock failed."
+    }
+    lappend scene(clocks,$scene_id) $clock_id
+    set scene(clock_mode,$scene_id,$clock_id) $clock_mode
+    set scene(clock_x,$scene_id,$clock_id) 0
+    set scene(clock_y,$scene_id,$clock_id) 0
+    set scene(clock_red,$scene_id,$clock_id) 1
+    set scene(clock_green,$scene_id,$clock_id) 1
+    set scene(clock_blue,$scene_id,$clock_id) 1
+    set scene(clock_alpha,$scene_id,$clock_id) 1
+    set scene(clock_bg_red,$scene_id,$clock_id) 0
+    set scene(clock_bg_green,$scene_id,$clock_id) 0
+    set scene(clock_bg_blue,$scene_id,$clock_id) 0
+    set scene(clock_bg_alpha,$scene_id,$clock_id) 1
+    return
+  }
+
+  proc SceneColorClock { scene_id clock_id text red green blue alpha } {
+    global scene
+    if {![info exist scene(name,$scene_id)]} {
+      snowmix message "SceneColorClock failed. No such scene $scene_id $clock_id"
+      return
+    }
+    if {![info exist scene(clock_mode,$scene_id,$clock_id)]} {
+      snowmix message "SceneColorClock failed. No such clock $clock_id"
+      return
+    }
+    if {$text} {
+      set scene(clock_red,$scene_id,$clock_id) $red
+      set scene(clock_green,$scene_id,$clock_id) $green
+      set scene(clock_blue,$scene_id,$clock_id) $blue
+      set scene(clock_alpha,$scene_id,$clock_id) $alpha
+    } else {
+      set scene(clock_bg_red,$scene_id,$clock_id) $red
+      set scene(clock_bg_green,$scene_id,$clock_id) $green
+      set scene(clock_bg_blue,$scene_id,$clock_id) $blue
+      set scene(clock_bg_alpha,$scene_id,$clock_id) $alpha
+    }
+    return
+  }
+
+  # Return active scene_id or set scene active, to be displayed
+  # No arguments list active scene_id
+  # active=1 sets scene_id active and all other scenes inactive (0)
+  # active=0 sets scene_id inactive.
+  # fade=0 scene_id will be set active and alpha=1 or inactive immediately
+  # fade=1 scene_id will be set active, alpha=0 and faded in. Previous active will be set passive and faded out
+  # fade=-1 scene_id will set active and alpha unchanged or inactive immediately
+  # SceneSetState [ scene_id active fade ]
+  proc SceneSetState { args } {
+    global scene system
+    set argc [llength $args]
+    # Should we list the active scene_id ?
+    if {!$argc} {
+      set scene_list ""
+      set active_id -1
+      foreach id $scene(scenes) {
+        if {$scene(active,$id) > 0} {
+          set active_id $id
+        } else {
+          lappend scene_list "$id $scene(active,$id)"
+        }
+      }
+      if {$active_id > -1} {
+        set scene_list [linsert $scene_list 0 "$active_id $scene(active,$active_id)"]
+      }
+      return $scene_list
+    }
+    # No we are going to set or fade a scene to either active or passive
+    set scene_id [lindex $args 0]
+    if {![info exist scene(name,$scene_id)] || $argc < 2} {
+      snowmix message "SceneSetState failed"
+      return
+    }
+    set active [lindex $args 1]
+    # Check if we have a fade parameter
+    if {$argc > 2} {
+      set fade [lindex $args 2]
+    } else {
+      set fade 0
+    }
+    set delay 0
+    # Now if active is 1, we may need to set or fade another scene inactive
+    if { $active > 0 } {
+      foreach id $scene(scenes)  {
+    	if {$scene(active,$id) > 0} {
+          # if active id is equal to new scene_id, we break.
+          if {$id == $scene_id} break
+          if {$fade > 0} {
+            # We are fading down
+            set speedset [SceneFadeSpeed down $id -]
+            set steps [lindex $speedset 0]
+            set delta [lindex $speedset 1]
+            #set delay [expr 1.2 * $steps / $system(framerate)]
+            set scene(active,$id) -$steps
+            set scene(deltaalpha,$id) -$delta
+            set delay 1
+          } else {
+            set scene(active,$id) 0
+          }
+        }
+      }
+    }
+    # Are we fading or cutting?
+    if {$fade > 0} {
+      # We are fading up
+      set speedset [SceneFadeSpeed up $scene_id -]
+      #set steps [lindex $speedset 0]
+      set delta [lindex $speedset 1]
+      if {$active} {
+        SceneAlpha $scene_id -1 0
+        if {$delay} {
+          # We need to postpone the fade up
+          set speedset [SceneFadeSpeed pause $scene_id -]
+          set steps [lindex $speedset 0]
+          set delay [expr $steps / $system(framerate)]
+          snowmix parse "command at +$delay tcl eval set scene(deltaalpha,$scene_id) $delta ; set scene(active,$scene_id) $active"
+        } else {
+          set scene(deltaalpha,$scene_id) $delta
+          set scene(active,$scene_id) $active"
+        }
+      } else {
+        set scene(deltaalpha,$scene_id) -$delta
+        set scene(active,$scene_id) $active"
+      }
+    } else {
+      if {!$fade} { SceneAlpha $scene_id -1 1 }
+      set scene(active,$scene_id) $active
+    }
+    if {!$scene(setactivesilent)} {
+      snowmix message "silent $scene(setactivesilent) scene $scene_id state set $active"
+    }
+    return
+  }
+
+  proc SceneSetBackground { scene_id image_id } {
+    global scene
+    if {![info exist scene(name,$scene_id)]} {
+      snowmix message "Add background to scene failed"
+      return
+    }
+
+    if {[info exist scene(back,shape_id,$scene_id)]} {
+      set shape_id $scene(back,shape_id,$scene_id)
+    } else {
+      set shape_id [GetNextAvail shape]
+    }
+    if {![string is integer -strict $shape_id]} { return }
+    set scene(back,shape_id,$scene_id) $shape_id
+
+    if {[info exist scene(back,place_id,$scene_id)]} {
+      set place_id $scene(back,place_id,$scene_id)
+    } else {
+      set place_id [GetNextAvail placedshape]
+    }
+    if {![string is integer -strict $place_id]} { return }
+    set scene(back,place_id,$scene_id) $place_id
+
+    set scene(back,image_id,$scene_id) $image_id
+    if {[string match "-" $image_id]} {
+      snowmix message "Background for scene $scene_id disabled"
+      return
+    }
+
+    set geometry [GetFromKeyId "image load" geometry $image_id]
+    set image_width [lindex $geometry 0]
+    set image_height [lindex $geometry 1]
+    set s ""
+    set scene(back,width,$scene_id) $image_width
+    set scene(back,height,$scene_id) $image_height
+    set xoff [expr $image_width/2.0]
+    set yoff [expr $image_height/2.0]
+    set scale_x [expr double($scene(width,$scene_id))/$image_width]
+    set scale_y [expr double($scene(height,$scene_id))/$image_height]
+    append s "shape add $shape_id to be deleted\n"
+    append s "shape add $shape_id  \n"
+    append s "shape add $shape_id Scene $scene_id background shape\n"
+    append s "shape inshape $shape_id 2\n"
+    append s "shape clip $shape_id\n"
+    append s "shape newpath $shape_id\n"
+    append s "shape image $shape_id $image_id -$xoff -$yoff $scale_x $scale_y\n"
+    append s "shape paint $shape_id 1\n"
+    set x [expr $scene(x,$scene_id) + $scene(width,$scene_id)/2.0]
+    set y [expr $scene(y,$scene_id) + $scene(height,$scene_id)/2.0]
+    append s "shape place $place_id $shape_id $x $y $scene(width,$scene_id) $scene(height,$scene_id) \n"
+    set scene(back,x,$scene_id) $x
+    set scene(back,y,$scene_id) $y
+
+    snowmix parse "$s"
+    snowmix message "Background for scene $scene_id set"
+    return
+  }
+
+  proc ScenePlaceFrame { scene_id frame_id xoff yoff width height } {
+    global scene
+    if {![info exist scene(name,$scene_id)] || ![info exist scene(xoff,$scene_id,$frame_id)]} {
+      snowmix message "ScenePlaceFrame failed"
+      return
+    }
+    #set s ""
+    set scene(xoff,$scene_id,$frame_id) $xoff
+    set scene(yoff,$scene_id,$frame_id) $yoff
+    set scene(width,$scene_id,$frame_id) $width
+    set scene(height,$scene_id,$frame_id) $height
+    if {![string match "\-" $scene(source_front,$scene_id,$frame_id)]} {
+        SceneSetFrameSource $scene_id $frame_id $scene(source_front,$scene_id,$frame_id) $scene(source_id_front,$scene_id,$frame_id) 1 $scene(active,$scene_id,$frame_id)
+    }
+    if {![string match "\-" $scene(source_back,$scene_id,$frame_id)]} {
+      SceneSetFrameSource $scene_id $frame_id $scene(source_back,$scene_id,$frame_id) $scene(source_id_back,$scene_id,$frame_id) 0 0
+    }
+    ScenePlaceTextFrame $scene_id $frame_id $xoff $yoff $width $height
+
+    snowmix message "ScenePlaceFrame done"
+    return
+  }
+
+  
+  proc ScenePlaceTextFrame { scene_id frame_id xoff yoff width height } {
+    global scene
+    if {![info exist scene(name,$scene_id)] || ![info exist scene(xoff,$scene_id,$frame_id)]} {
+      snowmix message "ScenePlaceTextFrame failed"
+      return
+    }
+    foreach order {front back} {
+      if {$scene(name_text_id_$order,$scene_id,$frame_id) > -1} {
+        snowmix parse "text coor $scene(name_text_id_$order,$scene_id,$frame_id) [expr $xoff + $width / 2] [expr $yoff + 2]"
+      }
+      if {$scene(time_text_id_$order,$scene_id,$frame_id) > -1} {
+        snowmix parse "text coor $scene(time_text_id_$order,$scene_id,$frame_id) [expr $xoff + $width] [expr $yoff + $height - 2]"
+      }
+    }
+    return
+  }
+
+    #SceneFrameText $scene_id $frame_id name $front - "Feed #$type_id"
+  # SceneFrameText { scene_id frame_id type [ order value [ string_value] ]
+  # type = name | time
+  # order = 1=front 0=back
+  # value = 1=show 0=hide
+  proc SceneFrameText { scene_id frame_id type args } {
+    global scene
+    if {![info exist scene(name,$scene_id)] || ![info exist scene(active,$scene_id,$frame_id)]} {
+      snowmix message "SceneFrameText failed for scene $scene_id frame $frame_id"
+      return
+    }
+    # Check if this is a request for values
+    set argl [llength $args]
+    if {!$argl} {
+      foreach order {front back} {
+        set showkey [format "%s_text_show_%s" $type $order]
+        if {[info exist scene($showkey,$scene_id,$frame_id)]} {
+          lappend s $scene($showkey,$scene_id,$frame_id)
+        } else { lappend s "-" }
+      }
+      return $s
+    }
+    # This is a call to set value
+    set order [lindex $args 0]
+    set value [lindex $args 1]
+    if {$order} { set order front } else { set order back }
+    if {$value} { set value 1 } else { set value 0 }
+    if {$argl == 2} {
+      set showkey [format "%s_text_show_%s" $type $order]
+      if {[info exist scene($showkey,$scene_id,$frame_id)]} {
+        set scene($showkey,$scene_id,$frame_id) $value
+      }
+      return
+    } elseif {$argl >= 3} {
+      set stringkey [format "%s_string_id_%s" $type $order]
+      if {[info exist scene($stringkey,$scene_id,$frame_id)]} {
+        foreach t [lrange $args 2 end] { append s "$t " }
+#        puts "text string $scene($stringkey,$scene_id,$frame_id) $s"
+        snowmix parse "text string $scene($stringkey,$scene_id,$frame_id) $s"
+      }
+    }
+  }
+
+  proc SceneFrameToogleTitleBar { scene_id frame_id } {
+    global scene
+    if {![info exist scene(titlebar,$scene_id,$frame_id)]} return
+    if {$scene(titlebar,$scene_id,$frame_id)} { set scene(titlebar,$scene_id,$frame_id) 0 } else { set scene(titlebar,$scene_id,$frame_id) 1 }
+    return
+  }
+
+  proc SceneAddFrame { scene_id frame_id xoff yoff width height } {
+    global scene
+    if {[string match "-" $width]} { set width $scene(maxwidth) }
+    if {[string match "-" $height]} { set height $scene(maxheight) }
+    if {![info exist scene(name,$scene_id)] || $width < 1 || $height < 1 || [info exist scene(active,$scene_id,$frame_id)]} {
+      snowmix message "Add frame to scene failed."
+      return
+    }
+
+    lappend scene(frames,$scene_id) $frame_id
+    set scene(active,$scene_id,$frame_id) 0
+    set scene(xoff,$scene_id,$frame_id) $xoff
+    set scene(yoff,$scene_id,$frame_id) $yoff
+    set scene(width,$scene_id,$frame_id) $width
+    set scene(height,$scene_id,$frame_id) $height
+    set scene(titlebar,$scene_id,$frame_id) 0
+    set scene(titlebar_id,$scene_id,$frame_id) 1
+    foreach order { front back } {
+      set scene(source_$order,$scene_id,$frame_id) -
+      set scene(source_id_$order,$scene_id,$frame_id) -1
+      #set scene(name_text_id_$order,$scene_id,$frame_id) -1
+      #set scene(time_text_id_$order,$scene_id,$frame_id) -1
+      foreach type {name time} {
+        set stringkey [format "%s_string_id_%s" $type $order]
+        set textkey [format "%s_text_id_%s" $type $order]
+        set showkey [format "%s_text_show_%s" $type $order]
+        set scene($showkey,$scene_id,$frame_id) 0
+        # scene(name_text_show_front,$scene_id,$frame_id)
+        # scene(time_text_show_front,$scene_id,$frame_id)
+        if {$type == {name}} {
+          set string_id [ReserveNextAvail string "$type for scene $scene_id frame $frame_id $order"]
+        } else {
+          set string_id [ReserveNextAvail string "\[#RUNTIME1]"]
+        }
+        if {![string is integer -strict $string_id]} {
+          snowmix message "WARNING: No available string in SceneAddFrame"
+          set scene($stringkey,$scene_id,$frame_id) -1
+        } else {
+          set scene($stringkey,$scene_id,$frame_id) $string_id
+        }
+        set text_id [ReserveNextAvail placedtext $string_id $scene($type,font,$scene_id)]
+        if {![string is integer -strict $text_id]} {
+          snowmix message "WARNING: No available textplace or missing font in SceneAddFrame"
+          set scene($textkey,$scene_id,$frame_id) -1
+        } else {
+          set scene($textkey,$scene_id,$frame_id) $text_id
+          if {$type == {name}} {
+            snowmix parse "text align $text_id top center"
+            snowmix parse "text rgb $text_id 1 1 1"
+            snowmix parse "text backgr $text_id 10 10 2 2 0 0 0 0.3"
+          } else {
+            snowmix parse "text align $text_id bottom right"
+            snowmix parse "text rgb $text_id 1 1 1"
+            snowmix parse "text backgr $text_id 10 0 2 2 0 0 0 0.3"
+          }
+        }
+      }
+    }
+    ScenePlaceTextFrame $scene_id $frame_id $xoff $yoff $width $height
+    set scene(valign,$scene_id,$frame_id) l
+    set scene(halign,$scene_id,$frame_id) t
+    #set scene(alpha,$scene_id,$frame_id) 1
+    set scene(alphalink,$scene_id,$frame_id) 0
+    # Now get the front and back shape and placed shape
+    foreach order { front back } {
+      set shape [GetNextAvail shape]
+      if {![string is integer -strict $shape]} {
+        snowmix message "WARNING: No available shape in SceneAddFrame"
+        continue
+      }
+      snowmix parse "shape add $shape To be deleted"
+      snowmix parse "shape add $shape"
+      snowmix parse "shape add $shape Reserved. Scene $scene_id frame $frame_id order $order"
+      set scene(shape_$order,$scene_id,$frame_id) $shape
+
+      set place [GetNextAvail placedshape]
+      if {![string is integer -strict $place]} {
+        snowmix message "WARNING: No available placed shape in SceneAddFrame"
+        continue
+      }
+      snowmix parse "shape place $place 1 0 0 1 1 "
+      snowmix parse "shape place $place "
+      snowmix parse "shape place $place 1 0 0 1 1 "
+      set scene(place_$order,$scene_id,$frame_id) $place
+    }
+    lappend scene(order,$scene_id) "f $frame_id"
+    return
+  }
+
+  proc ScenesUpdate {} {
+    global scene system
+    # Go through all scenes and update active scenes
+    foreach scene_id $scene(scenes) {
+      # Active can be negative, 0 or 1
+      if {$scene(active,$scene_id) != 0} {
+
+        # Check if we need to adjust alpha
+        if {$scene(deltaalpha,$scene_id)} {
+          set scene(alpha,$scene_id) [expr $scene(alpha,$scene_id) + $scene(deltaalpha,$scene_id)]
+          if {$scene(alpha,$scene_id) > 1} {
+            set scene(alpha,$scene_id) 1
+            set scene(deltaalpha,$scene_id) 0
+          } elseif {$scene(alpha,$scene_id) < 0} {
+            set scene(alpha,$scene_id) 0
+            set scene(deltaalpha,$scene_id) 0
+          }
+          if {$scene(alphabg,link,$scene_id)} {
+            if {[info exist scene(back,place_id,$scene_id)]} {
+              snowmix parse "shape place alpha $scene(back,place_id,$scene_id) $scene(alpha,$scene_id)"
+            }
+          }
+          if {$scene(alphatext,link,$scene_id)} { set scene(alphatext,$scene_id) $scene(alpha,$scene_id) }
+        }
+       
+        # Check if we need to increment negative active scene
+        if {$scene(active,$scene_id) < 0} {
+          incr scene(active,$scene_id)
+        }
+
+        # Check if we need to apply a background
+        if {[info exist scene(back,place_id,$scene_id)] &&
+	    ![string match "-" $scene(back,image_id,$scene_id)]} {
+          snowmix parse "shape overlay $scene(back,place_id,$scene_id) "
+        }
+        # Go through the overlay order and find frames and texts
+        foreach displayset $scene(order,$scene_id) {
+          set type [lindex $displayset 0]
+          if {$type == {f}} {
+            set frame_id [lindex $displayset 1]
+            # Check to see if frame is active
+            if { $scene(active,$scene_id,$frame_id) != 0 } {
+              # Check if we need to increment negative active frame
+              if { $scene(active,$scene_id,$frame_id) < 0 } {
+                incr scene(active,$scene_id,$frame_id)
+              }
+
+              foreach side {back front} {
+                if {[string match "-" $scene(source_$side,$scene_id,$frame_id)]} {
+                  set frame_set($side,alpha) "-"
+                  set frame_set($side,source) "- -"
+                  continue
+                }
+                if {[info exist scene(place_$side,$scene_id,$frame_id)]} {
+                  set alpha [lindex [lindex [snowmix info shape alpha $scene(place_$side,$scene_id,$frame_id)] 0] 1]
+                  set alpha_restore $alpha
+                  if {$scene(alpha,$scene_id) < 1 && $alpha > 0} {
+                    set alpha [expr $alpha * $scene(alpha,$scene_id)]
+                    snowmix parse "shape place alpha $scene(place_$side,$scene_id,$frame_id) $alpha"
+                  }
+                  snowmix parse "shape overlay $scene(place_$side,$scene_id,$frame_id) "
+                  if {[llength $scene(overlay_proc,type,$scene(source_$side,$scene_id,$frame_id))]} {
+                    set alpha [lindex [lindex [snowmix info shape alpha $scene(place_$side,$scene_id,$frame_id)] 0] 1]
+                    $scene(overlay_proc,type,$scene(source_$side,$scene_id,$frame_id)) $scene(source_id_$side,$scene_id,$frame_id) $scene(xoff,$scene_id,$frame_id) $scene(yoff,$scene_id,$frame_id) $scene(width,$scene_id,$frame_id) $scene(height,$scene_id,$frame_id) $alpha
+                  }
+                  set frame_set($side,alpha) $alpha
+                  set frame_set($side,source) "$scene(source_$side,$scene_id,$frame_id) $scene(source_id_$side,$scene_id,$frame_id)"
+
+                  if {$alpha != $alpha_restore} {
+                    snowmix parse "shape place alpha $scene(place_$side,$scene_id,$frame_id) $alpha_restore"
+                  }
+                  if {$scene(name_text_show_$side,$scene_id,$frame_id)} {
+                    snowmix parse "text alpha $scene(name_text_id_$side,$scene_id,$frame_id) $alpha"
+                    snowmix parse "text overlay $scene(name_text_id_$side,$scene_id,$frame_id)"
+#puts "OVERLAY $scene(name_text_id_$side,$scene_id,$frame_id)"
+                  }
+                  if {$scene(time_text_show_$side,$scene_id,$frame_id)} {
+                    snowmix parse "text alpha $scene(time_text_id_$side,$scene_id,$frame_id) $alpha"
+                    snowmix parse "text overlay $scene(time_text_id_$side,$scene_id,$frame_id)"
+                  }
+                }
+              }
+              if {$scene(titlebar,$scene_id,$frame_id) && [info procs TitleBarOverlay] != ""} {
+                TitleBarOverlay 1
+              }
+
+              # If a source is visible, we update its key entry with current frame_no
+              # This we we can later ask when a source was last displayed
+              if {$frame_set(front,alpha) != "-" && $frame_set(front,alpha) > 0.0} {
+                set scene(source_last_seen,$frame_set(front,source)) $system(frame_no,post)
+#                puts "set scene(source_last_seen,$frame_set(front,source)) $system(frame_no,post)"
+              }
+              if {$frame_set(back,alpha) != "-" && $frame_set(back,alpha) > 0.0} {
+                if { $frame_set(front,alpha) == "-" || $frame_set(front,alpha) < 1.0 } {
+                  set scene(source_last_seen,$frame_set(back,source)) $system(frame_no,post)
+#                  puts "set scene(source_last_seen,$frame_set(back,source)) $system(frame_no,post)"
+                }
+              }
+            }
+          } elseif {$type == {t}} {
+            set text_id [lindex $displayset 1]
+            if {!$scene(overlay_text,$scene_id,$text_id)} continue
+            set s "text alpha $text_id $scene(alphatext,$scene_id)\n"
+            append s "text overlay $text_id"
+            snowmix parse $s
+          }
+        }
+      }
+    }
+#    set s ""
+#    foreach scene_id $scene(scenes) {
+#      if {$scene(active,$scene_id) != 0} {
+#        if {[string length $scene(overlay_text,$scene_id)] > 0} {
+#          foreach text_id $scene(overlay_text,$scene_id) {
+#            append s "text alpha $text_id $scene(alphatext,$scene_id)\n"
+#          }
+#          append s "text overlay $scene(overlay_text,$scene_id)\n"
+#        }
+#      }
+#    }
+#    if {[string length $s] > 0} {
+#      snowmix parse "$s"
+#    }
+#    foreach scene_id $scene(scenes) {
+#      if {$scene(active,$scene_id) > 0} {
+#        foreach clock_id $scene(clocks,$scene_id) {
+#          if {$scene(clock_mode,$scene_id,$clock_id) > 0} {
+#            #append s [TextClockUpdate $clock_id]
+#            TextClockUpdate $clock_id
+#          }
+#        }
+#      }
+#    }
+#puts "FRAME $system(frame_no,post)"
+    #CheckDisplayState
+    SceneCheckSourceDisplayed
+    return
+  }
+
+  # Args : [ source [ exe_proc ] ]
+  proc SceneAddSourceCheck { args } {
+    global scene
+    if {[llength $args]} {
+      set source [lindex $args 0]
+      if {[llength $args] > 1} {
+        set exec_proc [lindex $args 1]
+        set options [lrange $args 2 end]
+        if {![info exist scene(check_source_displayed)] || [lsearch $scene(check_source_displayed) $source] == -1} {
+          lappend scene(check_source_displayed) $source
+        }
+        set scene(source_displayed,proc,$source) $exec_proc
+        if { $options != "" } {
+          set scene(source_displayed,options,$source) $options
+        } else {
+          unset -nocomplain scene(source_displayed,options,$source)
+        }
+      } else {
+        unset -nocomplain scene(source_displayed,proc,$source)
+        unset -nocomplain scene(source_displayed,options,$source)
+        while {[lsearch -exact $scene(check_source_displayed) $source] > -1} {
+          set n [lsearch -exact $scene(check_source_displayed) $source]
+          set scene(check_source_displayed) [lreplace $scene(check_source_displayed) $n $n]
+        }
+      }
+    }
+    snowmix message "scenes.slib : SceneAddSourceCheck = $scene(check_source_displayed)"
+    return
+  }
+
+  proc SceneCheckSourceDisplayed {} {
+    global scene system
+    if {![info exist scene(check_source_displayed)]} return
+    set current_frame_no $system(frame_no,post)
+    foreach source $scene(check_source_displayed) {
+      # We skip it if we have never seen it
+      if {![info exist scene(source_last_seen,$source)]} {
+        continue
+      }
+      set change ""
+
+      # We now check if we saw it in last frame, but not this
+      if {$current_frame_no > $scene(source_last_seen,$source)} {
+        if {$current_frame_no - 1 > $scene(source_last_seen,$source)} {
+          continue
+        }
+        set change off
+      } else {
+        # We saw the source is this frame period. We check if did not see it in the last frame and have a change
+        if {![info exist scene(source_prev_seen,$source)]} {
+          set change on
+          set scene(source_prev_seen,$source) $current_frame_no
+        } else {
+          # We have seen the source. We check if we saw it in the last
+          if { $scene(source_prev_seen,$source) + 1 == $current_frame_no } {
+            # Source was seen in the last frame. No change
+            set scene(source_prev_seen,$source) $current_frame_no
+            continue
+          }
+          # Source has been seen before, but it was not in the previous frame period
+          set change on
+          set scene(source_prev_seen,$source) $current_frame_no
+        }
+      }
+      if {$change != "" && [info exist scene(source_displayed,proc,$source)] && [info procs $scene(source_displayed,proc,$source)] != ""} {
+        if {[info exist scene(source_displayed,options,$source)]} {
+          $scene(source_displayed,proc,$source) $source $change $scene(source_displayed,options,$source)
+        } else {
+          $scene(source_displayed,proc,$source) $source $change
+        }
+      }
+    }
+    return
+  }
+puts PMM4
+
+  proc CheckDisplayState2 {} {
+    global scene
+    if {![info exist scene(source_displayed)]} return
+    set display_list ""
+    foreach frame_set  $scene(source_displayed) {
+      set back [lindex $frame_set 0]
+      set front [lindex $frame_set 1]
+#puts "SIDE <$back> <$front>"
+      set back_source [lindex $back 2]
+      set back_alpha [lindex $back 3]
+      set front_source [lindex $front 2]
+      set front_alpha [lindex $front 3]
+      if {$front_alpha != "-" && $front_alpha > 0.0} { lappend display_list $front_source }
+      if {$back_alpha != "-" && $back_alpha > 0.0} {
+        if { $front_alpha == "-" || $front_alpha < 1.0 } { lappend display_list $back_source }
+      }
+#puts "LIST $display_list $front_source $front_alpha"
+    }
+    if {[lsearch $display_list "feed 5"] > -1} { puts "feed 5 seen" }
+    return
+  }
+
+  #   s   f
+  #  <0  <0   : scene(fadespeed) : All scenes
+  #  <0  >0   : scene(fadespeed,frame) : All frames all scenes
+  # >-1  =-   : scene(fadespeed,$scene_id) : One scene
+  # >-1  <0   : scene(fadespeed,frame,$scene_id) : All frame in one scene
+  # >-1  >-1  : scene(fadespeed,$scene_id,$frame_id) : One Scene one frame
+  # type = all, up, down, pause
+  proc SceneFadeSpeed { type scene_id frame_id args } {
+    global scene
+    if {[llength $args]} {
+      set speed [lindex $args 0]
+      if {![string is integer -strict $speed]} {
+        snowmix message "SceneFadeSpeed failed"
+        return
+      }
+      if {$speed < 1 } { set speed 1 }
+      if {$type == {all}} { set type_list {up down pause} } else { set type_list $type }
+      if {$scene_id == {all}} { set scene_list $scene(scenes) } else { set scene_list $scene_id }
+      foreach type $type_list {
+        foreach scene_id $scene_list {
+#puts "FadeSpeed type $type scene $scene_id frame $frame_id speed $speed"
+        if {$scene_id > -1 && $frame_id == {all}} { set frame_list $scene(frames,$scene_id) } else { set frame_list $frame_id }
+          set frame $frame_id;
+          foreach frame_id $frame_list {
+            if {$scene_id < 0} {
+              if {$frame_id < 0} {
+                set scene(fade$type) $speed
+              } else {
+                set scene(fade$type,frame) $speed
+              }
+            } else {
+              if {[string match "-" $frame_id]} {
+                set scene(fade$type,$scene_id) $speed
+              } elseif {$frame_id < 0} {
+                set scene(fade$type,frame,$scene_id) $speed
+              } else {
+                set scene(fade$type,$scene_id,$frame_id) $speed
+              }
+            }
+          }
+          set frame_id $frame;
+        }
+      }
+    } else {
+      if {![info exist scene(name,$scene_id)] || ($type != {all} && $type != {up} && $type != {down} && $type != {pause})} {
+        snowmix message "SceneFadeSpeed failed"
+        return
+      }
+      if {$type == {all}} {
+        return "{up [SceneFadeSpeed up $scene_id $frame_id]} {pause [SceneFadeSpeed pause $scene_id $frame_id]} {down [SceneFadeSpeed down $scene_id $frame_id]}"
+      }
+      if {[info exist scene(fade$type,$scene_id,$frame_id)]} {
+        set speed $scene(fade$type,$scene_id,$frame_id)
+      } elseif {[info exist scene(fade$type,frame,$scene_id)]} {
+        set speed $scene(fade$type,frame,$scene_id)
+      } elseif {([string match "-" $frame_id] || $frame_id == -1) && [info exist scene(fade$type,$scene_id)]} {
+        set speed $scene(fade$type,$scene_id)
+      } elseif {[info exist scene(fade$type,frame)]} {
+        set speed $scene(fade$type,frame)
+      } elseif {[info exist scene(fade$type)]} {
+        set speed $scene(fade$type)
+      } else { set speed 32 }
+      if { $speed < 1 } { set speed 1 }
+#puts "Fadespeed Scene $scene_id frame $frame_id type $type speed $speed"
+      # We set delta a little to high to be sure we get there (1.0001/$speed)
+      return "$speed [expr 1.0001/$speed]"
+    }
+    return
+  }
+
+  # Switch back to front in frame. If fade is 0, then at once,
+  # otherwise fade.
+  proc SceneFrameBack2Front { scene_id frame_id fade } {
+    global scene system
+puts "SceneFrameBack2Front scene $scene_id frame $frame_id fade $fade"
+    # Check that scene and frame exist.
+    if {![info exist scene(name,$scene_id)] || ![info exist scene(xoff,$scene_id,$frame_id)]} {
+      snowmix message "SceneFrameBack2Front failed"
+      return
+    }
+    # Switch parameters between front and back
+    foreach name "place shape source source_id" {
+      set a $scene(${name}_front,$scene_id,$frame_id)
+      set scene(${name}_front,$scene_id,$frame_id) $scene(${name}_back,$scene_id,$frame_id)
+      set scene(${name}_back,$scene_id,$frame_id) $a
+    }
+    set s ""
+    if {$fade} {
+puts "place front $scene(place_front,$scene_id,$frame_id) $scene(place_back,$scene_id,$frame_id)"
+      # Get fade speed
+      set speedset [SceneFadeSpeed pause $scene_id $frame_id]
+      set steps [lindex $speedset 0]
+      #set delta [lindex $speedset 1]
+      set delay [expr $steps / $system(framerate)]
+      set speedset [SceneFadeSpeed up $scene_id $frame_id]
+      set steps [lindex $speedset 0]
+      set delta [lindex $speedset 1]
+      # Set alpha for front to 0 and order fade of alpha.
+      # Back will fade down from whatever value it has
+      append s "shape place alpha $scene(place_front,$scene_id,$frame_id) 0\n"
+                        #append s "shape place move alpha $scene(place_front,$scene_id,$frame_id) $delta $steps\n"
+      append s "command at +$delay shape place move alpha $scene(place_front,$scene_id,$frame_id) $delta $steps\n"
+
+
+      set speedset [SceneFadeSpeed down $scene_id $frame_id]
+      set steps [lindex $speedset 0]
+      set delta [lindex $speedset 1]
+      append s "shape place move alpha $scene(place_back,$scene_id,$frame_id) -$delta $steps\n"
+    } else {
+      append s "shape place alpha $scene(place_front,$scene_id,$frame_id) 1\n"
+      append s "shape place alpha $scene(place_back,$scene_id,$frame_id) 0\n"
+    }
+    set front 1
+    foreach order { front back } {
+      #set scene(source_$place,$scene_id,$frame_id) $type
+      #set scene(source_id_$place,$scene_id,$frame_id) $type_id
+      if {[string match feed $scene(source_$order,$scene_id,$frame_id)]} {
+        set nametext "Feed #$scene(source_id_$order,$scene_id,$frame_id)"
+        set timetext "\[#RUNTIME1,$scene(source_id_$order,$scene_id,$frame_id)\]"
+      } else { set nametext "" ; set timetext "" }
+#      if {[string match feed $scene(source_$order,$scene_id,$frame_id)]} {
+        set showkey [format "name_text_show_%s" $order]
+        if {[info exist scene($showkey,$scene_id,$frame_id)]} {
+          SceneFrameText $scene_id $frame_id name $front $scene($showkey,$scene_id,$frame_id) $nametext
+        }
+        set showkey [format "time_text_show_%s" $order]
+        if {[info exist scene($showkey,$scene_id,$frame_id)]} {
+          SceneFrameText $scene_id $frame_id time $front 1 $timetext
+        }
+#      }
+      set front 0
+    }
+    snowmix parses "$s"
+    snowmix message "SceneFrameBack2Front $scene_id $frame_id"
+    return
+  }
+
+  # Fade up/down scene scene_id
+  # fade=1 fade up, fade=0 fade down
+  proc SceneFade { scene_id fade } {
+    global scene
+    if {![info exist scene(name,$scene_id)]} {
+      snowmix message "SceneFade failed"
+      return
+    }
+    if {$fade} {
+      set speedset [SceneFadeSpeed up $scene_id -]
+      set delta [lindex $speedset 1]
+      #set steps [lindex $speedset 0]
+      set scene(deltaalpha,$scene_id) $delta
+    } else {
+      set speedset [SceneFadeSpeed down $scene_id -]
+      set delta [lindex $speedset 1]
+      #set steps [lindex $speedset 0]
+      set scene(deltaalpha,$scene_id) "-$delta"
+    }
+    return
+  }
+
+
+  # Fade up/down frame frame_id scene scene_id.
+  # fade=1 fade up, fade=0 fade down
+  proc SceneFrameFade { scene_id frame_id fade } {
+    global scene
+    if {![info exist scene(active,$scene_id,$frame_id)]} {
+      snowmix message "SceneFrameFade failed"
+      return
+    }
+puts "SceneFrameFade scene $scene_id frame $frame_id fade $fade"
+    set s ""
+    if {$fade} {
+      # We will fade up. If scene is passive, we fade from 0, else from where we are
+      if {$scene(active,$scene_id,$frame_id) != 1} {
+        append s "shape place alpha $scene(place_front,$scene_id,$frame_id) 0\n"
+      }
+      set scene(active,$scene_id,$frame_id) 1
+      set speedset [SceneFadeSpeed up $scene_id $frame_id]
+      set steps [lindex $speedset 0]
+      set delta [lindex $speedset 1]
+      append s "shape place move alpha $scene(place_front,$scene_id,$frame_id) $delta $steps\n"
+      append s "shape place alpha $scene(place_back,$scene_id,$frame_id) 0\n"
+    } else {
+      #Fade frame down from whatever it is
+      set speedset [SceneFadeSpeed down $scene_id $frame_id]
+      set steps [lindex $speedset 0]
+      set delta [lindex $speedset 1]
+      set scene(active,$scene_id,$frame_id) -$steps
+      append s "shape place move alpha $scene(place_front,$scene_id,$frame_id) -$delta $steps\n"
+      append s "shape place alpha $scene(place_back,$scene_id,$frame_id) 0\n"
+    }
+    append s "message fade scene $scene_id frame $frame_id\n"
+    snowmix parse "$s"
+    return 
+  }
+
+  # Set or list active frame/frames
+  # Used without arguments, it will list the all frame states for all scenes.
+  # Used with scene_id as argument, it will list all frame state for that scene
+  # Used with scene_id and frame_id as argument, it will list frame state for that scene and that frame
+  # acive=1 frame is set active and alpha is set to 1
+  # active=0 frame is set to passive
+  # active=-1 frame is set to active, but alpha is left unchanged
+  # Arguments : [ scene_id [ frame_id [ active silent ] ] ]
+  proc SceneSetFrameActive { args } {
+    global scene
+    set argc [llength $args]
+    if { $argc < 3 } {
+      if { !$argc } { set scene_list $scene(scenes) } else { set scene_list [lindex $args 0] }
+      set active_list ""
+      set f_list ""
+      # No frame_id argument, we will print all frame
+      foreach scene_id $scene_list {
+        set f_list ""
+        if { $argc < 2 } { set frame_list $scene(frames,$scene_id) } else { set frame_list [lindex $args 1] }
+        foreach frame_id $frame_list {
+	  lappend f_list "$frame_id $scene(active,$scene_id,$frame_id)"
+        }
+        lappend active_list "$scene_id $scene(active,$scene_id) $f_list"
+      }
+      return $active_list
+    }
+    set scene_id [lindex $args 0]
+    set frame_id [lindex $args 1]
+    set active [lindex $args 2]
+    set silent [lindex $args 3]
+    if {![info exist scene(active,$scene_id,$frame_id)]} {
+      snowmix message "SceneSetFrameActive failed"
+    }
+    if {$active == 1} {
+      snowmix parse "shape place alpha $scene(place_front,$scene_id,$frame_id) 1"
+    }
+    if {!$silent} {
+      snowmix message "Set scene $scene_id frame $frame_id active $active"
+    }
+    if {$active == -1} { set active 1 }
+    set scene(active,$scene_id,$frame_id) $active
+    return
+  }
+
+  # Set whether individual texts should be overlayed for a given scene or not
+  # SceneOverlayText scene_id [ overlay  place_text_id .... ]
+  # If overlay is 1, the text_ids will be marked for overlaying, otherwise marked for not overlayed.
+  proc SceneSetOverlayText {scene_id args} {
+    global scene
+    if {![info exist scene(name,$scene_id)]} {
+      snowmix message "Add display text to scene failed"
+      return
+    }
+    set n [llength $args]
+    if {!$n} {
+      set text_list ""
+      foreach text_id $scene(overlay_text,$scene_id) {
+        lappend text_list "$text_id $scene(overlay_text,$scene_id,$text_id)"
+      }
+      return $text_list
+    }
+    if {$n > 1} {
+      set overlay [lindex $args 0]
+      if {$overlay != 1 && $overlay != 0} return
+      foreach text_id [lrange $args 1 end] {
+        set scene(overlay_text,$scene_id,$text_id) $overlay
+      }
+    }
+    return
+  }
+  
+  proc SceneAddOverlayText {scene_id args} {
+    global scene
+    if {![info exist scene(name,$scene_id)]} {
+      snowmix message "Add display text to scene failed"
+      return
+    }
+    if {![llength $args]} {
+      return [SceneSetOverlayText $scene_id]
+    }
+    foreach text_id $args {
+      lappend scene(overlay_text,$scene_id) $text_id
+      lappend scene(order,$scene_id) "t $text_id"
+      set scene(overlay_text,$scene_id,$text_id) 1
+    }
+    return
+  }
+
+  # Sets the source for the frame
+  # scene_id	: scene id
+  # frame_id	: frame id
+  # type	: feed | image | graph | radar | clock2
+  # front	: 1=front 0=back
+  # active	: 1=set scene/frame active 0=set scene/frame passive
+  #
+  proc SceneSetFrameSource { scene_id frame_id type type_id front active args } {
+    global scene
+    if {![info exist scene(name,$scene_id)] ||
+        ![info exist scene(xoff,$scene_id,$frame_id)] ||
+         (![string match "-" $type] && [lsearch -exact $scene(frametypes) $type] < 0)} {
+      snowmix message "SceneSetFrameSource failed"
+puts "Search in <$scene(frametypes)> <$type> [lsearch -exact $scene(frametypes) $type]"
+      return
+    }
+    set s "\n"
+    if {[llength $args] > 0} {
+      foreach align $args {
+        if {[string match "[lrc]" $align] [string length $align] == 1} { set scene(halign,$scene_id,$frame_id) $align }
+        elseif {[string match "[tbm]" $align] [string length $align] == 1} { set scene(valign,$scene_id,$frame_id) $align }
+      }
+    }
+    set width 0
+    set height 0
+    if {[info exist scene(info_proc,type,$type)]} {
+      set shape_id [$scene(info_proc,type,$type) shape $type_id]
+      set geometry [$scene(info_proc,type,$type) geometry $type_id]
+      set width [lindex $geometry 0]
+      set height [lindex $geometry 1]
+      set par [$scene(info_proc,type,$type) par $type_id]
+      if {[llength $par] > 1} {
+        set parx [expr double([lindex $par 0])]
+        set pary [expr double([lindex $par 1])]
+      } else {
+        set parx 1
+        set pary 1
+      }
+      if {!$width || !$height} {
+        snowmix message "Invalid source"
+        return
+      }
+      set scale_x [expr double($scene(width,$scene_id,$frame_id)) / $width]
+      set scale_y [expr double($scene(height,$scene_id,$frame_id)) / $height]
+      #if { $scale_x > $scale_y } { set scale_y $scale_x } else { set scale_x $scale_y }
+      if {$parx != $pary} {
+        set scale_y [expr $scale_y * $pary / $parx]
+      }
+      set xoff [expr -round($width/2)]
+      set yoff [expr -round(double($parx)/$pary*$height/2)]
+    }
+
+#puts "TYPE $type $type_id geo $width,$height $geometry scale $scale_x,$scale_y"
+    if { $front == 1 } {
+      set place front
+      set alpha 1
+    } else {
+      set place back
+      set alpha 0
+    }
+    if {[string match "-" $type]} {
+      set scene(source_$place,$scene_id,$frame_id) "-"
+      set scene(source_id_$place,$scene_id,$frame_id) -1
+      set shape $scene(shape_$place,$scene_id,$frame_id)
+      snowmix parse "shape add $shape Scene $scene_id frame $frame_id $place shape"
+      if {!$scene(setactivesilent)} {
+        snowmix message "Scene $scene_id frame $frame_id $type $type_id front $front active $active"
+      }
+    } else {
+      set shape $scene(shape_$place,$scene_id,$frame_id)
+      set scene(source_$place,$scene_id,$frame_id) $type
+      set scene(source_id_$place,$scene_id,$frame_id) $type_id
+
+      append s "shape add $shape Scene $scene_id frame $frame_id $place shape\n"
+      append s "shape moveto $shape 0 0\n"
+      append s "shape inshape $shape 2\n"
+      append s "shape clip $shape\n"
+      append s "shape newpath $shape\n"
+      if {[string match feed $type] || [string match image $type]} {
+        append s "shape $type $shape $type_id $xoff $yoff $scale_x $scale_y\n"
+        append s "shape paint $shape 1\n"
+      } elseif { $shape_id > -1 } {
+        append s "shape inshape $shape $shape_id\n"
+      }
+
+      # append s "message set place_x expr $scene(x,$id) + $scene(xoff,$scene_id,$frame_id)\n"
+      set place_x [expr $scene(x,$scene_id) + $scene(xoff,$scene_id,$frame_id) + $scene(width,$scene_id,$frame_id)/2]
+      set place_y [expr $scene(y,$scene_id) + $scene(yoff,$scene_id,$frame_id) + $scene(height,$scene_id,$frame_id)/2]
+      append s "shape place $scene(place_$place,$scene_id,$frame_id) $shape $place_x $place_y $scene(width,$scene_id,$frame_id) $scene(height,$scene_id,$frame_id)\n"
+      append s "shape place alpha $scene(place_$place,$scene_id,$frame_id) $alpha\n"
+      if {!$scene(setactivesilent)} {
+        append s "message Scene $scene_id frame $frame_id $type $type_id front $front active $active\n"
+      }
+#      if {[string match feed $type]} {
+      if {[string match feed $type]} {
+        set nametext "Feed #$type_id"
+        set timetext "\[#RUNTIME1,$type_id\]"
+      } else { set nametext "" ; set timetext "" }
+        if {$front} { set order front } else { set order back }
+        set showkey [format "name_text_show_%s" $order]
+        if {[info exist scene($showkey,$scene_id,$frame_id)]} {
+          SceneFrameText $scene_id $frame_id name $front $scene($showkey,$scene_id,$frame_id) $nametext
+        }
+        set showkey [format "time_text_show_%s" $order]
+        if {[info exist scene($showkey,$scene_id,$frame_id)]} {
+          SceneFrameText $scene_id $frame_id time $front 1 $timetext
+        }
+#      }
+      snowmix parse "$s"
+    }
+    if { $front == 1 } {
+      SceneSetFrameActive $scene_id $frame_id $active 1
+    }
+    return
+  }
+
+  # Initialize scenes
+  SceneInit
+
+command end
+
+tcl exec libscenes.tcl

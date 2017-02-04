@@ -1,0 +1,562 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="content-type" content="text/html; charset=iso-8859-1"/>
+<meta name="description" content="Snowmix Video Mixer"/>
+<meta name="keywords" content="Snowmix Video Mixer,Video,Mixer,OpenGL,Cairo Graphics,GStreamer,Linux,FreeBSD,MacOS,OS X"/> 
+<meta name="author" content="Peter Maersk-Moller"/> 
+<link rel="stylesheet" type="text/css" href="../default.css" media="screen"/>
+<link rel="shortcut icon" href="../img/Snowmix-logo-transparent-128x101.ico"/>
+<title>Snowmix - The Swiss Army Knife of Open Source Live Video Mixing.</title>
+</head>
+
+<body>
+
+<div class="container">
+
+	<div class="main">
+
+		<div class="header">
+
+			<div class="title">
+
+				<a name="top" href="../">
+				<h1>Snowmix - Live Video Mixer</h1>
+				<h3>The Swiss Army Knife of Open Source Live Video Mixing.</h3>
+			</a></div>
+
+			
+
+		</div>
+
+<div class="content">
+	<div class="item">
+
+		<h1>Compiling and Installing Snowmix.</h1>
+                <div class="descr">Updated for Snowmix 0.5.1</div>
+
+		<h3>Introduction</h3>
+		<br/>
+
+		<p>This page contains information about compiling, installing and testing Snowmix.</p>
+
+		<ul>	
+			<li><a href="#prep">Preparations and bootstrap</a>.</li>
+			<li><a href="#sudo">Sudo</a>.</li>
+			<li><a href="#gstreamer">GStreamer</a>.</li>
+			<li><a href="#tcl">Tcl/Tk</a>.</li>
+			<li><a href="#compile">Compiling Snowmix</a>.</li>
+			<li><a href="#opengl">Including Support for OpenGL 3D Graphics</a>.</li>
+			<li><a href="#installing">Installing Snowmix</a>.</li>
+			<li><a href="#comments">Platform Comments</a>.</li>
+			<li><a href="#test">Testing and running Snowmix</a>.</li>
+			<li><a href="#coredumps">Core Dumps</a>.</li>
+			<li><a href="#osx">Compiling Snowmix for Mac OS X</a>.</li>
+		</ul>
+	</div>
+
+	<div class="item">
+
+		<a name="prep"><h3>Preparations and bootstrap.</h3></a>
+		<br/>
+
+		<p>To compile, install and run Snowmix, Snowmix source code must be
+		<a href="downloads.html">downloaded</a> onto a <a href="requirements.html#platforms">supported platform</a>.
+		Furthermore Snowmix <a href="requirements.html#software">requires a number of libraries and tools</a>.</p>
+
+		<p><strong>The good news is that Snowmix's boostrap script will detect platform and offer to install
+		any missing package or libraries.</strong></p>
+		<div align="right"><a href="">Top</a></div>
+
+	</div>
+
+	<div class="item">
+		<a name="sudo"><h3>Sudo.</h3></a>
+		<p>The bootstrap script will use the command
+		<i><a href="https://en.wikipedia.org/wiki/Sudo">sudo</a></i> for
+		installing missing packages and you will be required to provide your password for <i>sudo</i>
+		for it to succeed.</p>
+
+		<p>If you are uncomfortable providing the password to the boostrap script, you can alternatively
+		install any missing packages your self beforehand.
+		See the list of <a  href="requirements.html#software">required software here</a>.
+		The bootstrap script will then either detect the installed packages or ask to
+		skip detecting possibly missing packages and proceed without executing sudo
+		needing the password. Unfortunately this does not fully apply for the Mac OS X, but you
+		can look in the boostrap script for any wrong doing your self.</p>
+
+		<p>Some distros, such as Debian and others, the users do not by default have access
+		to execute *sudo* commands. To have access to execute the *sudo* command on a Debian
+		system, you need to add your username to the sudo group
+		in the /etc/group file. Alternatively you may be able as root to run the command:<p>
+
+		<code># adduser YOUR_USERNAME sudo</code>
+
+		<p>After adding your username to the sudo group, you need to log out and log
+		in again. ALterntive to adding your user name to the sudo group, you can alter
+		the /etc/sudoers file to grant you access to execute the sudo command. This takes effect
+		immediately.</p>
+
+		<p>On Ubuntu you can manually install the missing packages using the following command:</p>
+
+		<code>sudo apt-get install build-essential automake autoconf libtool g++ pkg-config \
+		libsdl1.2-dev libpango1.0-dev libpng12-dev libosmesa6-dev freeglut3-dev</code>
+
+		<p>Some Ubuntu/Debian alike distros may require tcl8.6-dev or tcl8.5-dev instead of tcl-dev.
+		tcl-dev in one of its versions/incarnations is needed by Snowmix to include the embedded
+		Interpreter offering <a href="../Advanced/scripting.html">advanced scripting</a>.</p>
+		<div align="right"><a href="">Top</a></div>
+	</div>
+
+	<div class="item">
+
+		<a name="gstreamer"><h3>GStreamer</h3></a>
+		<br/>
+
+		<p>GStreamer-1.0 (GStreamer 0.10 is no longer officially supported here nor at
+		the GStreamer project) is needed by the demo examples and the scripts to feed
+		audio and/or video streams to Snowmix and to read mixed video and/or audio from
+		Snowmix.</p>
+
+		<p><a href="http://gstreamer.freedesktop.org/">GStreamer</a> versions 1.2.0-1.2.1
+		have an issue with the alpha value (setting value to 127 instead of 255) when
+		converting video streams from I420/YUV to BGRA.</p>
+
+		<p><a href="http://gstreamer.freedesktop.org/">GStreamer</a> versions 1.2.1-1.2.2
+		have a performance issue (uses 2-4 times as much CPU) when converting video streams
+		from I420/YUV to BGRA lowering the overall performance of a Snowmix video mixer system.</p>
+
+		<p>Gstreamer versions 1.5.0-1.5.2 seems to have issues with Matroska mux and TS mux
+		and demux, but seems otherwise fine.</p>
+
+		<p>Due to these issues, the scripts of Snowmix will require GStreamer 0.10 if GStreamer
+		1.2.0-1.2.2 is installed, but an upgrade to newer versions are strongly recommended.</p>
+		The recommended <a href="http://gstreamer.freedesktop.org/">GStreamer</a> version is
+		GStreamer-1.6.3. Version 1.4.5 was the recommended version for Snowmix 0.5.0.</p>
+
+		<p>The basic GStreamer tools can on Ubuntu be installed by executing the following
+		command although this may be an older version:</p>
+
+		<code>$ sudo apt-get install gstreamer1.0-plugins-good gstreamer1.0-plugins-bad \
+			gstreamer1.0-plugins-ugly gstreamer1.0-libav gstreamer1.0-tools gstreamer1.0-alsa</code>
+
+		<p>GStreamer packages for other platforms are listed for most on the <a href="requirements.html#software">required software</a> page.</p>
+
+		<div align="right"><a href="">Top</a></div>
+	</div>
+
+	<div class="item">
+
+		<a name="tcl"><h3>Tcl/Tk</h3></a>
+		<br/>
+
+		<p>If you want to run the GUI utilities such as snowaudio.tcl for
+		controlling audio, snowscene.tcl for controlling scenes or snowoutput.tcl
+		to monitor output timing and buffers, you will need Tcl/Tk and BWidgets.
+		To install these packages on a Ubuntu platform execute one of the following:</p>
+
+<code>$ sudo apt-get install tcl8.6 tk8.6 bwidget tcl8.6-dev
+$ sudo apt-get install tcl8.5 tk8.5 bwidget tcl8.5-dev
+$ sudo apt-get install tcl tk bwidget</code>
+
+		<p>Once again, the boostrap script supplied with Snowmix will offer to install the required
+		packages, Tcl and Tk tools included for all supported platforms.</p>
+		<div align="right"><a href="">Top</a></div>
+
+	</div>
+
+	<div class="item">
+
+		<a name="compile"><h3>Compiling Snowmix:</h3></a>
+		<br/>
+
+		<p>Unpack the Snowmix package, enter the main directory and run the bootstrap script.
+		The script may be needed to run more than once if packages are missing. After running
+		the bootstrap script, you can rerun the configure program with your own customized
+		settings. After bootstrap and the optional configure process, you run the make
+		command as shown below:</p>
+
+		<code>$ tar -xzvf Snowmix-0.5.1.tar.gz
+$ cd Snowmix-0.5.1
+$ ./bootstrap
+$ make</code>
+
+		<p>That's it. Please <strong>pay attention</strong> to what the bootstrap script
+		will tell you when it finish, hopefully without any errors. At the end of the
+		boostrap script you will be told something like this:</p>
+
+<code>You can rerun ./configure --prefix=YOUR_INSTALLATION_DIR if you need to change the installation path for Snowmix
+
+You can revert the bootstrap script by executing the command './strapboot'
+
+>>>>>>>>>> PLEASE NOTE <<<<<<<<<<<<
+By default the Snowmix will be installed in /usr/local. If you want to
+change this, please run ./configure --prefix=YOUR_CHOICE
+
+If Snowmix is installed into /usr/local you need to set the enviroment
+variable SNOWMIX to /usr/local/lib/Snowmix-0.5.1
+
+Consider adding the following to your ~/.bashrc or ~/.bash_profile
+
+   export SNOWMIX=/usr/local/lib/Snowmix-0.5.1
+
+Then after finishing this script, logout and login again to continue
+
+Press return to continue 
+
+Now you can compile Snowmix and install snowmix using the following commands:
+
+  make
+  sudo make install
+
+After that, you can run Snowmix by executing the command
+
+    snowmix ini/YOUR_INI_FILE
+
+Or you can run the demo by executing the command 'snowmix_demo'
+
+For questions and help, please use the discussion forum at http://sourceforge.net/projects/snowmix/
+where you in the Wiki also can find a lot of documentation, examples and help.
+See also website http://snowmix.sourceforge.net/ for ressources and documentation
+</code>
+
+		<p>Please read what the boostrap script tells you and take the actions it suggests.</p>
+
+		<p>After succefully running make, you now have the binary <i>snowmix</i> in the src
+		directory. You can change the default installation directory through the <i>configure</i>
+		command before running the make command. Use <i>./configure --help</i> for more information.</p>
+	</div>
+
+	<div class="item">
+
+		<a name="comments"><h3>Platform Comments</h3></a>
+		<br/>
+
+		<p><strong>Linux CentOS</strong>: You need to add permissions to run sudo. GStreamer seems to miss H.264 and AAC encoder and decoder modules needed for the demo example.</p>
+
+		<p><strong>Linux Chakra</strong>: Runs fine, but Chakra seems to miss
+		<a href="https://sourceforge.net/projects/tcllib/">BWidget</a> as an
+		installable package although available for Arch Linux. Perhaps you can
+		download it and install it your self.</p>
+
+		<p><strong>Debian</strong>: Needs package sudo and you need to add permissions
+		to run sudo for the user running the bootstrap script.</p>
+
+		<p><strong>Fedora</strong>: For Fedora 23 you need to add the rpmfusion
+		repository and install relevant gstreamer plugins to run the snowmix_demo.
+		Similar for Fedora 22, but untested. The commands are:</p>
+
+		<code>sudo rpm -Uvh http://download1.rpmfusion.org/free/fedora/rpmfusion-free-release-23.noarch.rpm
+sudo rpm -Uvh http://download1.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-23.noarch.rpm
+sudo dnf install gstreamer-plugins-bad gstreamer-plugins-bad-free-extras gstreamer-plugins-bad-nonfree \
+	gstreamer-plugins-ugly gstreamer-ffmpeg gstreamer1-libav gstreamer1-plugins-bad-free-extras \
+	gstreamer1-plugins-bad-freeworld gstreamer1-plugins-base-tools gstreamer1-plugins-good-extras \
+	gstreamer1-plugins-ugly gstreamer1-plugins-bad-free gstreamer1-plugins-good \
+	gstreamer1-plugins-base gstreamer1</code>
+
+		<p><strong>Linux Mint</strong>: All is fine.</p>
+
+		<p><strong>FreeBSD PCBSD</strong>: You need to execute the following command</p>
+
+		<code>sudo ln -s /usr/local/bin/bash /bin/bash</code>
+		<p> for the scripts to work. Run <u>all commands</u> in bash rather than other shells.
+        	No video/image sinks was found for GStreamer1.0 for PCBSD10.2.
+        	No 'wish' needed for tcl GUI programs was found.</p>
+
+		<p><strong>OpenSUSE</strong>: The package gstreamer-plugins-libav isn't found by
+		zypper. You need to find the right version yourself and install it manually.
+		Without it, you may miss important decoders such as decoder for H.264 etc.</p>
+
+		<p><strong>Linux Ubuntu</strong>: All is fine.</p>
+
+		<div align="right"><a href="">Top</a></div>
+
+	</div>
+
+	<div class="item">
+
+		<a name="opengl"><h3>Including Support for OpenGL 3D Graphics</h3></a>
+		<br/>
+
+		<p>Because <a href="../Documentation/guide-glshapes.html">Glshapes</a> is alpha-code
+		in Snowmix version 0.5.1, you need to compile or recompile Snowmix to include
+		support for Glshapes. To do this you will need to execute the following commands:</p>
+
+		<code>$ cd TO_WHERE_THE_SNOWMIX_CODE_TREE_RESIDES
+$ ./bootstrap
+$ ./configure --enable-snowmixosmesa --enable-snowmixx11 --enable-snowmixglu --enable-snowmixglut \
+	--prefix=/usr/local --libdir=/usr/local/lib
+$ make clean
+$ make
+$ sudo make install</code>
+
+		<p>Please note that Mac OS X users and others, may want to use the prefix to be
+		/opt/local and libdir to be /opt/local/lib or whatever is preferred on the platform.</p>
+
+		<p>OpenGL has not been tested on the ARMv7 platform. Most implementations
+		with ARMv7 offers OpenGL ES as opposed to regular OpenGL. Quite likely only
+		few changes to Snowmix will be necessary to get Snowmix to work with OpenGL ES,
+		but this is currently untested.</p>
+
+		<p>You can read more about Snowmix OpenGL Support in the 
+		<a href="../Documentation/guide-glshapes.html">Snowmix GL Shapes Guide</a>.</p>
+		<div align="right"><a href="">Top</a></div>
+
+	</div>
+
+	<div class="item">
+
+		<a name="installing"><h3>Installing Snowmix:</h3></a>
+		<br/>
+
+		<p>From Snowmix version 0.5.0, Snowmix is supposed to be installed before running. You can technically
+		run Snowmix without installing it by setting the enviroment variable SNOWMIX to the base of
+		Snowmix's directory. However then you are on your own. So to install you need to execute the following
+		command:</p>
+
+<code> $ make install </code>
+
+		<p>However unless you set installation directory in the configuration process to be something writable, or you are root, you may have to do:</p>
+
+<code> $ sudo make install </code>
+
+		<p>From Snowmix version 0.5.0 and onwards, Snowmix is intended to be installed and has been tested as such.</p>
+		<div align="right"><a href="">Top</a></div>
+
+	</div>
+
+	<div class="item">
+
+		<a name="test"><h3>Testing and running Snowmix:</h3></a>
+		<br/>
+
+		<p>It is strongly advised <strong>not to run Snowmix as root</strong>. Testing Snowmix
+		requires that you have installed a complete set of GStreamer and GStreamer plugins.
+		You will need the plugin-base, plugin-good, plugin-bad, plugin-ugly and plugin-libav.
+		On how to to install GStreamer and these plugins, if not already installed by
+		the bootstrap script or by other means earlier, please use Google to search for help.</p>
+
+		<p><strong>IMPORTANT</strong>: Before running any of the scripts, you need to set the
+		enviroment variable SNOWMIX as explained by the end of the boostrap script.</p>
+
+		<p>A permanent solution would be to add the following to your .bash_rc file
+		in your home directory:</p>
+
+		<code>export SNOWMIX=/usr/local/lib/Snowmix-0.5.1</code>
+
+		<p><strong>Please note</strong> that the actual setting depends on where you
+		installed your Snowmix collection.</p>
+
+		<p>On Mac OS X you should set the SNOWMIX variable in your ~/.bash_profile.
+		PLEASE see the section further down on installing Snowmix on the Mac OS X
+		platform regarding the SNOWMIX variable and the installation path.</p>
+
+		<p>When Snowmix has been installed and you have set your SNOWMIX environment variable
+		permanently and logged out and in again, you can now run the Snowmix demo as test:</p>
+
+		<code>$ snowmix_demo</code>
+
+		<p>This demo will open one terminal window for Snowmix, one experimental audio mixer
+		based on Tcl/Tk, one terminal running output of audio and video as well as more terminal
+		windows running test input streams. If all goes well, you will hear audio and see a
+		window with the mixed result depending on which menu point you choose when running the demo.</p>
+
+		<p>If you want to test individual ini files, you can do so using the following commands and
+		replacing the *some_ini_file* with your choice of ini file. Available ini files are found in
+		the $SNOWMIX/ini directory and ~/.snowmix/ini directory.</p>
+
+<code># In a terminal window
+$ cd
+$ snowmix ini/some_ini_file
+
+# In another terminal window
+$ xterm -e bash output2screen
+
+# In a third terminal window
+$ xterm -e bash input2feed 1
+</code>
+
+
+		<p>In the window running Snowmix, you can now type Snowmix commands. To begin with, you can
+		type 'help' and press return. Type 'quit' when you want to stop Snowmix. If you terminate
+		Snowmix in any other way, some of the shared memory allocated will stay allocate and build
+		up until you can not start Snowmix again. Allocated shared memory can be found listed
+		in /run/shm or /dev/shm (on Linux) and can be deallocated by deleting files in there.
+		The files you need to delete are /run/shm/shmpipe*. However if you don't know what you
+		are doing, bets are you will create problems for you and your machine. If you delete the
+		shm files there, you will have to restart your GStreamer pipelines.</p>
+		<div align="right"><a href="">Top</a></div>
+
+	</div>
+
+
+
+
+	<div class="item">
+		<a name="coredumps"><h3>Core Dumps.</h3></a>
+
+		<p>Snowmix will core dump if the shared memory file system is full. On Linux you can see the state of the shared memory file system is full by executing the command:</p>
+
+<code> $ df -k /run/shm </code>
+
+		<p>If Snowmix exits abnormally (or by using CTRL-C), Snowmix will leave shared memory allocated. If this happens a couple of times, you will eventually run out of shared memory space. The allocated shared memory space can be released by deleting the files /run/shm/shmpipe*. However if you do that, you will have to restart your GStreamer pipelines feeding Snowmix and reading from Snowmix.</p>
+
+		<p>The following is no longer thought to be true, but left here for later inspection. In the code in controller.cpp Snowmix will core dump when calling mmap() after shm_open() and ftruncate(). So far I don't know how to prevent it. Suggestions and hints are welcomed. This problem however seems to have gone, though it has not yet been fully verified.</p>
+		<div align="right"><a href="">Top</a></div>
+
+	</div>
+
+	<div class="item">
+
+		<a name="osx"><h3>Compiling Snowmix for Mac OS X.</h3></a>
+		<br/>
+
+		<p>Snowmix compiles on Mac OS_X Lion, Mountain Lion, Maverick and Yosemite. It might also work on older Snow Leopard, but it has not been tested.</p>
+
+
+	<h3>El Capitan, Yosemite, Maverick and Mountain Lion</h3>
+
+		<p>To compile Snowmix on OS X on El Capitan, Yosemite, Maverick
+		and Mountain Lion, you need to install Xcode, which Apple
+		provide through App Store for free.
+		So install Xcode first and possibly the Command Line Utilities.
+		The bootstrap script will check for the Utilities and offer to
+		be download and install it if missing.</p>
+
+	<h3>Lion and Snowleopard</h3>
+
+		<p>To compile Snowmix on OS X on Lion and Snowleopard you first
+		need to install Xcode, which Apple may no longer provide through
+		App Store for free. Then you need to download
+		the Command Line Utilities and install this package as the
+		bootscript <strong>can not do this</strong>. You can find the
+		Utilities for Lion on the Apple Developer website, but for
+		Snowleopard you may have to search elsewhere.</p>
+
+	<h3>El Capitan, Yosemite, Maverick, Mountain Lion, Lion and Snowleopard.</h3>
+
+		<p>The boostrap script will offer to download and install
+		<a href="https://www.macports.org/">port for Mac</a> as well as a number of
+		libraries mentioned in the Linux Section. It will also offer to download
+		and install GStreamer for Mac for you. If you have a GStreamer version older
+		than 1.6.3, you may want to remove that version before running the bootstrap script.</p>
+
+		<p>When Xcode has been installed and Snowmix has been downloaded to your Download directory,
+		you can execute the following commands to compile Snowmix:</p>
+
+<code>$ cd $HOME
+$ mkdir Developer
+$ cd Developer
+$ tar -xzvf $HOME/Downloads/Snowmix-0.5.1.tar.gz
+$ echo 'export PATH=/opt/local/bin:/Library/Frameworks/GStreamer.framework/Commands' >>~/.bash_profile
+$ echo 'export SM=$HOME/Developer/Snowmix-0.5.1' >>~/.bash_profile
+$ echo 'export SNOWMIX=/opt/local/lib/Snowmix-0.5.1' >>~/.bash_profile
+</code>
+
+		<p>Please note the use of single quotes as opposed to double quotes.</p>
+
+		<p>What you set the SNOWMIX enviroment variable depends on what
+		you have selected when you ran the <i>configure</i> sctipt. If
+		you ran the <i>configure</i> script through the <i>bootstrap</i>
+		script, Snowmix will be installed into /opt/local/lib/Snowmix-<i>VERSION</i>
+		for the OS X platform when you run the installation command. If
+		however you ran the <i>configure</i> script afterwards, it will
+		depend if you specified a path for the prefix. The <i>configure</i>
+		script used without argument, will by default select an installation path in /usr/local rather than /opt/local. The bootstrap script may install <a href="https://www.macports.org/"><i>port</i></a> packages into the <i>/opt</i> tree by default.</p>
+
+		<p>Now logout and login again for changes to take effect and then run the following commands assuming you did set the PATH to include /opt :</p>
+
+<code>$ cd $SM
+$ ./bootstrap
+$ make
+$ sudo make install
+$ snowmix_demo</code>
+
+		<p>If '/opt/local/bin' is not included in your PATH environment
+		variable as described, the bootstrap script may not fail, but
+		subsequent executing "make" probably will.</p>
+
+		<p>If you do not allow the <i>bootstrap</i> script to install any possibly
+		missing packages and tools, the subseqent <i>make</i> command is likely to
+		fail unless all required software is installed and found.</p>
+
+		<p>If GStreamer is not in your PATH environment variable as described above,
+		the demo script is likely to fail.</p>
+
+		<p>Reports on success and failures on the Mac OS X platform are very welcome
+		in the <a href="https://sourceforge.net/p/snowmix/discussion/">Support Forum</a>.</p>
+
+		<p>The Tcl GUI scripts works poorly on OS X if tcl/tk and wish is not version 8.6. By default Maveriks and earlier has by default a Tcl version earlier than 8.6.</p>
+		<div align="right"><a href="">Top</a></div>
+
+	</div>
+</div>
+		<div class="sidenav">
+
+			<h1>Intro</h1>
+			<div class="sidenavintro">
+			<ul>
+				<li><a href="../Intro/about.html">About</a></li>
+				<li><a href="../Intro/news.html">News</a></li>
+				<li><a href="../Intro/faq.html">FAQ</a></li>
+				<li><a href="../Intro/screenshots.html">Screenshots</a></li>
+				<li><a href="../Intro/downloads.html">Downloads</a></li>
+				<li><a href="../Intro/requirements.html">Requirements</a></li>
+				<li><a href="../Intro/compileandinstall.html">Compile &amp; Install</a></li>
+				<li><a href="../Intro/support.html">Support &amp; Forum</a></li>
+			</ul>
+			</div>
+
+			<h1>Documentation</h1>
+			<ul>
+				<li><a href="../Documentation/reserved.html">Reserved Commands</a></li>
+				<li><a href="../Documentation/reference.html">Reference Manuals</a></li>
+				<li><a href="../Documentation/guides.html">Snowmix Guides</a></li>
+				<li><a href="../Documentation/releasenotes.html">Release Notes</a></li>
+				<li><a href="../Documentation/changelog.html">ChangeLog</a></li>
+				<li><a href="../Documentation/developmentplans.html">Development Plans</a></li>
+				<li><a href="../Documentation/endoflife.html">End of Life</a></li>
+			</ul>
+
+			<h1>Examples</h1>
+			<ul>
+				<li><a href="../Examples/basic.html">Basic Configurations</a></li>
+				<li><a href="../Examples/input.html">Input with GStreamer</a></li>
+				<li><a href="../Examples/output.html">Output with Gstreamer</a></li>
+				<li><a href="../Examples/scripting.html">Basic Scripting</a></li>
+			</ul>
+
+			<h1>Advanced Topics</h1>
+			<ul>
+				<li><a href="../Advanced/scripting.html">Advanced Scripting</a></li>
+				<li><a href="../Advanced/libraries.html">Snowmix Libraries</a></li>
+			</ul>
+
+			<h1>Search</h1>
+			<div>
+			<!--
+			<form action="index.html">
+				<input type="text" name="search" class="styled" disabled /> <input type="submit" value="" class="button" />
+			</form> -->
+			&nbsp;&nbsp;Search is disabled for now.
+			<form name="cse" id="searchbox_demo" action="https://www.google.com/cse">
+  <input type="hidden" name="cref" value="" />
+  <input type="hidden" name="ie" value="utf-8" />
+  <input type="hidden" name="hl" value="" />
+  <input name="q" type="text" size="22" disabled />
+  <input type="submit" name="sa" value="Search" />
+</form>
+<script type="text/javascript" src="https%3A%2F%2Fcse.google.com%2Fcse/tools/onthefly?form=searchbox_demo&amp;lang="></script>
+			</div>
+
+		</div>
+	
+		<div class="clearer"><span></span></div>
+
+	</div>
+	<div class="footer">Copyright &copy; 2012-2016 Peter Maersk-Moller. - Inital weblayout &copy; 2006 <a href="index.html">Website.com</a>. Valid <a href="http://jigsaw.w3.org/css-validator/check/referer">CSS</a> &amp; <a href="http://validator.w3.org/check?uri=referer">XHTML</a>. Template design by <a href="http://templates.arcsin.se">Arcsin</a>
+	</div>
+</div>
+</body>
+</html>

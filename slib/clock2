@@ -1,0 +1,40 @@
+
+Description		: Index key
+------------------------+-------------------
+List of clocks		: clocks
+Name of strings		: stringnames : label hour colon1 minute colon2 second
+List of strings		: stringlist : L- 00 : 00 : 00
+Rate counter		: ratecounter : used to divide down to approx 1 second
+------------------------+-------------------
+name			: name,$clock_id
+x			: x,$clock_id
+y			: y,$clock_id
+width			: width,$clock_id
+height			: height,$clock_id
+scale_x			: scale_x,$clock_id
+scale_y			: scale_y,$clock_id
+font_id			: font_id,$clock_id
+shape_id		: shape_id,$clock_id
+textsizefind list 	: textsizefind,$clock_id
+text name list		: colon1 colon2 hour minute second label
+string id for name	: string_id,$name,$clock_id
+place id for name	: place_id,$name,$clock_id
+geometry for name	: geometry,$name,$clock_id
+offset			: offset,$name,$clock_id
+rgb			: rgb,$clock_id
+rgb background		: rgb_back,$clock_id
+alpha			: alpha,$clock_id
+alpha background	: alpha_back,$clock_id
+second value		: second,$clock_id	# counter value second
+minute value		: minute,$clock_id	# counter value minute
+hour value		: hour,$clock_id	# counter value hour
+count dir		: countup,$clock_id
+run			: run,$clock_id
+localtime/counter	: localtime,$clock_id
+T+ or T-		: tminus,$clock_id
+padding 		: pad
+
+
+
+
+label hour colon1 minute colon2 second

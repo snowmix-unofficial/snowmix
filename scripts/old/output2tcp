@@ -1,0 +1,89 @@
+#!/bin/bash
+# Deliver mixer1 output to tcp server.
+tmpfile=/tmp/output2file.tmp.$$
+echo 'system info' | nc 127.0.0.1 9999 >$tmpfile
+geometry=`grep 'STAT:  System geometry' $tmpfile |cut -f3 -d: |cut -f2 -d' '|tr 'x' ' '`
+framerate=`grep 'STAT:  Frame rate' $tmpfile |cut -f3 -d: |cut -f2 -d' '`
+ctrsocket=`grep 'STAT:  Output ctr sock name' $tmpfile |cut -f3 -d: |cut -f2 -d' '`
+rm $tmpfile
+
+gstlaunch=`which gst-launch-1.0`
+if [ X$gstlaunch != X ] ; then
+  VIDEOCONVERT=videoconvert
+  VIDEO=video/x-raw
+  AUDIO=audio/x-raw
+  vfid=string
+  afid="format=(string)S16LE, "
+else
+  gstlaunch=`which gst-launch-0.10`
+  if [ X$gstlaunch != X ] ; then
+    VIDEOCONVERT=ffmpegcolorspace
+    VIDEO=video/x-raw-rgb
+    AUDIO=audio/x-raw-int
+    vfid=fourcc
+    afid=""
+  else
+    echo "Could not find gst-launch-1.0 or gst-launch-0.10. Stopping"
+    exit
+  fi
+fi
+
+
+frameratefraction()
+{
+  echo $1 | awk '{ rate=$1 ;
+         factor=1;
+         intrate=int(rate);
+         while (factor*rate > intrate) {
+           factor = factor * 10;
+           intrate = int(rate*factor);
+         }
+         printf("%d/%d\n",intrate,factor);
+       }'
+}
+ratefraction=`frameratefraction $framerate`
+width=`echo $geometry |cut -f1 -d' '`
+height=`echo $geometry |cut -f2 -d' '`
+
+SRC='shmsrc socket-path='$ctrsocket' do-timestamp=true is-live=true'
+#SRC='videotestsrc ! '$VIDEOCONVERT' ! videoscale ! '$VIDEOCONVERT
+MIXERFORMAT=$VIDEO', bpp=(int)32, depth=(int)32, endianness=(int)4321, format=('$vfid')BGRA, red_mask=(int)65280, green_mask=(int)16711680, blue_mask=(int)-16777216, width=(int)'$width', height=(int)'$height', framerate=(fraction)'$ratefraction', pixel-aspect-ratio=(fraction)1/1, interlaced=(boolean)false'
+X264SETTINGS='bitrate=3000 tune=zerolatency speed-preset=5'
+#X264SETTINGS='bitrate=1000 profile=high bframes=2 dct8x8=true tune=zerolatency speed-preset=6'
+AUDIOFORMAT=$AUDIO', '$afid' endianness=(int)1234, signed=(boolean)true, width=(int)16, depth=(int)16, rate=(int)44100, channels=(int)1'
+
+i=0
+while true ; do
+  file=snowmix-$i.ts
+  if [ -s $file ] ; then
+    i=`expr $i + 1`
+    file=snowmix-$i.mp4
+  else
+    $gstlaunch -e -v shmsrc socket-path=$ctrsocket do-timestamp=true is-live=true ! \
+		$MIXERFORMAT		! \
+		$VIDEOCONVERT		! \
+		queue			! \
+		x264enc	$X264SETTINGS	! \
+		h264parse		! \
+		mpegtsmux name=muxer	! \
+		queue 			! \
+		tcpserversink port=5010 sync=true
+exit 
+	$gstlaunch -e        \
+		$SRC                  	  ! \
+		$MIXERFORMAT              ! \
+		$VIDEOCONVERT		! \
+		queue                 	  ! \
+		x264enc $X264SETTINGS	  ! \
+		h264parse                 ! \
+		mpegtsmux name=muxer  	  ! \
+		queue 	         	  ! \
+		tcpserversink port=5010 sync=true
+
+#		tee name=t0               ! \
+#		queue leaky=2          	  ! \
+#		filesink location=$file t0. ! \
+#
+    sleep 2
+  fi
+done

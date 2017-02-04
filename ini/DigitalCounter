@@ -1,0 +1,307 @@
+# Copyright by Peter Maersk-Moller 2012 - All rights reserved
+require version 0.4.2
+
+# Loading images into image 20-30
+# Placing image 21-28
+############## Digital Counter Section - Definition of a Counter ##################
+command create DigitalCounterInit
+  message Digital Counter Init
+  # Load image 0-9 into image load id 20-29 and semicolon in image id 30
+  image load 20 images/digital-0-105x151.png
+  image load 21 images/digital-1-105x151.png
+  image load 22 images/digital-2-105x151.png
+  image load 23 images/digital-3-105x151.png
+  image load 24 images/digital-4-105x151.png
+  image load 25 images/digital-5-105x151.png
+  image load 26 images/digital-6-105x151.png
+  image load 27 images/digital-7-105x151.png
+  image load 28 images/digital-8-105x151.png
+  image load 29 images/digital-9-105x151.png
+  image load 30 images/digital-colon-37x151.png
+  image load 31 images/digital-decimal-37x151.png
+  image load 32 images/digital-minus-105x151.png
+  # place counter 00:00:00
+  tcl exec DigiCounterInitTcl.tcl
+  # Set counter to 99:59:59
+  tcl exec DigiCounterTcl
+command end
+
+# This switch can be used to hold the clock
+# Clock is hold by deleting it (or just the loop line)
+# Clock is started again by creating it again (or by adding the loop command)
+command create DigiCounterSeconds_Switch
+  DigiCounterSeconds
+  loop
+command end
+
+# This command control the least significant digit in seconds
+# It should be called every second
+command create DigiCounterSeconds
+  label start
+  image image 21 29
+  next
+  image image 21 28
+  next
+  image image 21 27
+  next
+  image image 21 26
+  next
+  image image 21 25
+  next
+  image image 21 24
+  next
+  image image 21 23
+  next
+  image image 21 22
+  next
+  image image 21 21
+  next
+  image image 21 20
+  next
+  DigiCounterSeconds2
+  goto start
+command end
+
+# This command control the least significant digit in seconds
+# It will be called by DigiCounterSeconds every 10 seconds
+command create DigiCounterSeconds2
+  label start
+  image image 22 25
+  next
+  image image 22 24
+  next
+  image image 22 23
+  next
+  image image 22 22
+  next
+  image image 22 21
+  next
+  image image 22 20
+  next
+  DigiCounterMinutes
+  goto start
+command end
+
+command create DigiCounterMinutes
+  label start
+  image image 24 29
+  next
+  image image 24 28
+  next
+  image image 24 27
+  next
+  image image 24 26
+  next
+  image image 24 25
+  next
+  image image 24 24
+  next
+  image image 24 23
+  next
+  image image 24 22
+  next
+  image image 24 21
+  next
+  image image 24 20
+  next
+  DigiCounterMinutes2
+  goto start
+command end
+
+command create DigiCounterMinutes2
+  label start
+  image image 25 25
+  next
+  image image 25 24
+  next
+  image image 25 23
+  next
+  image image 25 22
+  next
+  image image 25 21
+  next
+  image image 25 20
+  next
+  DigiCounterHours
+  goto start
+command end
+
+command create DDigiCounter99Reset
+  label start
+  next 100
+  message RESET HOUR 1+2
+  command restart DigiCounterHours
+  command restart DigiCounterHours2
+  DigiCounterHours2
+  loop
+  #goto start
+command end
+
+command create DigiCounterHours
+  label start
+  image image 27 29
+  next
+  image image 27 28
+  next
+  image image 27 27
+  next
+  image image 27 26
+  next
+  image image 27 25
+  next
+  image image 27 24
+  next
+  image image 27 23
+  next
+  image image 27 22
+  next
+  image image 27 21
+  next
+  image image 27 20
+  next
+  DigiCounterHours2
+  goto start
+command end
+
+command create DigiCounterHours2
+  image image 28 29
+  next
+  image image 28 28
+  next
+  image image 28 27
+  next
+  image image 28 26
+  next
+  image image 28 25
+  next
+  image image 28 24
+  next
+  image image 28 23
+  next
+  image image 28 22
+  next
+  image image 28 21
+  next
+  image image 28 20
+  loop
+command end
+
+command create DigiCounterInitTcl.tcl
+  proc PlaceDigiCounter {x y scale img_no place_no} {
+    set place_list ""
+    set delta_x [expr round(-25 * $scale / 0.25)]
+    set delta_semicolon [expr round(-17 * $scale / 0.25)]
+    set x [expr round($x - 1 * $delta_semicolon - 3 * $delta_x)]
+    set img_semicolon [expr $img_no + 10]
+    append place_list "image place $place_no $img_no $x $y center middle\n"
+    append place_list "image scale $place_no $scale $scale\n"
+    incr place_no
+    incr x $delta_x
+    append place_list "image place $place_no $img_no $x $y center middle\n"
+    append place_list "image scale $place_no $scale $scale\n"
+    incr place_no
+    incr x $delta_semicolon
+    append place_list "image place $place_no $img_semicolon $x $y center middle\n"
+    append place_list "image scale $place_no $scale $scale\n"
+    incr place_no
+    incr x $delta_semicolon
+    append place_list "image place $place_no $img_no $x $y center middle\n"
+    append place_list "image scale $place_no $scale $scale\n"
+    incr place_no
+    incr x $delta_x
+    append place_list "image place $place_no $img_no $x $y center middle\n"
+    append place_list "image scale $place_no $scale $scale\n"
+    incr place_no
+    incr x $delta_semicolon
+    append place_list "image place $place_no $img_semicolon $x $y center middle\n"
+    append place_list "image scale $place_no $scale $scale\n"
+    incr place_no
+    incr x $delta_semicolon
+    append place_list "image place $place_no $img_no $x $y center middle\n"
+    append place_list "image scale $place_no $scale $scale\n"
+    incr place_no
+    incr x $delta_x
+    append place_list "image place $place_no $img_no $x $y center middle\n"
+    append place_list "image scale $place_no $scale $scale\n"
+    return $place_list
+  }
+
+  proc SetDigiCounter {hours mins secs} {
+    set sec_list ""
+    #append sec_list "command restart DigiCounter99Reset\n"
+    append sec_list "command restart DigiCounterSeconds\n"
+    append sec_list "command restart DigiCounterSeconds2\n"
+    append sec_list "DigiCounterSeconds2\n"
+    append sec_list "command restart DigiCounterMinutes\n"
+    append sec_list "command restart DigiCounterMinutes2\n"
+    append sec_list "DigiCounterMinutes2\n"
+    append sec_list "command restart DigiCounterHours\n"
+    append sec_list "command restart DigiCounterHours2\n"
+    append sec_list "DigiCounterHours2\n"
+    while { $secs > 59 } {
+      incr secs -60
+      incr mins
+    }
+    while { $mins > 59 } {
+      incr mins -60
+      incr hours
+    }
+    if { $hours > 99 } { set hours 99 }
+    set secs [expr 60 - $secs]
+    set mins [expr 60 - $mins]
+    set hours [expr 100 - $hours]
+    append sec_list "# Time = $hours $mins $secs\n"
+    for {set i 0} {$i < $secs} {incr i 1} {
+      append sec_list DigiCounterSeconds\n
+    }
+    for {set i 0} {$i < $mins} {incr i 1} {
+      append sec_list DigiCounterMinutes\n
+    }
+    for {set i 0} {$i < $hours} {incr i 1} {
+      append sec_list DigiCounterHours\n
+#      append sec_list DigiCounter99Reset\n
+    }
+    return $sec_list
+  }
+command end
+
+# Place Counter centered middle at 864,288, scale it to 0.25,
+# image load start number is 20(..30) and image place start number is 21(..28)
+command create DigiCounterTcl
+  set a "\n"
+  append a [PlaceDigiCounter 845 520 0.25 20 21]
+  append a [SetDigiCounter 99 59 59]
+  append a "text place 27 25 5 835 480 1.0 1.0 1.0 1.0 nw"
+  append a "text align 27 center top"
+  return $a
+command end
+
+command create DigiDimCounter
+  image move alpha 21 -0.02 50
+  image move alpha 22 -0.02 50
+  image move alpha 23 -0.02 50
+  image move alpha 24 -0.02 50
+  image move alpha 25 -0.02 50
+  image move alpha 26 -0.02 50
+  image move alpha 27 -0.02 50
+  image move alpha 28 -0.02 50
+command end
+command create DigiUnDimCounter
+  image move alpha 21 0.02 50
+  image move alpha 22 0.02 50
+  image move alpha 23 0.02 50
+  image move alpha 24 0.02 50
+  image move alpha 25 0.02 50
+  image move alpha 26 0.02 50
+  image move alpha 27 0.02 50
+  image move alpha 28 0.02 50
+command end
+command afterend DigiDimCounter
+command create DigiDim
+  command restart DigiDimCounter
+  loop
+command end
+command create DigiUnDim
+  command restart DigiUnDimCounter
+  loop
+command end

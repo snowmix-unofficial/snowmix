@@ -1,0 +1,146 @@
+# Copyright by Peter Maersk-Moller 2012 - All rights reserved
+# verbose
+require version 0.4.0
+
+############## Clock Section - Definition of a Clock ##################
+## ClockTCL is used to synchronize the clock and set the hands of the clock
+command create ClockInitTcl
+  proc ImageRotation { place_id rotation } {
+    return "image rotation $place_id $rotation\n"
+  }
+  proc SetTime {hour_image minute_image second_image shadow_second_image} {
+    set sec_list ""
+    set a [clock format [clock seconds] -format "%l %M %S"]
+    set pi [expr 2*asin(1.0)]
+    regsub ^0 [lindex $a 1] "" minutes
+    regsub ^0 [lindex $a 2] "" seconds
+    set rotation_secs [expr $seconds * $pi / 30.0]
+    set rotation_minute [expr $minutes * $pi / 30.0]
+    set rotation_hour [expr ([lindex $a 0] + $minutes / 60.0) * $pi / 6.0]
+    append sec_list "# Time = $a\n"
+    for {set i 0} {$i < [lindex $a 2]} {incr i 1} {
+      append sec_list ClockSeconds\n
+    }
+    append sec_list [ImageRotation $hour_image $rotation_hour]
+    append sec_list [ImageRotation $minute_image $rotation_minute]
+    append sec_list [ImageRotation $second_image $rotation_secs]
+    append sec_list [ImageRotation $shadow_second_image $rotation_secs]
+    return $sec_list
+  }
+command end
+
+command create ClockTcl
+  set a [SetTime 16 15 14 17]
+  return [format "\n%s" $a]
+command end
+
+## ClockInit is called to create and initialize the clock
+command create ClockInit
+  image load 10 images/SwissClock-trans-259x259.png
+  image load 11 images/SwissClock-trans-hand-9x89.png
+  image load 12 images/SwissClock-trans-second-hand-19x105-center-9-81.png
+  # Clock plate
+  image place 10 10 129 129 center middle
+  image scale 10 0.4 0.4
+  # Second hand shadow
+  image place 14 12 127 127 center bottom
+  image scale 14 0.4 0.4
+  image offset 14 0 22
+  image alpha 14 0.3
+  # minute hand
+  image place 15 11 129 129 center bottom
+  image scale 15 0.45 0.45
+  image offset 15 0 19
+  # hour hand
+  image place 16 11 129 129 center bottom
+  image scale 16 0.45 0.3
+  image offset 16 0 22
+  # Second hand shadow
+  image place 17 12 129 129 center bottom
+  image scale 17 0.4 0.4
+  image offset 17 0 22
+  tcl exec ClockInitTcl
+  tcl exec ClockTcl
+  message Clock Initialized
+command end
+
+# This is used to simulate the second hand physical move (
+command create ClockSecondsMove
+  #message Clock Move 1
+  image move rotation 14 0.10471975511965977461 1
+  image move rotation 17 0.10471975511965977461 1
+  next 5
+  #message Clock Move 2
+  image move rotation 14 0.020471975511965977461 1
+  image move rotation 17 0.020471975511965977461 1
+  next 5
+  #message Clock Move 3
+  image move rotation 14 -0.020471975511965977461 1
+  image move rotation 17 -0.020471975511965977461 1
+  next 4
+  #message Clock Move 4
+  image move rotation 14 0.010471975511965977461 1
+  image move rotation 17 0.010471975511965977461 1
+  next 3
+  image move rotation 14 -0.010471975511965977461 1
+  image move rotation 17 -0.010471975511965977461 1
+command end
+
+# This is called every second
+command create ClockSeconds
+  command restart ClockSecondsMove
+  loop 59
+  tcl exec ClockTcl
+  loop
+command end
+
+# This is called at framrate (24)
+command create ClockFramerate
+  ClockSecondsMove
+  #DigiCounterSeconds_Switch
+  loop 23
+  DigiCounterSeconds_Switch
+  ClockSeconds
+  DigiClockSeconds
+  loop
+command end
+
+command create ClockShow
+  command restart ClockFadein
+  loop
+command end
+
+# This will fade the clock in in 50 frames, but fade out again after 120 frames (5 secs at 24frames/s)
+command create UnDimClock
+  next
+  image move alpha 10 0.02 50
+  image move alpha 14 0.02 50
+  image move alpha 15 0.02 50
+  image move alpha 16 0.02 50
+  image move alpha 17 0.02 50
+command end
+
+# This will fade the clock out in 100 frames
+command create DimClock
+  next
+  image move alpha 10 -0.01 100
+  image move alpha 14 -0.01 100
+  image move alpha 15 -0.01 100
+  image move alpha 16 -0.01 100
+  image move alpha 17 -0.01 100
+command end
+
+command create Dim
+  command restart DimClock
+  loop
+command end
+command create UnDim
+  command restart UnDimClock
+  loop
+command end
+
+command afterend DimClock
+command afterend UnDimClock
+command afterend ClockSecondsMove
+#ClockInit
+####################### End of Clock Definitions

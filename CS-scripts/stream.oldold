@@ -1,0 +1,38 @@
+#!/bin/bash
+
+if [ $# != 1 ] ; then exit ; fi
+
+AUDIOFORMAT='audio/x-raw-int, endianness=(int)1234, signed=(boolean)true, width=(int)16, depth=(int)16, rate=(int)44100, channels=(int)1'
+
+case $1 in
+  you|youtube)
+	width=1280
+	height=720
+	width=640
+	height=360
+	videoencoder="x264enc bitrate=500 bframes=2"
+	audioencoder="faac bitrate=64000 profile=2"
+	location="rtmp://a.rtmp.youtube.com/videolive?sparams=id%2Citag%2Cns%2Cexpire&ipbits=0&itag=120&signature=6C4BBFCD5958DEA4043FD55A9DBAD67D51BC5658.329C0A6BAED97CD65DC6E49401284D46456EF47C&ns=yt-live&id=whbU8EsHZ4s&key=yt_qc&expire=1369169907 flashver=FME/3.0\20(compatible;\20FMSc\201.0)"
+	;;
+  ustream)
+	width=1024
+	height=576
+	videoencoder="x264enc bitrate=400 bframes=0"
+	audioencoder="lame mode=3 bitrate=64"
+	location="rtmp://1.11788764.fme.ustream.tv/ustreamVideo/11788764/HyYgjUqdwAeY4vFJVrMC4wyAQPxJ6f4t' flashver=FME/3.0\20(compatible;\20FMSc\201.0)'"
+	;;
+  *)	echo 'Use youtube or ustream'
+	exit
+esac
+
+gst-launch -v videotestsrc !\
+	'video/x-raw-yuv, framerate=25/1, width='$width', height='$height !\
+	ffmpegcolorspace		!\
+	$videoencoder			!\
+	mux. audiotestsrc		!\
+	$AUDIOFORMAT			!\
+	$audioencoder			!\
+	flvmux streamable=true name=mux	!\
+	rtmpsink location="$location"
+
+exit

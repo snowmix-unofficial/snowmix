@@ -1,0 +1,127 @@
+<div class="content">
+
+	<div class="item">
+
+		<h1>Requirements for Compiling, Installing and Running Snowmix.</h1>
+                <div class="descr">Updated for Snowmix 0.5.1</div>
+
+		<p>This page list the supported platforms as well as the required hardware and software needed to compile, install and run Snowmix.</p>
+		<h3>Content</h3>
+		<ul>
+			<li><a href="#platforms">Supported Platforms</a>.
+			<li><a href="#hardware">Supported Hardware</a>.
+			<li><a href="#software">Required Software</a>.
+		</ul>
+
+	</div>
+
+	<div class="item">
+
+		<a name="platforms"><h1>Supported Platforms.</h1></a>
+	
+		<p>Snowmix is supported on a wide range of
+		<a href="https://en.wikipedia.org/wiki/Linux">Linux</a>
+		distributions, a version of
+		<a href="https://en.wikipedia.org/wiki/FreeBSD">FreeBSD</a>
+		and versions of
+		<a href="http://en.wikipedia.org/wiki/OS_X">Mac OS X</a>.
+		Snowmix version 0.5.1 release was tested on the following platforms:</p>
+		<ul>
+			<li>Linux <a href="http://www.ubuntu.com/">Ubuntu Desktop and Server</a> amd64/i386/i686/ARMv7.
+			<li>Linux <a href="http://www.debian.org/">Debian</a> amd64 and i386/i686.
+			<li>Linux <a href="http://www.cdentos.org/">CentOS</a> amd64 and i386/i686.
+			<li>Linux <a href="http://chakraos.org/">Chakra</a> amd64 and i386/i686.
+			<li>Linux <a href="https://getfedora.org/">Fedora Live Desktop</a> amd64 and i386/i686.
+			<li>Linux <a href="http://www.linaro.org/">Linaro</a> ARMv7 (tested version 0.5.0 on ODROID U2)
+			<li>Linux <a href="http://www.linuxmint.com/">Mint</a> amd64 and i386/i686.
+			<li>Linux <a href="http://www.opensuse.org/">OpenSUSE</a> amd64 and i386/i686.
+			<li>FreeBSD <a href="http://www.pcbsd.org/">PCBSD</a> amd64.
+			<li>Mac OS X <a href="http://en.wikipedia.org/wiki/El_Capitan">El Capitan</a>, <a href="http://en.wikipedia.org/wiki/OS_X_Yosemite">Yosemite</a>, <a href="http://en.wikipedia.org/wiki/OS_X_Mavericks">Mavericks</a>, <a href="http://en.wikipedia.org/wiki/OS_X_Mountain_Lion">Mountain Lion</a>, <a href="http://en.wikipedia.org/wiki/Mac_OS_X_Lion">Lion</a>.
+		</ul>
+
+		<p>For Windows, please see the <a href="[HOME]Intro/faq.html#windows">relevant section in the FAQ</a>.</p>
+		<div align="right"><a href="">Top</a></div>
+	</div>
+
+	<div class="item">
+
+		<a name="hardware"><h1>Supported Hardware.</h1></a>
+
+		<p>Snowmix is very relaxed with its hardware requirements and it has been
+		tested successfully on a variety of older and newer computers with i386/i686,
+		<a href="http://en.wikipedia.org/wiki/X86-64">amd64/x86_64</a> and
+		<a href="http://en.wikipedia.org/wiki/ARM_architecture">ARMv7</a> compatible processors.<p>
+
+		<p>Snowmix is being developed by the author on an old 2007
+		<a href="http://en.wikipedia.org/wiki/ThinkPad">Lenovo ThinkPad T61</a> with
+		2GB of RAM to ensure that Snowmix can run on a wide range of hardware including older hardware.</p>
+
+		<p>Although Snowmix itself have very modest hardware requirements,
+		a complete video mixer system with many input pipelines decoding HD video,
+		Snowmix mixing HD video and an output pipeline aggressively encoding high
+		quality low bandwidth video will require a substantial amount of both CPU
+		power and CPU to memory bandwidth.</p>
+
+		<p>The author is using Snowmix to produce Live television
+		<a href="https://www.youtube.com/watch?v=ADq5sOfq-lI&start=11010">rocket launches from the Baltic Sea</a>
+		for <a href="http://www.copsub.com/>Copenhagen Suborbitals</a>.
+		The productions are in HD <a href="http://en.wikipedia.org/wiki/720p">720p</a>
+		- 1280x720@25fps with up to 10 camera input and up to 10 audio input on an old
+		<a href="http://en.wikipedia.org/wiki/List_of_Dell_PowerEdge_Servers">Dell PowerEdge 1950 Generation III</a>
+		with with two <a href="http://ark.intel.com/products/33927/Intel-Xeon-Processor-E5420-12M-Cache-2_50-GHz-1333-MHz-FSB">Xeon 2.33-2.5G0Hz E5420</a>
+		CPUs, each with 4 cores and 4-8GB RAM in total although less is required.
+		This type of CPU was released for sale in 2007 so obviously Snowmix can run
+		on older hardware as well as very well on newer hardware. Snowmix only uses
+		a fraction of the CPU time as most CPU time on a complete multi core system
+		goes to decoding video and audio streams for input as well as encoding the
+		mixed audio and video stream for output.</p>
+
+		<div align="right"><a href="">Top</a></div>
+	</div>
+
+	<div class="item">
+
+		<a name="software"><h1>Required software.</h1></a>
+
+		<p>Snowmix depends on <a href="http://cairographics.org/">libcairo from CairoGraphics.org</a> and <a href="http://www.pango.org/">Pango</a> available for Linux, Mac OS X and Windows among others. Libcairo is already part of most Linux distributions. Prebuilt binaries are also available for Mac OS X and Windows although Pango on OS X may have to be built using <a href="https://www.macports.org/">MacPort</a>.</p>
+
+		<p>Snowmix also depends on <a href="https://www.libsdl.org/">SDL</a>, <a href="http://www.libpng.org/pub/png/libpng.html">libPNG</a> and <a href="http://www.tcl.tk/">Tcl/Tk</a> which all have multi-platform support including Linux, Mac OS X and Windows.</p>
+
+		<p>For configuring and compiling Snowmix, <a href="https://gcc.gnu.org/">gcc/g++</a> and <a href="http://www.gnu.org/software/automake/manual/html_node/Autotools-Introduction.html">autotools</a> are necessary.</p>
+
+		<p>The bootstrap script supplied with Snowmix will offer to check, download and install necessary tools, libraries and needed software for you.</p>
+
+		<p>Snowmix uses a <a href="http://en.wikipedia.org/wiki/Shared_memory">shared memory</a> model for efficiently inputting to and outputting video from Snowmix. The shared memory model is compliant with GStreamer <strong>shmsink</strong> and <strong>shmsrc</strong> so <a href="http://gstreamer.freedesktop.org/">Gstreamer</a> is recommended as required software too. All the scripts for inputting and outputting audio and video to and from Snowmix uses <a href="http://gstreamer.freedesktop.org/">Gstreamer</a>.</p>
+
+		<p>The table below list the packages needed to be installed for Snowmix to compile, run and test on each supported platform. Snowmix's boostrap script <strong>will detect platform and offer to install missing packages</strong>.</p>
+
+		<p>
+<table valign=top borderwidth=2>
+	<tr bgcolor=#CCD><td>Operating System</td><td>Version</td><td>Packages</td></tr>
+	<tr><td>Linux Ubuntu</td><td>12.04 LTS - 14.04 LTS</td><td>build-essential, automake, autoconf, libtool, g++, pkg-config, libsdl1.2-dev, libpango1.0-dev, libpng12-dev, tcl-dev, tcl, tk, bwidget, gstreamer-tools<br/> OpenGL requires also libosmesa6-dev and freeglut3-dev</td></tr>
+	<tr bgcolor=#EEE><td>Linux Debian</td><td>7.7.0 Wheezy</td><td>build-essential, automake, autoconf, libtool, g++, pkg-config, libsdl1.2-dev, libpango1.0-dev, libpng12-dev, tcl-dev, tcl, tk, bwidget, gstreamer-tools.<br/>OpenGL requires also libosmesa6-dev and freeglut3-dev</td></tr>
+	<tr><td>Linux Mint</td><td>17.1/17.2 Cinnamon</td><td>build-essential, automake, autoconf, libtool, g++, pkg-config, libsdl1.2-dev, libpango1.0-dev, libpng12-dev, tcl-dev, tcl, tk, bwidget, gstreamer-tools<br/>OpenGL requires also libosmesa6-dev and freeglut3-dev</td></tr>
+	<tr bgcolor=#EEE><td>Linux CentOS</td><td>7 15.03</td><td>gcc, gcc-c++, autoconf, automake, libtool, SDL-devel, libpng-devel, pango-devel, tcl, tcl-devel, tk, bwidget.<br/>OpenGL requires mesa-libOSMesa mesa-libOSMesa-devel freeglut-devel<br/> For script support many of the following GStreamer packages are required, but not all are available from standard repositories : gstreamer, gstreamer-devel, gstreamer-ffmpeg, gstreamer-plugins-bad, gstreamer-plugins-bad-free, gstreamer-plugins-bad-free-extras, gstreamer-plugins-bad-nonfree, gstreamer-plugins-base, gstreamer-plugins-espeak, gstreamer-plugins-fc, gstreamer-plugins-good, gstreamer-plugins-good-extras, gstreamer-plugins-ugly gstreamer-tools</td></tr>
+	<tr><td>Linux Fedora</td><td>Live Workstation 21/22</td><td>gcc, gcc-c++, autoconf, automake, libtool, SDL-devel, libpng12-devel, pango-devel, tcl, tcl-devel, tk, bwidget.<br/>OpenGL requires mesa-libOSMesa-devel freeglut-devel. For script support many of the following GStreamer packages are required, but not all are available from standard repositories : gstreamer, gstreamer-devel, gstreamer-ffmpeg, gstreamer-plugins-bad, gstreamer-plugins-bad-free, gstreamer-plugins-bad-free-extras, gstreamer-plugins-bad-nonfree, gstreamer-plugins-base, gstreamer-plugins-espeak, gstreamer-plugins-fc, gstreamer-plugins-good, gstreamer-plugins-good-extras, gstreamer-plugins-ugly gstreamer-tools</td></tr>
+	<tr bgcolor=#EEE><td>Linux Chakra</td><td>2014.11 Euler</td><td>openbsd-netcat, bc, gst-libav, pkg-config, autoconf, automake, libtool, awk, gcc<br/>OpenGL requires OSMesa and libglut however the packages has not been identified.</td></tr>
+	<tr><td>Linux OpenSUSE</td><td>13.2</td><td>autoconf, automake, libtool, gcc, gcc-c++, pkg-config, libSDL-1_2-0, SDL-devel, libpng16, libpng16-devel, libcairo2, cairo-devel, libpango-1_0-0, pango-devel, tcl, tk, tcllib, tcl-devel, bwidget.<br/>OpenGL requires libOSMesa-devel and libglut.<br/>The following packages are useful for GStreamer support in the scripts: gstreamer, gstreamer-utils, gstreamer-plugins-base, gstreamer-plugins-good, gstreamer-plugins-bad, gstreamer-plugins-ugly, gstreamer-plugins-qt</td></tr>
+	<tr bgcolor=#EEE><td>Mac OS X</td><td>Lion 10.7</td><td>Xcode, Xcode Command Line Tools, port, autoconf, automake, libtool, pkgconfig, pango, cairo, libsdl, libpng, gstreamer</td></tr>
+	<tr><td>Mac OS X</td><td>Mountain Lion 10.8</td><td>Xcode, Xcode Command Line Tools, port, autoconf, automake, libtool, pkgconfig, pango, cairo, libsdl, libpng, gstreamer</td></tr>
+	<tr bgcolor=#EEE><td valign=top>Mac OS X</td><td valign=top>Mavericks 10.9</td><td>Xcode, Xcode Command Line Tools, port, autoconf, automake, libtool, pkgconfig, pango, cairo, libsdl, libpng, gstreamer</td></tr>
+	<tr><td valign=top>Mac OS X</td><td valign=top>Yosemite 10.10</td><td>Xcode, Xcode Command Line Tools, port, autoconf, automake, libtool, pkgconfig, pango, cairo, libsdl, libpng, gstreamer</td></tr>
+	<tr bgcolor=#EEE><td valign=top>Mac OS X</td><td valign=top>El Capitan 10.11</td><td>Xcode, Xcode Command Line Tools, port, autoconf, automake, libtool, pkgconfig, pango, cairo, libsdl, libpng, gstreamer</td></tr>
+</table>
+		</p>
+
+		<h3>Fedora and CentOS</h3>
+		<p>The following commands has for earlier versions of Fedora been useful to install GStreamer support for scripts. However this has not been tested recently.</p>
+		<code>
+GST_PACKAGES='gstreamer gstreamer-devel gstreamer-ffmpeg gstreamer-plugins-bad gstreamer-plugins-bad-free gstreamer-plugins-bad-free-extras gstreamer-plugins-bad-nonfree gstreamer-plugins-base gstreamer-plugins-espeak gstreamer-plugins-fc gstreamer-plugins-good gstreamer-plugins-good-extras gstreamer-plugins-ugly gstreamer-tools'
+su -c 'yum localinstall --nogpgcheck http://download1.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm http://download1.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm'
+sudo yum install gstreamer-plugins-bad-nonfree
+
+sudo yum install $GST_PACKAGES
+</code>
+		<div align="right"><a href="">Top</a></div>
+	</div>
+</div>

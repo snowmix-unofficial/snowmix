@@ -1,0 +1,220 @@
+# Basic Intercom Settings
+#
+# Copyright by Peter Maersk-Moller 2012-2013 - All rights reserved
+# verbose
+require version 0.4.1
+
+#maxplaces images 32
+#maxplaces shapeplaces 64
+
+# Define allowed remote host IP addresses. If omitted then only 127.0.0.1 will be accepted.
+system host allow 127.0.0.1 81.7.134.69 192.168.1.0/24 193.88.237.0/24
+
+# Listen on port 9990 for command control connections
+system control port 9990
+
+# Set system Geometry to WIDTH HEIGHT
+system geometry 1280 720 ARGB
+tcl eval set system(width) 1280 ; set system(height) 720
+
+# Set system frame rate to N or NN.NN
+system frame rate 24
+
+# Set output control socket
+system socket /tmp/mixer1
+
+command create libaudio.tcl
+  set audio_feed(feeds) ""
+  set audio_mixer(mixers) ""
+  set audio_sink(sinks) ""
+  proc CreateAudioFeed { feed_id name channels rate format mute volume } {
+    global audio_feed
+    if {![string is integer -strict $feed_id]} {
+      return "\nmessage invalid feed id\n"
+    }
+    if {[info exist audio_feed($feed_id,name)]} {
+      return "\nmessage audio feed $feed_id was already created\n"
+    }
+    if {![string is integer -strict $channels] || $channels < 1} {
+      return "\nmessage invalid channels\n"
+    }
+    if {![string is integer -strict $rate] || $rate < 1} {
+      return "\nmessage invalid rate\n"
+    }
+    if {![string match 16 $format]} {
+      return "\nmessage invalid format\n"
+    }
+    if {![string match off $mute] && ![string match on $mute]} {
+      return "\nmessage invalid mute option\n"
+    }
+    set audio_feed(name,$feed_id) "$name"
+    set audio_feed(channels,$feed_id) $channels
+    set audio_feed(rate,$feed_id) $rate
+    set audio_feed(format,$feed_id) $format
+    set audio_feed(mute,$feed_id) $mute
+    set audio_feed(volume,$feed_id) $volume
+    set s "\naudio feed add $feed_id $name\n"
+    append s "\naudio feed add $feed_id\n"
+    append s "\naudio feed add $feed_id $name\n"
+    append s "audio feed channels $feed_id $channels\n"
+    append s "audio feed rate $feed_id $rate\n"
+    append s "audio feed format $feed_id $format signed \n"
+    append s "audio feed mute $mute $feed_id\n"
+    append s "audio feed volume $feed_id $volume\n"
+    append s "message audio feed $feed_id created\n"
+    lappend audio_feed(feeds) $feed_id
+    return "$s\n"
+  }
+
+  proc CreateAudioMixer { mixer_id name channels rate mute volume } {
+    global audio_mixer
+    if {![string is integer -strict $mixer_id]} {
+      return "\nmessage invalid mixer id\n"
+    }
+    if {[info exist audio_mixer($mixer_id,name)]} {
+      return "\nmessage audio mixer $mixer_id was already created\n"
+    }
+    if {![string is integer -strict $channels] || $channels < 1} {
+      return "\nmessage invalid channels\n"
+    }
+    if {![string is integer -strict $rate] || $rate < 1} {
+      return "\nmessage invalid rate\n"
+    }
+    if {![string match off $mute] && ![string match on $mute]} {
+      return "\nmessage invalid mute option\n"
+    }
+    set audio_mixer(name,$mixer_id) "$name"
+    set audio_mixer(channels,$mixer_id) $channels
+    set audio_mixer(rate,$mixer_id) $rate
+    set audio_mixer(mute,$mixer_id) $mute
+    set audio_mixer(volume,$mixer_id) $volume
+    set s "\naudio mixer add $mixer_id $name\n"
+    append s "\naudio mixer add $mixer_id\n"
+    append s "\naudio mixer add $mixer_id $name\n"
+    append s "audio mixer channels $mixer_id $channels\n"
+    append s "audio mixer rate $mixer_id $rate\n"
+    append s "audio mixer mute $mute $mixer_id\n"
+    append s "audio mixer volume $mixer_id $volume\n"
+    append s "message audio mixer $mixer_id created\n"
+    lappend audio_mixer(mixers) $mixer_id
+    set audio_mixer(source_count,$mixer_id) 0
+    return "$s\n"
+  }
+
+  proc AddSource2Mixer { mixer_id source_type source_id mute volume } {
+    global audio_mixer audio_feed
+    if {![string is integer -strict $mixer_id] ||
+        ![info exist audio_mixer(name,$mixer_id)]} {
+      return "\nmessage invalid mixer id\n"
+    }
+    if {![string match mixer $source_type] &&
+        ![string match feed $source_type]} {
+      return "\nmessage invalid source type option\n"
+    }
+    if {![string is integer -strict $source_id]} {
+      if {[string match mixer $source_type] &&
+          ![info exist audio_mixer(name,$source_id)]} {
+         return "\nmessage invalid source id\n"
+      }
+      if {[string match feed $source_type] &&
+          ![info exist audio_feed(name,$source_id)]} {
+         return "\nmessage invalid source id\n"
+      }
+    }
+    if {![string match off $mute] && ![string match on $mute]} {
+      return "\nmessage invalid mute option\n"
+    }
+    incr audio_mixer(source_count,$mixer_id)
+    set s "\naudio mixer source $source_type $mixer_id $source_id\n"
+    append s "\naudio mixer source mute $mute $mixer_id $audio_mixer(source_count,$mixer_id)\n"
+    append s "\naudio mixer source volume $mixer_id $audio_mixer(source_count,$mixer_id) $volume\n"
+    return "$s\nmessage audio source $audio_mixer(source_count,$mixer_id) added to audio mixer $mixer_id\n"
+  }
+
+  proc CreateAudioSink { sink_id name channels rate format mute volume source_type source_id } {
+    global audio_sink
+    if {![string is integer -strict $sink_id]} {
+      return "\nmessage invalid sink id\n"
+    }
+    if {[info exist audio_sink($sink_id,name)]} {
+      return "\nmessage audio sink $sink_id was already created\n"
+    }
+    if {![string is integer -strict $channels] || $channels < 1} {
+      return "\nmessage invalid channels\n"
+    }
+    if {![string is integer -strict $rate] || $rate < 1} {
+      return "\nmessage invalid rate\n"
+    }
+    if {![string match 16 $format]} {
+      return "\nmessage invalid format\n"
+    }
+    if {![string match off $mute] && ![string match on $mute]} {
+      return "\nmessage invalid mute option\n"
+    }
+    if {![string match mixer $source_type] &&
+        ![string match feed $source_type]} {
+      return "\nmessage invalid source type option\n"
+    }
+    if {![string is integer -strict $source_id]} {
+      return "\nmessage invalid sink source id\n"
+    }
+    set audio_sink(name,$sink_id) "$name"
+    set audio_sink(channels,$sink_id) $channels
+    set audio_sink(rate,$sink_id) $rate
+    set audio_sink(format,$sink_id) $format
+    set audio_sink(mute,$sink_id) $mute
+    set audio_sink(volume,$sink_id) $volume
+    set audio_sink(source_type,$sink_id) $source_type
+    set audio_sink(source_id,$sink_id) $source_id
+    set s "\naudio sink add $sink_id $name\n"
+    append s "audio sink channels $sink_id $channels\n"
+    append s "audio sink rate $sink_id $rate\n"
+    append s "audio sink format $sink_id $format signed \n"
+    append s "audio sink mute $mute $sink_id\n"
+    append s "audio sink volume $sink_id $volume\n"
+    append s "audio sink source $source_type $sink_id $source_id\n"
+    append s "message audio sink $sink_id created\n"
+    lappend audio_sink(sinks) $sink_id
+    return "$s\n"
+  }
+command end
+
+tcl exec libaudio.tcl
+
+tcl eval CreateAudioFeed 1 "Intercom #1" 1 44100 16 off 1
+tcl eval CreateAudioFeed 2 "Intercom #2" 1 44100 16 off 1
+tcl eval CreateAudioFeed 3 "Intercom #3" 1 44100 16 off 1
+#tcl eval CreateAudioFeed 4 "Intercom #4" 1 44100 16 off 1
+tcl eval CreateAudioMixer 1 "Intercom Mixer #1" 1 44100 off 1
+#tcl eval CreateAudioMixer 2 "Intercom Mixer #2" 1 44100 off 1
+#tcl eval CreateAudioMixer 3 "Intercom Mixer #3" 1 44100 off 1
+#tcl eval CreateAudioMixer 4 "Intercom Mixer #4" 1 44100 off 1
+tcl eval CreateAudioSink 0 "Dummy Sink" 1 44100 16 off 1 mixer 1
+tcl eval CreateAudioSink 1 "Intercom #1" 1 44100 16 off 1 mixer 1
+#tcl eval CreateAudioSink 2 "Intercom #2" 1 44100 16 off 1 mixer 2
+#tcl eval CreateAudioSink 3 "Intercom #3" 1 44100 16 off 1 mixer 3
+#tcl eval CreateAudioSink 4 "Intercom #4" 1 44100 16 off 1 mixer 4
+
+tcl eval AddSource2Mixer 1 feed 1 off 1
+#tcl eval AddSource2Mixer 1 feed 2 off 1
+tcl eval AddSource2Mixer 1 feed 3 off 1
+#tcl eval AddSource2Mixer 1 feed 4 off 1
+
+#tcl eval AddSource2Mixer 2 feed 1 off 1
+#tcl eval AddSource2Mixer 2 feed 2 off 1
+#tcl eval AddSource2Mixer 2 feed 3 off 1
+#tcl eval AddSource2Mixer 2 feed 4 off 1
+
+#tcl eval AddSource2Mixer 3 feed 1 off 1
+#tcl eval AddSource2Mixer 3 feed 2 off 1
+#tcl eval AddSource2Mixer 3 feed 4 off 1
+#
+#tcl eval AddSource2Mixer 4 feed 1 off 1
+#tcl eval AddSource2Mixer 4 feed 2 off 1
+#tcl eval AddSource2Mixer 4 feed 3 off 1
+
+audio sink start 0
+audio mixer start 1
+
+shape add 1 dummy shape
+shape place 1 1 0 0 1 1

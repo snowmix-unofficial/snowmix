@@ -1,0 +1,38 @@
+#!/bin/sh
+for dir in src relay ; do
+  if [ -f $dir/Makefile ] ; then
+    cd $dir
+    make distclean
+    cd ..
+  fi
+done
+
+rm -r Makefile		\
+	INSTALL		\
+	Makefile.in	\
+	aclocal.m4	\
+	autom4te.cache	\
+	configure	\
+	config.guess	\
+	config.sub	\
+	config.log	\
+	config.status	\
+	depcomp		\
+	install-sh	\
+	ltmain.sh 	\
+	libtool		\
+	m4		\
+	missing		\
+	compile
+
+makedirs='src relay frames images images/tcl_images ini slib scripts tcl test'
+for dir in $makedirs ; do
+  if [ -f $dir/Makefile.in ] ; then rm -f $dir/Makefile.in ; fi
+  if [ -f $dir/Makefile ] ; then rm -f $dir/Makefile ; fi
+done
+
+for dir in .deps .libs src/.libs src/.deps ; do
+  if [ -d $dir ] ; then
+    rm -rf $dir
+  fi
+done

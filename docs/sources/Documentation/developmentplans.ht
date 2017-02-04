@@ -1,0 +1,279 @@
+<div class="content">
+
+	<div class="item">
+
+		<h1>Development Plans</h1>
+		<div class="descr">Updated for Snowmix 0.5.1</div>
+
+		<h3>Introduction</h3>
+		<br/>
+
+		<p>This page list the intended development plans for Snowmix. As this project
+		is work in progress plans may change without notice depending upon needs and
+		requests. Feel free to request new features.</p>
+	</div>
+
+	<div class="item">
+		<h3>Snowmix 0.5.2</h3>
+		<div class="descr">Progress : 0%</div>
+
+		<p>Expansion of OpenGL 3D support. Maturing OpenGL support to become beta code
+		possibly suitable for production. Input for feature requests is needed and welcome.</p>
+		<div align="right"><a href="">Top</a></div>
+	</div>
+
+	<div class="item">
+		<h3>Snowmix 0.6</h3>
+		<div class="descr">Being planned.</div>
+		<br/>
+
+		<p>More GUI tools for producing Live TV using Snowmix. Support for slow-motion
+		files through external script. Support for chroma key
+		filtering (green screen, blue screen blending - See further down). Definition of
+		areas for easy placement, scaling stretching, clipping, moving and animation of
+		virtual feeds.</p>
+		<div align="right"><a href="">Top</a></div>
+	</div>
+
+	<div class="item">
+		<h3>Snowmix 0.7</h3>
+		<div class="descr">Being planned.</div>
+		<br/>
+
+		<div align="right"><a href="">Top</a></div>
+	</div>
+
+	<div class="item">
+		<h3>Snowmix 0.8</h3>
+		<div class="descr">Being planned.</div>
+		<br/>
+
+		<p>Snowmix GUI Support. Ideas and suggestion for what a GUI should accomplish is welcomed.</p>
+		<div align="right"><a href="">Top</a></div>
+	</div>
+
+	<div class="item">
+		<h3>Features Under Consideration.</h3>
+		<div class="descr">Being planned.</div>
+		<br/>
+
+		<p>The following features are on the development map, but the version for
+		which the feature has not yet been decided.</p>
+
+		<ul>
+			<li>Groups. group text, images, shapes. A single command for a group
+			will operate on all members of the group. Scaling, moving, rotation,
+			alpha blending and animation.
+			<li>Video Filters. Chroma key is under consideration for version 0.6,
+			but Snowmix already supports chroma keying through gstreamer modules
+			alpha and alphacolor.
+			<li>Audio Filters.
+			<li>Multiple Output modules for video as opposed to currently only one.
+			<li>I420 video input.
+			<li>Snowcub: Overhaul and updating of the GUI tool that can control flow and mixing with Snowmix.
+		</ul>
+		<div align="right"><a href="">Top</a></div>
+	</div>
+
+	<div class="item">
+		<h1>Earlier Releases.</h1>
+		<br/>
+
+		<p>The sections below list historic plans for earlier releases.</p>
+		<div align="right"><a href="">Top</a></div>
+	</div>
+
+	<div class="item">
+
+		<h3>Snowmix 0.5.1</h3>
+		<div class="descr">100% done and released February 9th 2016</div>
+		<br/>
+
+		<p>This version will add GUI tools for Live video production. Bugfixes for
+		making Snowmix even more stable and suitable for Live video production.</p>
+	</div>
+
+	<div class="item">
+
+		<h3>Snowmix 0.5.0</h3>
+		<div class="descr">100% done and released July 2015</div>
+		<br/>
+
+		<p>This version will support OpenGL 3D graphics and texture manipulation of feeds,
+		images and graphic elements. This version will allow for 3D overlay of video feeds
+		and images including 3D placement, 3D rotation, alpha blending and perhaps clipping.</p>
+
+		<p>OpenGL will be supported as "Off Screen" CPU based rendering using
+		<a href="http://www.mesa3d.org/osmesa.html">OSNesa</a> as well as hardware accelerated GPU
+		based rendering using <a href="http://en.wikipedia.org/wiki/GLX">GLX</a>.</p>
+
+		<p>The OpenGL support for Snowmix-0.5 is to be considered alpha code and will not
+		be recommended for production setups.</p>
+		<div align="right"><a href="">Top</a></div>
+	</div>
+
+	<div class="item">
+
+		<h3>Snowmix 0.4.6</h3>
+		<div class="descr">100% done and never released. Included in 0.5.0</div>
+		<br/>
+
+
+		<p>This version <strong>will be installable</strong> and will be suited to include
+		in distros such as Linux distros etc. This version will require the environment
+		variable SNOWMIX to point to where the Snowmix files will be installed, typically
+		/usr/local/lib/Snowmix-0.4.6 or /opt/local/lib/Snowmix-0.4.6.</p>
+
+		<p>Snowmix will apply a search path when loading images with a relative path, including
+		files with a relative path and when searching for the ini file if given with a relative
+		path and when writing an audio sink to a file with a relative path.</p>
+
+		<p>This version will also install snowcub.tcl to be used as a program from anywhere.</p>
+		<div align="right"><a href="">Top</a></div>
+	</div>
+
+	<div class="item">
+
+		<h3>Snowmix 0.4.5</h3>
+		<div class="descr">100% done and released January 21st 2015</div>
+		<br/>
+
+		<p>The overall theme for this version is an overhaul of the <strong>virtual feed</strong>
+		abilities for Snowmix. Adding commands for setting coordinates, scale, clip and alpha
+		individually.</p>
+
+		<p>Aligning virtual feed clipping and scaling with rest of Snowmix.</p>
+
+		<p>Reference manual for virtual feeds.</p>
+
+		<p>Fixing writing data on control connections to use select call and buffering.</p>
+
+		<p>Fixing vulnerability for stall if audio sinks stalls.</p>
+		<div align="right"><a href="">Top</a></div>
+	</div>
+
+	<div class="item">
+
+		<h3>Snowmix 0.4.5</h3>
+		<div class="descr">100% done and released September 3rd 2014</div>
+		<br/>
+
+		<p>The overall theme of this release will be to add support for other platforms and
+		to aide or automate the setup for compilation of Snowmix on these platforms.
+		Supported platforms will be Linux (Ubuntu and Fedora) for both i386/i686/amd64/ARMv7
+		and Mac OS X originally planned for version 0.7.</p>
+
+		<p>As always, the release will also include optimization and bugfixes.</p>
+
+		<p>This relase will also add UTF-8 formatted international character support for text strings.</p>
+
+		<p>The Tcl interpreter will be able to pass Snowmix commands for immidiate parsing
+		and execution as well query for a wide range internal Snowmix settings for text,
+		images, feeds, shapes etc. originally planned for rlease 0.7.
+		This is an important step for advanced scripting.</p>
+
+		<p>The code will furthermore be analyzed to remove potential memory leaks
+		and potential pointer NULL references as malformed commands in some cases can lead
+		to crashing Snowmix.</p>
+
+		<p>Snowmix libraries slibs will be partly documented and fully supported.</p>
+		<div align="right"><a href="">Top</a></div>
+	</div>
+
+	<div class="item">
+
+		<h3>Snowmix 0.4.3</h3>
+		<div class="descr">100% done and released January 17th 2014</div>
+		<br/>
+
+		<p>The overall theme of this release will be to add a new threaded video output
+		module and tighten up timing for the main video loop.</p<
+
+		<p>The release will also add support for Tk/Tcl8.6 as well as GStreamer1.0
+		originally planned for version 0.5. Furthermore the setup/compile/installation
+		scripts will be added more checks and automation.</p>
+
+		<p>As always, the release will also include optimization and bugfixes.</p>
+		<div align="right"><a href="">Top</a></div>
+	</div>
+
+	<div class="item">
+
+		<h3>Snowmix 0.4.2</h3>
+		<div class="descr">100% done and released 30th July 2013</div>
+
+		<p>The 0.4.2 version is intended as a maintenance release fixing
+		found bugs and smaller improvements.</p>
+
+		<p>The release will support volume "animation" for audio feeds,
+		mixers and sinks.</p>
+
+		<p>The release will also contain smaller improvements of Snowcub.</p>
+
+		<p>The demo includes example on how to use *scenes*, *clocks*, *graphs*
+		and an example application radar.</p>
+		<div align="right"><a href="">Top</a></div>
+	</div>
+
+	<div class="item">
+
+		<h3>Snowmix 0.4.1</h3>
+		<div class="descr">100% done and released July 4th 2013</div>
+
+		<p>The overall theme for this version is to add <strong>shapes</strong> with the
+		capabilities to draw graphic using graphic primitives such as lines,
+		arcs, splines, boxes, clipping, blending, gradients, masking, images,
+		video and a lot more as overlay to video. Includes colours and alpha
+		blending. Enabling free form clipping of video and images.</p>
+		<div align="right"><a href="">Top</a></div>
+	</div>
+
+	<div class="item">
+
+		<h3>Snowmix 0.4.0</h3>
+		<div class="descr">100% done and released Jan 20th 2013</div>
+
+		<p>The overall theme for this version is to add audio mixing
+		capabilities. How to configure and interface for audio
+		<a href="https://sourceforge.net/p/snowmix/wiki/Audio/">can be see here</a>.</p>
+		<div align="right"><a href="">Top</a></div>
+	</div>
+
+	<div class="item">
+
+		<h3>Snowmix 0.3.4</h3>
+		<div class="descr">100% done and released Oct 18th 2012</div>
+
+		<p>The overall theme for this version is an overhaul of the <strong>image</strong>
+		abilities for Snowmix. <strong>Image</strong> commands to scale, rotate and overlay images.
+		Animation for moving, scaling, ratating and overlaying are under consideration.
+		Support for animated PNG is under consideration.</p>
+		<div align="right"><a href="">Top</a></div>
+	</div>
+
+	<div class="item">
+
+		<h3>Snowmix 0.3.3</h3>
+		<div class="descr">100% done and released Oct 6th 2012</div>
+
+		<p>The overall theme for this version is an overhaul of the <strong>command</strong> abilities
+		for Snowmix.</p>
+
+		<p><strong>Command</strong> commands will be added to provide better flow control. Conditional
+		commands, timed commands, file commands are under consideration.</p>
+		<div align="right"><a href="">Top</a></div>
+	</div>
+
+	<div class="item">
+
+		<h3>Snowmix 0.3.2</h3>
+		<div class="descr">100% done and released 30th September 2012</div>
+
+		<p>The overall theme for this version is an overhaul of the **text**
+		abilities for Snowmix. **Text** commands will be added to increase animation
+		and layout abilities of text items. Scaling and clipping of text. Class
+		CVideoText to be renamed and moved away from class CTextItem. Organizing
+		and cleaning up normal feeds in its own class.</p>
+		<div align="right"><a href="">Top</a></div>
+	</div>
+</div>

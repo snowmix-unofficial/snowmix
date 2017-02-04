@@ -1,0 +1,985 @@
+# Basic Radar Settings
+# Copyright by Peter Maersk-Moller 2013 - All rights reserved
+#require version 0.4.4
+require version 0.5.1
+
+
+# CreateRadarCircleShape { shape_id } : 
+## CreateRadar {name place_id ray_place_id radar_id circle_id ray_id text_id x y width height} : 
+# RadarAddVessel { radar_id vessel_name vessel_id shape_id red green blue tplace_id tstring_id } : 
+# RadarCreate { id fullname circle_id vessels_id vessels2_id width height } :
+# RadarDisplayVessel { name vessel display } : 
+# RadarGetScaledCoors {radar_id vessel_id } : 
+# RadarInit {} : 
+# RadarList { radar_id } : 
+# RadarMakeVesselsList2 { radar_id } : 
+# RadarMakeVesselsList { radar_id } : 
+# RadarOverlay { radar_id x y width height } : 
+# RadarPlaceVessel { radar_id vessel_id } : 
+# RadarScreenCoors { name x y } : 
+# RadarSetRange_old { name range } : 
+# RadarSetRange { radar_id range } : 
+# RadarSetSpeed { radar_id ray_speed } : 
+# RadarSetVesselAlpha { radar_id vessel_id alpha } : 
+# RadarSetVesselPosition { radar_id vessel_id x y } : 
+# RadarSetVesselsAlpha { radar_id } : 
+# RadarSetVesselScale { radar_id scale } : 
+# RadarsList {} : 
+# RadarUpdate {} : 
+# RadarVesselSetUpdateAngle_old { name vessel x y} : 
+# RadarVesselSetUpdateAngle { radar_id vessel_id x y } : 
+# SetRadarSpeed { name speed } : 
+# SetVesselCoors { vessel x y } : 
+# UpdateRadar {} : 
+# UpdateVessel { vessel_name } : 
+# VesselTextPlace { name vessel sx sy } : 
+
+command create libradar.tcl
+
+  proc RadarInit {} {
+    global radar
+    # List of radars set empty
+    set radar(radars) ""
+    set radar(background) [list 0.14509 0.11372 0.34901]
+    set radar(foreground) [list 1.0 1.0 1.0]
+    set radar(alpha) 1.0
+    set radar(frame) 0
+    set radar(2PI) [expr 8*atan(1.0)]
+    set radar(count) 1
+    set radar(tfont_id) 8
+    set radar(rfont_id) 6
+    set radar(buttons) {{RadarHalfRange button {Half Range}}}
+    lappend radar(buttons) {RadarDoubleRange button {Double Range}}
+    lappend radar(buttons) {RadarSpeedUp button {Speed Up}}
+    lappend radar(buttons) {RadarSpeedDown button {Speed Down}}
+    Add2Update pre RadarUpdate
+    if {[llength [info proc SceneAddFrameType]]} {
+      SceneAddFrameType radar  RadarInfo
+    } else {
+      snowmix message "feeds.slib : WARNING. Could not add feed type to scene frame types"
+    }
+    return
+  }
+
+  # commands : exist id | geometry id | list | shape | overlay_proc
+  proc RadarInfo { command args } {
+    global radar
+    # exist <radar no>
+    if {[string match exist $command] && [llength $args] > 0} {
+      set radar_id [lindex $args 0]
+      if {![string is integer -strict $radar_id] || $radar_id < 0} { return 0 }
+      return [info exist radar(name,$radar_id)]
+    # geometry <radar no>
+    } elseif {[string match geometry $command] && [llength $args] > 0} {
+      set radar_id [lindex $args 0]
+      if {![string is integer -strict $radar_id] || $radar_id < 0} { return }
+      if {![info exist radar(name,$radar_id)]} return
+      return "$radar(width,$radar_id) $radar(height,$radar_id)"
+    } elseif {[string match list $command]} {
+      return $radar(radars)
+    } elseif {[string match shape $command] && [llength $args] > 0} {
+      set radar_id [lindex $args 0]
+      if {![string is integer -strict $radar_id] || $radar_id < 0} { return -1 }
+      if {![info exist radar(shape_id,$radar_id)]} { return -1 }
+      return $radar(shape_id,$radar_id)
+    } elseif {[string match buttons $command]} {
+      return $radar(buttons)
+    } elseif {[string match overlay_proc $command]} {
+      return RadarOverlay
+    }
+    return 0
+  }
+  
+  proc RadarsList {} {
+    global radar
+    snowmix message "Radars = $radar(radars)"
+    return
+  }
+
+  proc RadarList { radar_id } {
+    global radar
+    if {![info exist radar(name,$radar_id)]} {
+      snowmix message "Invalid radar"
+    }
+    #set s "\n"
+    # Here we should print the details for the radar
+    snowmix message "STAT: "
+    return
+  }
+
+  proc UpdateVessel { vessel_name } {
+    global radar vessel
+    set vessel($vessel_name,angle) [expr $vessel($vessel_name,angle) + $vessel($vessel_name,speed)]
+    set x [expr $vessel($vessel_name,r1) * cos($vessel($vessel_name,angle))]
+    set y [expr $vessel($vessel_name,r2) * sin($vessel($vessel_name,angle))]
+    foreach radar_id $radar(radars) {
+      set vessel_id $vessel(vessel_id,$radar_id,$vessel_name)
+      RadarSetVesselPosition $radar_id $vessel_id $x $y
+    }
+  }
+
+  # Set radar ray speed, fade speed and reset ray angle to 0
+  proc SetRadarSpeed { name speed } {
+    global radar
+    set radar($name,rayspeed) $speed
+    set radar($name,rayfade) [expr -0.80 / $speed]
+    set radar($name,deltaangle) [expr 8*atan(1.0) / $radar($name,rayspeed)]
+    set radar($name,step) 0
+    snowmix parse "shape place rotation $radar($name,ray_place_id) 0.0"
+    return
+  }
+
+  # Returns the screen cordinates on a radar depending on vessel coordinates
+  proc RadarScreenCoors { name x y } {
+    global radar
+    set x [expr int($radar($name,x) + $x * $radar($name,scale_x) + 0.5)]
+    set y [expr int($radar($name,y) + $y * $radar($name,scale_y) + 0.5)]
+    return "$x $y"
+  }
+
+  # Set the radar update angle for a vessel depending on coordinates
+  proc RadarVesselSetUpdateAngle_old { name vessel x y} {
+    global radar
+    if { $x == 0 && $y == 0 } {
+      set radar($name,vessel,$vessel,update) 0
+    } else {
+      set angle [expr atan2($y,$x)]
+      if {$angle < 0.0} { set angle [expr $angle + $radar(2PI)] }
+      set radar($name,vessel,$vessel,update) [expr round($radar($name,rayspeed) * $angle / $radar(2PI))]
+    }
+    return
+  }
+
+  proc VesselTextPlace { name vessel sx sy } {
+    global radar
+    set s ""
+    set align ""
+    if { $radar($name,vessel,$vessel,x) > 0 } {
+      set align " right"
+      set dx -6
+    } else {
+      set align " left"
+      set dx 6
+    }
+    #if { $radar($name,vessel,$vessel,y) > 0 } {
+    #  append align " bottom"
+    #  set dy -0
+    #} else {
+    #  append align " top"
+    #  set dy 0
+    #}
+    set dy 0
+    append align " middle "
+    #return
+    append s "text align $radar($name,vessel,$vessel,text_id) $align\n"
+    append s "text coor $radar($name,vessel,$vessel,text_id) [expr $sx + $dx] [expr $sy + $dy]\n"
+    snowmix parse "$s"
+    return 
+  }
+
+  # Set new coordinates for a vessel on all radars if existing - old and deprecated
+  proc SetVesselCoors { vessel x y } {
+    global radar
+    foreach name $radar(radars) {
+      if {![info exist radar($name,vessel,$vessel,name)]} continue
+      RadarVesselSetUpdateAngle_old $name $vessel $x $y
+      set radar($name,vessel,$vessel,newx) $x
+      set radar($name,vessel,$vessel,newy) $y
+      if { $radar($name,radius_squared) > [expr $x * $x + $y * $y] } { set display 1 } else { set display 0 }
+      RadarDisplayVessel $name $vessel $display
+    }
+  }
+
+  # Display or not to display vessel on radar
+  proc RadarDisplayVessel { name vessel display } {
+    global radar
+    set s ""
+    if {![info exist radar($name,vessel,$vessel,name)]} continue
+    if { $display == 0 && $radar($name,vessel,$vessel,display) > 0 } {
+      append s "shape place alpha $radar($name,vessel,$vessel,place_id) 0\n"
+      append s "text alpha $radar($name,vessel,$vessel,text_id) 0\n"
+      snowmix parse "$s"
+    }
+    set radar($name,vessel,$vessel,display) $display
+    return
+  }
+
+  # Update radar checks if a vessel is hit by the ray and should be updated
+  proc UpdateRadar {} {
+    global radar
+    UpdateVessel vostok
+    UpdateVessel bluerib
+    UpdateVessel hjortoe
+    incr radar(frame)
+    set s ""
+    foreach name $radar(radars) {
+      foreach vessel $radar($name,vessels) {
+        if {$radar($name,step) == $radar($name,vessel,$vessel,update)} {
+          append s "shape place alpha $radar($name,vessel,$vessel,place_id) $radar($name,vessel,$vessel,display)\n"
+          append s "shape place move alpha $radar($name,vessel,$vessel,place_id) $radar($name,rayfade) $radar($name,rayspeed)\n"
+          append s "text alpha $radar($name,vessel,$vessel,text_id) $radar($name,vessel,$vessel,display)\n"
+          append s "text move alpha $radar($name,vessel,$vessel,text_id) [expr $radar($name,rayfade) / 2] $radar($name,rayspeed)\n"
+	  snowmix parse "$s"
+          set s ""
+          if { $radar($name,vessel,$vessel,x) != $radar($name,vessel,$vessel,newx) || $radar($name,vessel,$vessel,y) != $radar($name,vessel,$vessel,newy) } {
+            set xy [RadarScreenCoors $name $radar($name,vessel,$vessel,newx) $radar($name,vessel,$vessel,newy)]
+            set sx [lindex $xy 0]
+            set sy [lindex $xy 1]
+            snowmix parse "shape place coor $radar($name,vessel,$vessel,place_id) $sx $sy"
+            VesselTextPlace $name $vessel $sx $sy
+            set radar($name,vessel,$vessel,x) $radar($name,vessel,$vessel,newx)
+            set radar($name,vessel,$vessel,y) $radar($name,vessel,$vessel,newy)
+            #RadarVesselSetUpdateAngle_old $name $vessel $radar($name,vessel,$vessel,newx) $radar($name,vessel,$vessel,newy)
+          }
+        }
+      }
+      if {$radar($name,step) < $radar($name,rayspeed)} {
+        incr radar($name,step)
+      } else {
+        #append s "message Radar $name at zero angle\n"
+        append s "shape place rotation $radar($name,ray_place_id) 0\n"
+        append s "shape place move rotation $radar($name,ray_place_id) $radar($name,deltaangle) $radar($name,rayspeed)\n"
+        set radar($name,step) 0
+        snowmix parse "$s"
+        set s ""
+      }
+    }
+    return
+  }
+
+  proc RadarSetRange_old { name range } {
+    global radar
+    set s ""
+    set radar($name,range) $range
+    set radar($name,scale_x) [expr 0.93 * $radar($name,width) / $radar($name,range)]
+    set radar($name,scale_y) [expr 0.93 * $radar($name,height) / $radar($name,range)]
+    if { $range < 2000 } {
+      set range_text [format "R=%.0fm" [expr $radar($name,range) / 2.0]]
+    } elseif { $range < 20000 } {
+      set range_text [format "R=%.2fkm" [expr $radar($name,range) / 2000.0]]
+    } else {
+      set range_text [format "R=%.1fkm" [expr $radar($name,range) / 2000.0]]
+    }
+    snowmix parse "text string $radar($name,text_id) $range_text"
+    set range [expr $range / 2.0]
+    set radar($name,radius_squared) [expr $range * $range]
+    foreach vessel $radar($name,vessels) {
+      if { $radar($name,radius_squared) > [expr $radar($name,vessel,$vessel,newx) * $radar($name,vessel,$vessel,newx) + $radar($name,vessel,$vessel,newy) * $radar($name,vessel,$vessel,newy)] } { set display 1 } else { set display 0 }
+      append s [RadarDisplayVessel $name $vessel $display]
+      set xy [RadarScreenCoors $name $radar($name,vessel,$vessel,newx) $radar($name,vessel,$vessel,newy)]
+      set sx [lindex $xy 0]
+      set sy [lindex $xy 1]
+      append s "shape place coor $radar($name,vessel,$vessel,place_id) $sx $sy\n"
+      snowmix parse "$s"
+      VesselTextPlace $name $vessel $sx $sy
+      set s ""
+    }
+    return
+  }
+
+  proc RadarUpdate {} {
+    global radar
+    set s ""
+    foreach radar_id $radar(radars) {
+      if {$radar(frame,$radar_id) >= $radar(ray_speed,$radar_id)} {
+        set radar(frame,$radar_id) 0
+      } else {
+        incr radar(frame,$radar_id)
+      }
+      set angle [expr $radar(frame,$radar_id) * $radar(2PI) / $radar(ray_speed,$radar_id)]
+      # Delete rotation entry, add rotatio entry to end and move it up first
+      append s "shape moveentry $radar(ray_id,$radar_id) 2\n"
+      append s "shape rotation $radar(ray_id,$radar_id) $angle\n"
+      append s "shape moveentry $radar(ray_id,$radar_id) last 2\n"
+#if {$radar(count) >= 26} {
+#  puts stderr "$radar(count) radar ray $s"
+#}
+
+      foreach vessel_id $radar(vessels,$radar_id) {
+        UpdateVessel  $radar(vessel_id,$radar_id,vessel_name,$vessel_id)
+        if { $radar(frame,$radar_id) == $radar(vessel_id,$radar_id,update,$vessel_id) } {
+          set radar(vessel_id,$radar_id,alpha,$vessel_id) 1
+          if { $radar(vessel_id,$radar_id,x,$vessel_id) != $radar(vessel_id,$radar_id,xold,$vessel_id) ||
+               $radar(vessel_id,$radar_id,y,$vessel_id) != $radar(vessel_id,$radar_id,yold,$vessel_id) } {
+            set radar(vessel_id,$radar_id,xold,$vessel_id) $radar(vessel_id,$radar_id,x,$vessel_id)
+            set radar(vessel_id,$radar_id,yold,$vessel_id) $radar(vessel_id,$radar_id,y,$vessel_id)
+            append s [RadarPlaceVessel $radar_id $vessel_id]
+          }
+        } else {
+          set alpha [expr $radar(vessel_id,$radar_id,alpha,$vessel_id) - 0.7/$radar(ray_speed,$radar_id)]
+#          if { $vessel_id == 75 } {
+#puts stderr "$radar(count) vessel 75 alpha $alpha"
+#          }
+          if { $alpha < 0 } {
+#puts stderr " ALPHA for vessel $vessel_id is $alpha"
+            set alpha 0
+          }
+          set radar(vessel_id,$radar_id,alpha,$vessel_id) $alpha
+        }
+      }
+      append s [RadarSetVesselsAlpha $radar_id]
+    }
+    if {[string length $s] > 0} { snowmix parse "$s" }
+    return
+  }
+
+  proc RadarSetSpeed { radar_id ray_speed } {
+    global radar
+    if {[info exist radar(name,$radar_id)] && [string is integer $ray_speed] && $ray_speed > 1 } {
+      set radar(ray_speed,$radar_id) $ray_speed
+    }
+    return
+  }
+
+  proc RadarSpeedUp { radar_id } {
+    global radar
+    if {![info exist radar(name,$radar_id)]} return
+    set newspeed [expr int($radar(ray_speed,$radar_id) * 0.75)]
+    if {$newspeed} { RadarSetSpeed $radar_id $newspeed}
+    return
+  }
+
+  proc RadarSpeedDown { radar_id } {
+    global radar
+    if {![info exist radar(name,$radar_id)]} return
+    set newspeed [expr int($radar(ray_speed,$radar_id) * 1.5)]
+    if {$newspeed} { RadarSetSpeed $radar_id $newspeed}
+    return
+  }
+
+  proc RadarDoubleRange { radar_id } {
+    global radar
+    if {![info exist radar(name,$radar_id)]} return
+    set newrange [expr $radar(range,$radar_id) * 2]
+    if {$newrange} { RadarSetRange $radar_id $newrange}
+    return
+  }
+
+  proc RadarHalfRange { radar_id } {
+    global radar
+    if {![info exist radar(name,$radar_id)]} return
+    set newrange [expr $radar(range,$radar_id) / 2]
+    if {$newrange} { RadarSetRange $radar_id $newrange}
+    return
+  }
+
+  proc RadarSetRange { radar_id range } {
+    global radar
+    if {![info exist radar(name,$radar_id)] || ![string is integer $range] || $range < 1} return
+    set radar(range,$radar_id) $range
+    set s "\n"
+    foreach vessel_id $radar(vessels,$radar_id) {
+      append s [RadarPlaceVessel $radar_id $vessel_id]
+    }
+    if { $range <= 1500 } {
+      set textrange "Range : $range m"
+    } elseif { $range <= 10000 } {
+      set textrange [format "Range : %.1f km" [expr $range /1000.0]]
+    } else {
+      set textrange [format "Range : %.0f km" [expr $range /1000.0]]
+    }
+    append s "text string $radar(rstring_id,$radar_id) $textrange\n"
+    snowmix parse "$s"
+    return
+  }
+
+  proc RadarSetVesselPosition { radar_id vessel_id x y } {
+    global radar
+    if {![info exist radar(name,$radar_id)] || ![info exist radar(vessel_id,$radar_id,x,$vessel_id)]} return
+    set radar(vessel_id,$radar_id,x,$vessel_id) $x
+    set radar(vessel_id,$radar_id,y,$vessel_id) $y
+    RadarVesselSetUpdateAngle $radar_id $vessel_id $x $y
+  }
+
+  proc RadarGetScaledCoors {radar_id vessel_id } {
+    global radar
+    if {![info exist radar(name,$radar_id)] ||
+        ![info exist radar(vessel_id,$radar_id,vessel_id,$vessel_id)]} { return "0 0" }
+    set scalefactor [expr 0.5*$radar(scale,$radar_id)/$radar(range,$radar_id)]
+    set scalefactor [expr 0.5/$radar(range,$radar_id)]
+
+    return "[expr $scalefactor*$radar(vessel_id,$radar_id,xold,$vessel_id)] [expr -$scalefactor*$radar(vessel_id,$radar_id,yold,$vessel_id)]"
+  }
+
+  proc RadarPlaceVessel { radar_id vessel_id } {
+    global radar
+    if {![info exist radar(name,$radar_id)] || ![info exist radar(vessel_id,$radar_id,vessel_id,$vessel_id)]} return
+    # figure out entry
+    set entry 4
+    foreach id $radar(vessels,$radar_id) {
+      if { $id == $vessel_id } break
+      incr entry 6
+    }
+    if { $id != $vessel_id } return
+    #set scalefactor [expr 0.5*$radar(scale,$radar_id)/$radar(range,$radar_id)]
+    #set scalefactor [expr 0.5/$radar(range,$radar_id)]
+
+    #set xoff [expr $scalefactor*$radar(vessel_id,$radar_id,xold,$vessel_id)]
+    #set yoff [expr -$scalefactor*$radar(vessel_id,$radar_id,yold,$vessel_id)]
+    set offset [RadarGetScaledCoors $radar_id $vessel_id]
+    set s "\n"
+    #set shape_id $radar(vessel_id,$radar_id,vessel_id,$vessel_id)
+    set shape_id $radar(vessels_id,$radar_id)
+#puts stderr "VESSEL $vessel_id $radar(vessel_id,$radar_id,xold,$vessel_id) $radar(vessel_id,$radar_id,yold,$vessel_id) $offset entry $entry on $shape_id"
+#puts stderr "shape moveentry $shape_id $entry"
+#puts stderr "shape moveto $shape_id $offset"
+#puts stderr "shape moveentry $shape_id last $entry"
+    append s "shape moveentry $shape_id $entry\n"
+    append s "shape moveto $shape_id $offset\n"
+    append s "shape moveentry $shape_id last $entry\n"
+if { $vessel_id == 75 } {
+#  puts stderr "$radar(count) Vessel $vessel_id shape $shape_id entry $entry offset $offset"
+#  if {$radar(count) >= 26} {
+#    puts stderr "$radar(count) Place Vessel $s"
+#  }
+  incr radar(count)
+}
+    snowmix parse "$s\n"
+    #return $s
+    return
+  }
+
+  # Set the angle step for which the vessel position should be updated
+  proc RadarVesselSetUpdateAngle { radar_id vessel_id x y } {
+    global radar
+    if { $x == 0 && $y == 0 } {
+      set frame 0
+    } else {
+      set angle [expr atan2(-$y,$x)]
+      if {$angle < 0.0} { set angle [expr $angle + $radar(2PI)] }
+      set frame [expr round((1 + $radar(ray_speed,$radar_id) * $angle) / $radar(2PI))]
+    }
+    # Prevent a miss in case we jump to the other side of the ray
+    if { $radar(frame,$radar_id) <= $radar(vessel_id,$radar_id,update,$vessel_id) && $radar(frame,$radar_id) > $frame} {
+#puts stderr "INVOKING Delayed update for $radar(vessel_id,$radar_id,vessel_name,$vessel_id). Old $radar(vessel_id,$radar_id,update,$vessel_id) new $radar(frame,$radar_id) instead of $frame"
+      set frame $radar(frame,$radar_id)
+    }
+    set radar(vessel_id,$radar_id,update,$vessel_id) $frame
+  }
+
+  proc RadarSetVesselAlpha { radar_id vessel_id alpha } {
+    global radar
+    set radar(vessel_id,$radar_id,alpha,$vessel_id) $alpha
+    return
+  }
+
+  proc RadarSetVesselsAlpha { radar_id } {
+    global radar
+    if {![info exist radar(name,$radar_id)]} return
+    set s "\n"
+    set entry 6
+    set shape_id $radar(vessels_id,$radar_id)
+    foreach vessel_id $radar(vessels,$radar_id) {
+      append s "shape moveentry $shape_id $entry\n"
+      append s "shape source rgba $shape_id $radar(vessel_id,$radar_id,rgb,$vessel_id) $radar(vessel_id,$radar_id,alpha,$vessel_id)\n"
+      append s "shape moveentry $shape_id last $entry\n"
+      incr entry 6
+    }
+#    if { $radar(count) >= 26 } {
+#      puts stderr "$radar(count) Set Alpha $s"
+#    }
+    return $s
+  }
+
+  proc RadarAddVessel { radar_id vessel_name vessel_id shape_id red green blue tplace_id tstring_id } {
+    global radar vessel
+    set s "\n"
+    if {![info exist radar(vessel_id,$radar_id,vessel_id,$vessel_id)]} {
+      lappend radar(vessels,$radar_id) $vessel_id
+    }
+    set tstring_id [ReserveNextAvail string "Vessel name"]
+    set tplace_id [ReserveNextAvail placedtext $tstring_id 4]
+    set vessel(vessel_id,$radar_id,$vessel_name) $vessel_id
+    set radar(vessel_id,$radar_id,vessel_id,$vessel_id) $vessel_id
+    set radar(vessel_id,$radar_id,vessel_name,$vessel_id) $vessel_name
+    set radar(vessel_id,$radar_id,shape_id,$vessel_id) $shape_id
+    set radar(vessel_id,$radar_id,rgb,$vessel_id) "$red $green $blue"
+    set radar(vessel_id,$radar_id,alpha,$vessel_id) 1
+    set radar(vessel_id,$radar_id,x,$vessel_id) 0
+    set radar(vessel_id,$radar_id,y,$vessel_id) 0
+    set radar(vessel_id,$radar_id,xold,$vessel_id) 0
+    set radar(vessel_id,$radar_id,yold,$vessel_id) 0
+    set radar(vessel_id,$radar_id,tplace_id,$vessel_id) $tplace_id
+    set radar(vessel_id,$radar_id,tstring_id,$vessel_id) $tstring_id
+    set radar(vessel_id,$radar_id,update,$vessel_id) 0
+    RadarVesselSetUpdateAngle $radar_id $vessel_id $radar(vessel_id,$radar_id,x,$vessel_id) $radar(vessel_id,$radar_id,y,$vessel_id)
+    append s "shape add $vessel_id Vessel $vessel_name for radar $radar_id\n"
+    #append s "shape newpath $vessel_id\n"
+    #append s "shape moveto $vessel_id 0 0\n"
+    #append s "shape scale $vessel_id -12 -12\n"
+    #append s "shape source rgba $vessel_id $red $green $blue $radar(vessel_id,$radar_id,alpha,$vessel_id)\n"
+    append s "shape inshape $vessel_id $shape_id\n"
+    append s "shape fill $vessel_id\n"
+    #append s "shape restore $vessel_id\n"
+    snowmix parse "$s"
+
+    RadarMakeVesselsList $radar_id
+    RadarMakeVesselsList2 $radar_id
+
+    set s ""
+    append s "text string $tstring_id $vessel_name\n"
+    append s "text place $tplace_id $tstring_id $radar(rfont_id,$radar_id) 0 0 1 1 1 1\n"
+    append s "text align $tplace_id left middle\n"
+    snowmix parse "$s\n"
+    return
+  }
+
+  proc RadarSetVesselScale { radar_id scale } {
+    global radar
+    set radar(vesselscale,$radar_id) $scale
+    RadarMakeVesselsList $radar_id
+    RadarMakeVesselsList2 $radar_id
+    return
+  }
+
+  proc RadarMakeVesselsList2 { radar_id } {
+    global radar
+    set s "\n"
+    set xoff 0.55
+    set yoff -0.2
+    set shape_id $radar(vessels2_id,$radar_id)
+    append s "shape add $shape_id Radar Vessels list for radar $radar_id\n"
+    append s "shape save $shape_id\n"
+    #append s "shape scaletell $shape_id\n"
+    append s "shape moveto $shape_id 0 0\n"
+    foreach vessel_id $radar(vessels,$radar_id) {
+      append s "shape save $shape_id\n"
+      append s "shape moveto $shape_id $xoff $yoff\n"
+      append s "shape scale $shape_id -$radar(vesselscale,$radar_id) -$radar(vesselscale,$radar_id)\n"
+      append s "shape source rgba $shape_id $radar(vessel_id,$radar_id,rgb,$vessel_id) $radar(vessel_id,$radar_id,alpha,$vessel_id)\n"
+      append s "shape inshape $shape_id $radar(vessel_id,$radar_id,vessel_id,$vessel_id)\n"
+      append s "shape restore $shape_id\n"
+      set yoff [expr $yoff + 0.1]
+    }
+    append s "shape restore $shape_id\n"
+    snowmix parse "$s\n"
+    return
+  }
+
+  proc RadarMakeVesselsList { radar_id } {
+    global radar
+    set s "\n"
+    append s "shape add $radar(vessels_id,$radar_id) Radar Vessels list for radar $radar_id\n"
+    append s "shape save $radar(vessels_id,$radar_id)\n"
+    #append s "shape scaletell $radar(vessels_id,$radar_id)\n"
+    append s "shape moveto $radar(vessels_id,$radar_id) 0 0\n"
+    foreach vessel_id $radar(vessels,$radar_id) {
+      set offset [RadarGetScaledCoors $radar_id $vessel_id]
+      append s "shape save $radar(vessels_id,$radar_id)\n"
+      append s "shape moveto $radar(vessels_id,$radar_id) $offset\n"
+      append s "shape scale $radar(vessels_id,$radar_id) -$radar(vesselscale,$radar_id) -$radar(vesselscale,$radar_id)\n"
+      append s "shape source rgba $radar(vessels_id,$radar_id) $radar(vessel_id,$radar_id,rgb,$vessel_id) $radar(vessel_id,$radar_id,alpha,$vessel_id)\n"
+      append s "shape inshape $radar(vessels_id,$radar_id) $radar(vessel_id,$radar_id,vessel_id,$vessel_id)\n"
+      append s "shape restore $radar(vessels_id,$radar_id)\n"
+    }
+    append s "shape restore $radar(vessels_id,$radar_id)\n"
+    #append s [RadarPlaceVessel $radar_id $vessel_id]
+    snowmix parse "$s\n"
+    return
+  }
+
+  proc RadarCreate { id fullname circle_id vessels_id vessels2_id width height } {
+    global radar
+    set s "\n"
+    # The radar circle offset is determined by the ratio between height and width as follows
+    set xoff [expr 0.5 * $height / $width - 0.5]
+    # The rescale is determined by the ratio between height and width as follows
+    set scale_x [expr double($height) / $width]
+    set radar(name,$id) $fullname
+    set radar(width,$id) 1
+    set radar(height,$id) 1
+
+    set radar(ray_speed,$id) 120
+    set radar(frame,$id) 0
+    set radar(vessels2_id,$id) $vessels2_id
+    set radar(vessels,$id) ""
+    set radar(range,$id) 1000
+    set radar(scale,$id) 0.96
+    append radar(radars) $id
+
+    # Radar shape
+    set shape_id [ReserveNextAvail shape]
+    if {$shape_id < 0} {
+      snowmix message "No available shape id in RadarCreate"
+      return
+    }
+    set radar(shape_id,$id) $shape_id
+
+    # Ray shape
+    set ray_id [ReserveNextAvail shape]
+    if {$shape_id < 0} {
+      snowmix message "No available ray shape id in RadarCreate"
+      return
+    }
+    set radar(ray_id,$id) $ray_id
+
+    # vessels shape
+#    set vessels_id [ReserveNextAvail shape]
+#    if {$shape_id < 0} {
+#      snowmix message "No available vessels shape id in RadarCreate"
+#      return
+#    }
+    set radar(vessels_id,$id) $vessels_id
+
+    # vessels2 shape
+#    set vessels2_id [ReserveNextAvail shape]
+#    if {$shape_id < 0} {
+#      snowmix message "No available vessels2 shape id in RadarCreate"
+#      return
+#    }
+    set radar(vessels2_id,$id) $vessels2_id
+
+
+
+    # Circle shape
+#    set circle_id [ReserveNextAvail shape]
+#    if {$shape_id < 0} {
+#      snowmix message "No available circle shape id in RadarCreate"
+#      return
+#    }
+    set radar(circle_id,$id) $circle_id
+
+    # String and place for Radar Name
+    set tstring_id [ReserveNextAvail string $fullname]
+    if {$tstring_id < 0} {
+      snowmix message "No available string id in RadarCreate"
+      return
+    }
+    set tplace_id [ReserveNextAvail placedtext $tstring_id $radar(tfont_id)]
+    if {$tplace_id < 0} {
+      snowmix message "No available text place id in RadarCreate"
+      return
+    }
+    #snowmix parse "text string $tstring_id $fullname\n"
+    #snowmix parse "text place $tplace_id $tstring_id $radar(tfont_id) 0 0 1 1 1 1\n"
+    snowmix parse "text rgb $tplace_id 1 1 1 1\n"
+    snowmix parse "text align $tplace_id center top\n"
+    set radar(tstring_id,$id) $tstring_id
+    set radar(tplace_id,$id) $tplace_id
+    set radar(tfont_id,$id) $radar(tfont_id)
+
+    # String and place for Range
+    set rstring_id [ReserveNextAvail string Range]
+    if {$rstring_id < 0} {
+      snowmix message "No available string id in RadarCreate"
+      return
+    }
+    set radar(rstring_id,$id) $rstring_id
+
+    set rplace_id [ReserveNextAvail placedtext $rstring_id $radar(rfont_id)]
+    if {$rplace_id < 0} {
+      snowmix message "No available text place id in RadarCreate"
+      return
+    }
+    set radar(rplace_id,$id) $rplace_id
+    #snowmix parse "text string $rstring_id Range\n"
+    #snowmix parse "text place $rplace_id $rstring_id $radar(rfont_id) 0 0 1 1 1 1\n"
+    snowmix parse "text rgb $rplace_id 1 1 1"
+    snowmix parse "text align $rplace_id left middle\n"
+    set radar(rfont_id,$id) $radar(rfont_id)
+
+    RadarSetVesselScale $id 12
+
+    # Create the ray shape
+    append s "shape add $ray_id Radar Ray for radar $id\n"
+    append s "shape save $ray_id\n"
+    append s "shape rotation $ray_id 0\n"
+    append s "shape moveto $ray_id 0.0 0.0\n"
+    append s "shape lineto $ray_id 0.5 0.0\n"
+    append s "shape line width $ray_id -2.0\n"
+    append s "shape line cap $ray_id round\n"
+    append s "shape stroke $ray_id\n"
+    #append s "shape rotation $ray_id 0\n"
+    append s "shape restore $ray_id\n"
+
+    # Create the vessels shape
+    RadarMakeVesselsList $id
+    RadarMakeVesselsList2 $id
+
+    # Create the radar shape
+    # Make an overall rectangular clip and fill with black
+    append s "shape add $shape_id Radar $id - $fullname\n"
+    append s "shape moveto $shape_id 0 0\n"
+    append s "shape inshape $shape_id 7\n"
+    append s "shape clip $shape_id\n"
+    append s "shape source rgba $shape_id 0 0 0 1\n"
+    append s "shape paint $shape_id\n"
+
+    # set origin to the left if width > height. If height > width, it will brake
+    append s "shape translate $shape_id $xoff 0\n"
+    append s "shape scale $shape_id $scale_x 1\n"
+
+    # Vessel List
+    append s "shape save $shape_id\n"
+    append s "shape inshape $shape_id $vessels2_id\n"
+#    append s "shape arc_cw $shape_id 0.6 -0.4 0.01 0 2PI\n"
+#    append s "shape source rgba $shape_id 1 1 1 1\n"
+#    append s "shape fill $shape_id\n"
+    append s "shape restore $shape_id\n"
+
+    # Vessel List box
+    append s "shape save $shape_id\n"
+    append s "shape newpath $shape_id\n"
+    append s "shape moveto $shape_id 0.86 0.088\n"
+    append s "shape scale $shape_id 0.72 0.70\n"
+    append s "shape inshape $shape_id 7\n"
+    append s "shape source rgb $shape_id 0 1 0\n"
+    append s "shape line width $shape_id 0.008\n"
+    append s "shape stroke $shape_id\n"
+    append s "shape restore $shape_id\n"
+
+
+    # Clip for circular radar
+    append s "shape newpath $shape_id\n"
+    append s "shape arc_cw $shape_id 0 0 0.49 0 2PI\n"
+    append s "shape clip $shape_id\n"
+
+    # Display base of radar
+    append s "shape newpath $shape_id\n"
+    append s "shape scale $shape_id $radar(scale,$id) $radar(scale,$id)\n"
+    append s "shape inshape $shape_id 1\n"
+    append s "shape clip $shape_id\n"
+    append s "shape inshape $shape_id 1\n"
+    append s "shape source pattern $shape_id $circle_id\n"
+    append s "shape paint $shape_id\n"
+    append s "shape moveto $shape_id 0 0.5\n"
+    append s "shape lineto $shape_id 0 0.125\n"
+    append s "shape moveto $shape_id 0 -0.125\n"
+    append s "shape lineto $shape_id 0 -0.5\n"
+
+    #append s "shape newpath $shape_id\n"
+    #append s "shape arc_cw $shape_id 0 0 0.48 0 2PI\n"
+    #append s "shape moveto $shape_id 0.0 0.0\n"
+    #append s "shape lineto $shape_id 0.2 0.4\n"
+    #append s "shape lineto $shape_id 0.4 0.4\n"
+    #append s "shape lineto $shape_id 0.2 0.2\n"
+    #append s "shape lineto $shape_id 0.0 0.0\n"
+    #append s "shape source rgb $shape_id 1 1 1\n"
+    #append s "shape line width $shape_id -1\n"
+    #append s "shape stroke $shape_id\n"
+
+    append s "shape moveto $shape_id -0.5 0.0\n"
+    append s "shape lineto $shape_id -0.125 0\n"
+    append s "shape moveto $shape_id 0.125 0.0\n"
+    append s "shape lineto $shape_id 0.5 0\n"
+    append s "shape moveto $shape_id -0.02 0.43625\n"
+    append s "shape lineto $shape_id  0.02 0.43625\n"
+    append s "shape moveto $shape_id -0.02 0.31125\n"
+    append s "shape lineto $shape_id  0.02 0.31125\n"
+    append s "shape moveto $shape_id -0.02 0.18625\n"
+    append s "shape lineto $shape_id  0.02 0.18625\n"
+    append s "shape moveto $shape_id -0.02 -0.18625\n"
+    append s "shape lineto $shape_id  0.02 -0.18625\n"
+    append s "shape moveto $shape_id -0.02 -0.31125\n"
+    append s "shape lineto $shape_id  0.02 -0.31125\n"
+    append s "shape moveto $shape_id -0.02 -0.43625\n"
+    append s "shape lineto $shape_id  0.02 -0.43625\n"
+
+    append s "shape moveto $shape_id 0.43625  0.02\n"
+    append s "shape lineto $shape_id 0.43625 -0.02\n"
+    append s "shape moveto $shape_id 0.31125  0.02\n"
+    append s "shape lineto $shape_id 0.31125 -0.02\n"
+    append s "shape moveto $shape_id 0.18625  0.02\n"
+    append s "shape lineto $shape_id 0.18625 -0.02\n"
+    append s "shape moveto $shape_id -0.18625  0.02\n"
+    append s "shape lineto $shape_id -0.18625 -0.02\n"
+    append s "shape moveto $shape_id -0.31125  0.02\n"
+    append s "shape lineto $shape_id -0.31125 -0.02\n"
+    append s "shape moveto $shape_id -0.43625  0.02\n"
+    append s "shape lineto $shape_id -0.43625 -0.02\n"
+    append s "shape source rgba $shape_id 0 1 0 0.4\n"
+    append s "shape line width $shape_id -1\n"
+    append s "shape stroke $shape_id\n"
+    append s "shape inshape $shape_id $ray_id\n"
+    #append s "shape scale $shape_id -12 -12\n"
+    append s "shape inshape $shape_id $vessels_id\n"
+    #return "$s\n"
+    snowmix parse "$s\n"
+    return
+  }
+
+  # Creates the radar placing it as shape place id place_id using the shape radar_id,
+  # circle_id and ray_id at x,y with width and height specified.
+  proc CreateRadar {name place_id ray_place_id radar_id circle_id ray_id text_id x y width height} {
+    append s "shape place $place_id $radar_id $x $y $width $height 0.0 0 0 0 1.0\n"
+    global radar
+    append radar(radars) $name
+    set radar($name,vessels) ""
+    set radar($name,rayangle) 0.0
+    set s ""
+    set radar($name,radar_id) $radar_id
+    set radar($name,circle_id) $circle_id
+    set radar($name,ray_id) $ray_id
+    set radar($name,place_id) $place_id
+    set radar($name,ray_place_id) $ray_place_id
+    set radar($name,text_id) $text_id
+    set radar($name,x) $x
+    set radar($name,y) $y
+    set radar($name,width) $width
+    set radar($name,height) $height
+    append s [RadarSetRange_old $name 1000]
+    append s "text place $radar($name,text_id) $radar($name,text_id) 5 [expr 2+round($radar($name,x) - $radar($name,width)/2)] [expr 2+round($radar($name,y) - $radar($name,height)/2)] 1 1 1\n"
+    append s [CreateRadarCircleShape $circle_id]
+    #
+    #append s "shape add $ray_id\n"
+    append s "shape add $ray_id Radar Ray\n"
+    append s "shape moveto $ray_id 0.0 0.0\n"
+    append s "shape lineto $ray_id 0.5 0.0\n"
+    append s "shape line width $ray_id -2.0\n"
+    append s "shape line cap $ray_id round\n"
+    append s "shape stroke $ray_id\n"
+    #
+    #append s "shape add $radar_id\n"
+    append s "shape add $radar_id Radar\n"
+    append s "shape inshape $radar_id 2\n"
+    append s "shape clip $radar_id\n"
+    append s "shape paint $radar_id\n"
+    append s "shape newpath $radar_id\n"
+    append s "shape scale $radar_id 0.93 0.93\n"
+    append s "shape inshape $radar_id 1\n"
+    append s "shape clip $radar_id\n"
+    append s "shape inshape $radar_id 1\n"
+    append s "shape source pattern $radar_id $circle_id\n"
+    append s "shape paint $radar_id\n"
+    append s "shape moveto $radar_id 0 0.5\n"
+    append s "shape lineto $radar_id 0 0.125\n"
+    append s "shape moveto $radar_id 0 -0.125\n"
+    append s "shape lineto $radar_id 0 -0.5\n"
+
+    append s "shape moveto $radar_id -0.5 0.0\n"
+    append s "shape lineto $radar_id -0.125 0\n"
+    append s "shape moveto $radar_id 0.125 0.0\n"
+    append s "shape lineto $radar_id 0.5 0\n"
+    append s "shape moveto $radar_id -0.02 0.43625\n"
+    append s "shape lineto $radar_id  0.02 0.43625\n"
+    append s "shape moveto $radar_id -0.02 0.31125\n"
+    append s "shape lineto $radar_id  0.02 0.31125\n"
+    append s "shape moveto $radar_id -0.02 0.18625\n"
+    append s "shape lineto $radar_id  0.02 0.18625\n"
+    append s "shape moveto $radar_id -0.02 -0.18625\n"
+    append s "shape lineto $radar_id  0.02 -0.18625\n"
+    append s "shape moveto $radar_id -0.02 -0.31125\n"
+    append s "shape lineto $radar_id  0.02 -0.31125\n"
+    append s "shape moveto $radar_id -0.02 -0.43625\n"
+    append s "shape lineto $radar_id  0.02 -0.43625\n"
+
+    append s "shape moveto $radar_id 0.43625  0.02\n"
+    append s "shape lineto $radar_id 0.43625 -0.02\n"
+    append s "shape moveto $radar_id 0.31125  0.02\n"
+    append s "shape lineto $radar_id 0.31125 -0.02\n"
+    append s "shape moveto $radar_id 0.18625  0.02\n"
+    append s "shape lineto $radar_id 0.18625 -0.02\n"
+    append s "shape moveto $radar_id -0.18625  0.02\n"
+    append s "shape lineto $radar_id -0.18625 -0.02\n"
+    append s "shape moveto $radar_id -0.31125  0.02\n"
+    append s "shape lineto $radar_id -0.31125 -0.02\n"
+    append s "shape moveto $radar_id -0.43625  0.02\n"
+    append s "shape lineto $radar_id -0.43625 -0.02\n"
+    append s "shape source rgba $radar_id 0 1 0 0.4\n"
+    append s "shape line width $radar_id -1\n"
+    append s "shape stroke $radar_id\n"
+    #
+    append s "shape place $place_id $radar_id $x $y $width $height 0.0 0 0 0 1.0\n"
+    append s "shape place $ray_place_id $ray_id $x $y [expr $width * 0.93] [expr $height * 0.93] 0.0 0 0.9 0 1.0\n"
+    snowmix parse "$s\n"
+    return
+  }
+
+  # Creates the shape that the radar is using to display phosphorus circles
+  # Shape_id is the shape number used to hold the shape definitions
+  proc CreateRadarCircleShape { shape_id } {
+    set s ""
+    #append s "shape pattern add $shape_id\n"
+    append s "shape pattern add $shape_id Unit Radar Circles\n"
+    append s "shape pattern radial $shape_id 0 0 0.0 0 0 0.5\n"
+
+    append s "shape pattern stoprgb $shape_id 0.000 0 1 0 0.1\n"
+
+    append s "shape pattern stoprgb $shape_id 0.160 0 1 0 0.1\n"
+    append s "shape pattern stoprgb $shape_id 0.210 0 1 0 0.2\n"
+    append s "shape pattern stoprgb $shape_id 0.240 0 1 0 0.4\n"
+    append s "shape pattern stoprgb $shape_id 0.245 0 1 0 1.0\n"
+    append s "shape pattern stoprgb $shape_id 0.255 0 1 0 1.0\n"
+    append s "shape pattern stoprgb $shape_id 0.260 0 1 0 0.4\n"
+    append s "shape pattern stoprgb $shape_id 0.280 0 1 0 0.2\n"
+
+    append s "shape pattern stoprgb $shape_id 0.460 0 1 0 0.1\n"
+    append s "shape pattern stoprgb $shape_id 0.490 0 1 0 0.4\n"
+    append s "shape pattern stoprgb $shape_id 0.495 0 1 0 1.0\n"
+    append s "shape pattern stoprgb $shape_id 0.505 0 1 0 1.0\n"
+    append s "shape pattern stoprgb $shape_id 0.510 0 1 0 0.4\n"
+    append s "shape pattern stoprgb $shape_id 0.540 0 1 0 0.2\n"
+
+    append s "shape pattern stoprgb $shape_id 0.710 0 1 0 0.1\n"
+    append s "shape pattern stoprgb $shape_id 0.740 0 1 0 0.4\n"
+    append s "shape pattern stoprgb $shape_id 0.745 0 1 0 1.0\n"
+    append s "shape pattern stoprgb $shape_id 0.755 0 1 0 1.0\n"
+    append s "shape pattern stoprgb $shape_id 0.760 0 1 0 0.4\n"
+    append s "shape pattern stoprgb $shape_id 0.790 0 1 0 0.2\n"
+
+    append s "shape pattern stoprgb $shape_id 0.950 0 1 0 0.1\n"
+    append s "shape pattern stoprgb $shape_id 0.980 0 1 0 0.4\n"
+    append s "shape pattern stoprgb $shape_id 0.990 0 1 0 1.0\n"
+    append s "shape pattern stoprgb $shape_id 1.000 0 1 0 1.0\n"
+
+    snowmix parse "$s\n"
+    return
+  }
+
+  proc RadarOverlay { radar_id x y width height args } {
+    global radar
+    if {![info exist radar(name,$radar_id)]} return
+    if {[llength $args]} {
+      set alpha [lindex $args 0]
+      if {!$alpha} return
+    } else { set alpha 1 }
+    set scale [expr $width / 832.0]
+    set scalefont [expr $scale + (1 - $scale)/3]
+    set txoff [expr $x + 3*$width/4]
+    set tyoff [expr $y + 5]
+    set rxoff [expr $x + round(0.58*$width)]
+    set ryoff [expr $y + round(56*$scalefont)]
+    set vxoff [expr $x + round(0.615*$width)]
+    set vyoff [expr $y + round(140*$scale)]
+    set s "\n"
+    #append s [RadarSetVesselScale $radar_id [expr $scale * 25 ]]
+    #append s [RadarSetVesselScale $radar_id 25]
+    set overlay_list ""
+    append s "text alpha $radar(tplace_id,$radar_id) $alpha\n"
+    append s "text coor $radar(tplace_id,$radar_id) $txoff $tyoff\n"
+    append s "text scale $radar(tplace_id,$radar_id) $scalefont $scalefont\n"
+    append s "text alpha $radar(rplace_id,$radar_id) $alpha\n"
+    append s "text coor $radar(rplace_id,$radar_id) $rxoff $ryoff\n"
+    append s "text scale $radar(rplace_id,$radar_id) $scalefont $scalefont\n"
+    foreach vessel_id $radar(vessels,$radar_id) {
+      append s "text alpha $radar(vessel_id,$radar_id,tplace_id,$vessel_id) $alpha\n"
+      append s "text coor $radar(vessel_id,$radar_id,tplace_id,$vessel_id) $vxoff $vyoff\n"
+      append s "text scale $radar(vessel_id,$radar_id,tplace_id,$vessel_id) $scalefont $scalefont\n"
+      append overlay_list "$radar(vessel_id,$radar_id,tplace_id,$vessel_id) "
+      set vyoff [expr round($vyoff + 47 * $scale)]
+    }
+    append s "text overlay $radar(tplace_id,$radar_id) $radar(rplace_id,$radar_id) $overlay_list\n"
+    snowmix parse "$s"
+    return
+  }
+
+  RadarInit
+
+  set vessel(Vostok,r1) 800
+  set vessel(Vostok,r2) 400
+  set vessel(Vostok,angle) 0
+  set vessel(Vostok,speed) 0.002
+  set vessel(BlueRIB,r1) 500
+  set vessel(BlueRIB,r2) 600
+  set vessel(BlueRIB,angle) 2.3
+  set vessel(BlueRIB,speed) -0.0035
+  set vessel(Hjortoe,r1) 500
+  set vessel(Hjortoe,r2) 1200
+  set vessel(Hjortoe,angle) -1
+  set vessel(Hjortoe,speed) 0.001
+
+command end
+
+tcl exec libradar.tcl
+
+# tcl eval CreateRadarCircleShape 3

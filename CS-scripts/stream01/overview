@@ -1,0 +1,12 @@
+#
+#
+# Listen for speak and make it available on port 8116
+nohup bash server_speaker& 
+
+# Listen for packets on 5070 and makes it available on 5030 (mp3) and 5070 raw
+nohup bash server_speaker& 
+
+# Accepts raw audio 1ch 24000 on port 4001 and makes it available at 4002
+nohup bash server_intercom_pmm&
+
+nohup bash borgergade tcp&

@@ -1,0 +1,64 @@
+#!/bin/bash
+# Deliver mixer1 output to screen.
+tmpfile=/tmp/output2screen.tmp.$$
+echo 'system info' | nc 127.0.0.1 9999 >$tmpfile
+geometry=`grep 'STAT:  System geometry' $tmpfile |cut -f3 -d: |cut -f2 -d' '|tr 'x' ' '`
+framerate=`grep 'STAT:  Frame rate' $tmpfile |cut -f3 -d: |cut -f2 -d' '`
+ctrsocket=`grep 'STAT:  Output ctr sock name' $tmpfile |cut -f3 -d: |cut -f2 -d' '`
+
+rm $tmpfile
+gstlaunch=`which gst-launch-1.0`
+if [ X$gstlaunch != X ] ; then
+  VIDEOCONVERT=videoconvert
+  VIDEO=video/x-raw
+  AUDIO=audio/x-raw
+  vfid=string
+  afid="format=(string)S16LE, "
+else
+  gstlaunch=`which gst-launch-0.10`
+  if [ X$gstlaunch != X ] ; then
+    VIDEOCONVERT=ffmpegcolorspace
+    VIDEO=video/x-raw-rgb
+    AUDIO=audio/x-raw-int
+    vfid=fourcc
+    afid=""
+  else
+    echo "Could not find gst-launch-1.0 or gst-launch-0.10. Stopping"
+    exit
+  fi
+fi
+
+frameratefraction()
+{
+  echo $1 | awk '{ rate=$1 ;
+         factor=1;
+         intrate=int(rate);
+         while (factor*rate > intrate) {
+           factor = factor * 10;
+           intrate = int(rate*factor);
+         }
+         printf("%d/%d\n",intrate,factor);
+       }'
+}
+ratefraction=`frameratefraction $framerate`
+           
+width=`echo $geometry |cut -f1 -d' '`
+height=`echo $geometry |cut -f2 -d' '`
+
+MIXERFORMAT=$VIDEO', bpp=(int)32, depth=(int)32, endianness=(int)4321, format=('$vfid')BGRA, red_mask=(int)65280, green_mask=(int)16711680, blue_mask=(int)-16777216, width=(int)'$width', height=(int)'$height', framerate=(fraction)'$ratefraction', pixel-aspect-ratio=(fraction)1/1, interlaced=(boolean)false'
+
+OUTPUTFORMAT=$VIDEO', width=512, height=288'
+OUTPUTFORMAT=$VIDEO', width=853, height=480'
+#OUTPUTFORMAT=$VIDEO', width=530, height=270'
+#OUTPUTFORMAT=queue
+
+while true ; do
+  $gstlaunch -v --gst-debug=queue:4 shmsrc socket-path=$ctrsocket do-timestamp=true is-live=true ! \
+    $MIXERFORMAT            ! \
+    queue leaky=2 max-size-buffers=2	!\
+    videoscale		    ! \
+    $OUTPUTFORMAT	    ! \
+    $VIDEOCONVERT	    ! \
+    xvimagesink
+  sleep 2
+done

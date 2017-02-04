@@ -1,0 +1,420 @@
+# Sapphire Clock Settings
+# Copyright by Peter Maersk-Moller 2012-2013 - All rights reserved
+# verbose
+require version 0.4.1
+
+# Functions for TextClock
+# CreateTextClock { name clock_id x y string_id place_id font_id scale } // Creates a clock
+#  - will use 8 text place ids counting from place_id inclusive
+# TextClockAlpha { clock_id alpha } // Set the alpha level for text clock
+# TextClockBackground { clock_id red green blue alpha } // Set the color/alpha for background
+# TextClockChangeLabel { clock_id text } // Set the label text
+# TextClockAddLabel { clock_id place_id string_id font_id text } // Add/Change the label
+# TextClockPlace { clock_id x y } // Placing/moving the clock
+# TextClockRun { clock_id run } // Start/stop the clock
+# TextClockDir { clock_id dir } // Couting dir=1 up dir=0 down
+# TextClockLocaltime { clock_id localtime } // Show localtime localtime=1 or counter localtime=0
+# TextClockSetCounter { clock_id hours mins seconds } // Set the counter values
+# TextClockSecond {} // Called every second to count
+# TextClockDim {clock_id dim } // Dim the clock DIm/hide dim=1 or Undim/Show dim=0
+# TextClockClip { clock_id clip } // Clip the clock. Clip/hide clip=1 Unclip/Show clip=0
+# TextClocksUpdate {} // Show/overlay the text clock
+
+command create libclock.tcl
+  set clock(clocks) ""
+  set clock(widthcolon) 22
+  set clock(widthdigits) 40
+  set clock(heightdigits) 22
+  set clock(ratecounter) 0
+
+  # Set the alpha value for the clock
+  proc TextClockAlpha { clock_id alpha } {
+    global clock
+    if {![info exist clock(name,$clock_id)]} {
+      return "\nmessage SetTextClockAlpha failed\n"
+    }
+    if { $alpha > 1 } { set alpha 1
+    } elseif { $alpha < 0 } { set alpha 0
+    }
+    set s "\n"
+    append s "text place alpha $clock(hourplace,$clock_id) $alpha\n"
+    append s "text place alpha $clock(colon1place,$clock_id) $alpha\n"
+    append s "text place alpha $clock(minuteplace,$clock_id) $alpha\n"
+    append s "text place alpha $clock(colon2place,$clock_id) $alpha\n"
+    append s "text place alpha $clock(secondplace,$clock_id) $alpha\n"
+    if {[info exist clock(label,place_id,$clock_id)]} {
+      append s "text place alpha $clock(label,place_id,$clock_id) $alpha\n"
+    }
+    return "$s\n"
+  }
+
+  proc TextClockBackground { clock_id red green blue alpha } {
+    global clock
+    if {![info exist clock(name,$clock_id)]} {
+      return "\nmessage SetTextClockBackground failed\n"
+    }
+    set s "\n"
+    set ptop [expr round($clock(scale,$clock_id)*2)]
+    set pbot [expr round($clock(scale,$clock_id)*2)]
+    if {[info exist clock(label,place_id,$clock_id)]} {
+      set pleft [expr round($clock(scale,$clock_id)*112)]
+    } else {
+      set pleft [expr round($clock(scale,$clock_id)*74)]
+    }
+    set pright [expr round($clock(scale,$clock_id)*74)]
+    append s "text place backgr $clock(minuteplace,$clock_id) $pleft $pright $ptop $pbot $red $green $blue $alpha\n"
+    if {[info exist clock(label,place_id,$clock_id)]} {
+#      append s "text place backgr $clock(label,place_id,$clock_id) $pend $pmm $ptop $pbot $red $green $blue $alpha\n"
+    }
+    return "$s\n"
+  }
+
+  proc TextClockChangeLabel { clock_id text } {
+    global clock
+    if {![info exist clock(name,$clock_id)]} {
+      return "\nmessage TextClockChangeLabel failed\n"
+    }
+    set s "\n"
+    if {[info exist clock(label,string_id,$clock_id)]} {
+      append s "text string $clock(label,string_id,$clock_id) $text"
+    }
+    return "$s\n"
+  }
+
+  proc TextClockAddLabel { clock_id place_id string_id font_id text } {
+    global clock
+    if {![info exist clock(name,$clock_id)]} {
+      return "\nmessage TextClockAddLabel failed\n"
+    }
+    set s "\n"
+    set clock(label,place_id,$clock_id) $place_id
+    set clock(label,string_id,$clock_id) $string_id
+    set clock(label,font_id,$clock_id) $font_id
+    set y [expr round($clock(y,$clock_id) - ($clock(scale,$clock_id)+0.3)*$clock(heightdigits))]
+    append s "text string $string_id $text\n"
+    append s "text place $place_id $string_id $font_id $clock(x,$clock_id) $y 1 1 1\n"
+    append s "text place align $place_id right middle\n"
+    return "$s\n"
+  }
+
+  # Place the text of the clock at 
+  proc TextClockPlace { clock_id x y } {
+    global clock
+    if {![info exist clock(name,$clock_id)]} {
+      return "\nmessage TextClockPlace failed\n"
+    }
+    set s "\n"
+    set clock(x,$clock_id) [expr round($x)]
+    set clock(y,$clock_id) [expr round($y)]
+    set x [expr round($clock(x,$clock_id)-$clock(scale,$clock_id)*($clock(widthdigits)+$clock(widthcolon)))]
+    #set y $clock(y,$clock_id)
+    append s "text place coor $clock(hourplace,$clock_id) $x $y\n"
+
+    set x [expr round($clock(x,$clock_id)-$clock(scale,$clock_id)*($clock(widthdigits)+$clock(widthcolon))/2)]
+    append s "text place coor $clock(colon1place,$clock_id) $x $y\n"
+
+    set x $clock(x,$clock_id)
+    append s "text place coor $clock(minuteplace,$clock_id) $x $y\n"
+
+    set x [expr round($clock(x,$clock_id)+$clock(scale,$clock_id)*($clock(widthdigits)+$clock(widthcolon))/2)]
+    append s "text place coor $clock(colon2place,$clock_id) $x $y\n"
+
+    set x [expr round($clock(x,$clock_id)+$clock(scale,$clock_id)*($clock(widthdigits)+$clock(widthcolon)))]
+    append s "text place coor $clock(secondplace,$clock_id) $x $y\n"
+
+    if {[info exist clock(label,place_id,$clock_id)]} {
+      set x [expr round($clock(x,$clock_id)-$clock(scale,$clock_id)*1.5*($clock(widthdigits)+$clock(widthcolon)))]
+      append s "text place coor $clock(label,place_id,$clock_id) $x $clock(y,$clock_id)\n"
+    }
+    return "$s\n"
+  }
+
+  proc TextClockRun { clock_id run } {
+    global clock
+    if {![info exist clock(name,$clock_id)]} {
+      return "\nmessage TextClockRun failed\n"
+    }
+    if {$run != 1} { set run 0 }
+    set clock(run,$clock_id) $run
+    return
+  }
+
+  proc TextClockDir { clock_id dir } {
+    global clock
+    if {![info exist clock(name,$clock_id)]} {
+      return "\nmessage TextClockDir failed\n"
+    }
+    if {$dir != 1} { set dir 0 }
+    set clock(countup,$clock_id) $dir
+    return
+  }
+
+
+  proc TextClockLocaltime { clock_id localtime } {
+    global clock
+    if {![info exist clock(name,$clock_id)]} {
+      return "\nmessage TextClockLocalTime failed\n"
+    }
+    set s "\n"
+    if {$localtime != 1} {
+      set localtime 0
+      set label "T-"
+      append s "text string $clock(hourstring,$clock_id) [format "%02d" $clock(hour,$clock_id)]\n"
+      append s "text string $clock(minutestring,$clock_id) [format "%02d" $clock(minute,$clock_id)]\n"
+      append s "text string $clock(secondstring,$clock_id) [format "%02d" $clock(second,$clock_id)]\n"
+    } else {
+      set label "L-"
+    }
+    set clock(localtime,$clock_id) $localtime
+    append s [TextClockChangeLabel $clock_id "$label"]
+    #append s [TextClockChangeLabel $clock_id "$label $clock(localtime,$clock_id)"]
+    return "$s\n"
+  }
+
+  proc TextClockSetCounter { clock_id hours mins seconds } {
+    global clock
+    if {![info exist clock(name,$clock_id)]} {
+      return "\nmessage TextClockSetCounter failed\n"
+    }
+    set s "\n"
+    if { $seconds > 59 } { set seconds 59
+    } elseif { $seconds < 0 } { set seconds 0 }
+    if { $mins > 59 } { set mins 59
+    } elseif { $mins < 0 } { set mins 0 }
+    if { $hours > 99 } { set hours 99
+    } elseif { $hours < 0 } { set hours 0 }
+    set clock(second,$clock_id) $seconds
+    set clock(minute,$clock_id) $mins
+    set clock(hour,$clock_id) $hours
+    append s "text string $clock(hourstring,$clock_id) [format "%02d" $hours]\n"
+    append s "text string $clock(minutestring,$clock_id) [format "%02d" $mins]\n"
+    append s "text string $clock(secondstring,$clock_id) [format "%02d" $seconds]\n"
+    return "$s\n"
+  }
+  
+
+  proc TextClockSecondUpdate { clock_id } {
+    global clock
+    if {![info exist clock(name,$clock_id)]} {
+      return "\nmessage TextClockSecond failed\n"
+    }
+    if {$clock(run,$clock_id) != 1} {
+      return
+    }
+    set s "\n"
+    if {$clock(localtime,$clock_id)} {
+      set a [clock format [clock seconds] -format "%H %M %S"]
+      append s "text string $clock(hourstring,$clock_id) [lindex $a 0]\n"
+      append s "text string $clock(minutestring,$clock_id) [lindex $a 1]\n"
+      append s "text string $clock(secondstring,$clock_id) [lindex $a 2]\n"
+    }
+    if {$clock(countup,$clock_id) == 1 } {
+      # Count up
+      if {$clock(second,$clock_id) < 59} {
+        incr clock(second,$clock_id)
+      } else {
+        set clock(second,$clock_id) 0
+        if {$clock(minute,$clock_id) < 59} {
+          incr clock(minute,$clock_id)
+        } else {
+          set clock(minute,$clock_id) 0
+          if {$clock(hour,$clock_id) < 99} {
+            incr clock(hour,$clock_id)
+          } else {
+            set clock(hour,$clock_id) 0
+          }
+          if { !$clock(localtime,$clock_id) } {
+            append s "text string $clock(hourstring,$clock_id) [format "%02d" $clock(hour,$clock_id)]\n"
+          }
+        }
+        if { !$clock(localtime,$clock_id) } {
+          append s "text string $clock(minutestring,$clock_id) [format "%02d" $clock(minute,$clock_id)]\n"
+        }
+      }
+      if { !$clock(localtime,$clock_id) } {
+        append s "text string $clock(secondstring,$clock_id) [format "%02d" $clock(second,$clock_id)]\n"
+      }
+    } else {
+      # Count down
+      if {$clock(second,$clock_id) > 0} {
+        incr clock(second,$clock_id) -1
+      } else {
+        set clock(second,$clock_id) 59
+        if {$clock(minute,$clock_id) > 0} {
+          incr clock(minute,$clock_id) -1
+        } else {
+          set clock(minute,$clock_id) 59
+          if {$clock(hour,$clock_id) > 0} {
+            incr clock(hour,$clock_id) -1
+          } else {
+            set clock(hour,$clock_id) 99
+          }
+          if { !$clock(localtime,$clock_id) } {
+            append s "text string $clock(hourstring,$clock_id) [format "%02d" $clock(hour,$clock_id)]\n"
+          }
+        }
+        if { !$clock(localtime,$clock_id) } {
+          append s "text string $clock(minutestring,$clock_id) [format "%02d" $clock(minute,$clock_id)]\n"
+        }
+      }
+      if { !$clock(localtime,$clock_id) } {
+        append s "text string $clock(secondstring,$clock_id) [format "%02d" $clock(second,$clock_id)]\n"
+      }
+    }
+    return "$s\n"
+  }
+
+  proc TextClockCreate { name clock_id x y string_id place_id font_id scale } {
+    global clock
+puts "CLOCK CREATE 0 :"
+    if {[info exist clock(name,$clock_id)]} {
+      return "\nmessage CreateTextClock failed\n"
+    }
+puts "CLOCK CREATE 1 : $name $clock_id"
+    set s "\n"
+    set clock(name,$clock_id) "$name"
+    set clock(x,$clock_id) $x
+    set clock(y,$clock_id) $y
+    set clock(string_id,$clock_id) $string_id
+    set clock(place_id,$clock_id) $place_id
+    set clock(font_id,$clock_id) $font_id
+    set clock(scale,$clock_id) $scale
+    set clock(colonstring,$clock_id) $string_id
+    set clock(secondstring,$clock_id) [expr $string_id + 1]
+    set clock(minutestring,$clock_id) [expr $string_id + 2]
+    set clock(hourstring,$clock_id) [expr $string_id + 3]
+    set clock(colon1place,$clock_id) $place_id
+    set clock(colon2place,$clock_id) [expr $place_id + 1]
+    set clock(secondplace,$clock_id) [expr $place_id + 2]
+    set clock(minuteplace,$clock_id) [expr $place_id + 3]
+    set clock(hourplace,$clock_id) [expr $place_id + 4]
+    set clock(second,$clock_id) 0
+    set clock(minute,$clock_id) 0
+    set clock(hour,$clock_id) 0
+    set clock(countup,$clock_id) 0
+    set clock(run,$clock_id) 0
+    set clock(localtime,$clock_id) 0
+    set clock(varnames,$clock_id) "minute hour colon2 colon1 second"
+puts "CLOCK CREATE 2 : $name $clock_id"
+    append s "text string $clock(colonstring,$clock_id) :\n"
+    append s "text string $clock(secondstring,$clock_id) 00\n"
+    append s "text string $clock(minutestring,$clock_id) 00\n"
+    append s "text string $clock(hourstring,$clock_id) 00\n"
+    append s "text place $clock(hourplace,$clock_id) $clock(hourstring,$clock_id) $font_id 0 0 1 1 1 0\n"
+    append s "text place align $clock(hourplace,$clock_id) center middle\n"
+    append s "text place $clock(colon2place,$clock_id) $clock(colonstring,$clock_id) $font_id 0 0 1 1 1 0\n"
+    append s "text place align $clock(colon2place,$clock_id) center middle\n"
+    append s "text place $clock(minuteplace,$clock_id) $clock(minutestring,$clock_id) $font_id 0 0 1 1 1 0\n"
+    append s "text place align $clock(minuteplace,$clock_id) center middle\n"
+    append s "text place $clock(secondplace,$clock_id) $clock(secondstring,$clock_id) $font_id 0 0 1 1 1 0\n"
+    append s "text place align $clock(secondplace,$clock_id) center middle\n"
+    append s "text place $clock(colon1place,$clock_id) $clock(colonstring,$clock_id) $font_id 0 0 1 1 1 0\n"
+    append s "text place align $clock(colon1place,$clock_id) center middle\n"
+    append s "message Clock $name created\n"
+puts "CLOCK CREATE 3 : $name $clock_id"
+    append s [TextClockPlace 1 640 580]
+puts "CLOCK CREATE 4 : $name $clock_id"
+    lappend clock(clocks) $clock_id
+    return "$s\n"
+  }
+  proc TextClockDim {clock_id dim } {
+    global clock
+    if {![info exist clock(name,$clock_id)]} {
+      return "\nmessage TextClockDim failed\n"
+    }
+    set steps 40
+    if {$dim == 1} { set delta [expr -1.0/$steps]
+    } else { set delta [expr 1.0/$steps] }
+    set s "\n"
+    append s "text place backgr move alpha $clock(hourplace,$clock_id) $delta $steps\n"
+    append s "text place backgr move alpha $clock(colon1place,$clock_id) $delta $steps\n"
+    append s "text place backgr move alpha $clock(minuteplace,$clock_id) $delta $steps\n"
+    append s "text place backgr move alpha $clock(colon2place,$clock_id) $delta $steps\n"
+    append s "text place backgr move alpha $clock(secondplace,$clock_id) $delta $steps\n"
+    append s "text place move alpha $clock(hourplace,$clock_id) $delta $steps\n"
+    append s "text place move alpha $clock(colon1place,$clock_id) $delta $steps\n"
+    append s "text place move alpha $clock(minuteplace,$clock_id) $delta $steps\n"
+    append s "text place move alpha $clock(colon2place,$clock_id) $delta $steps\n"
+    append s "text place move alpha $clock(secondplace,$clock_id) $delta $steps\n"
+    if {[info exist clock(label,place_id,$clock_id)]} {
+      append s "text place move alpha $clock(label,place_id,$clock_id) $delta $steps\n"
+    }
+    return "$s\n"
+  }
+  proc TextClockClip { clock_id clip } {
+    global clock
+    if {![info exist clock(name,$clock_id)]} {
+      return "\nmessage TextClockClip failed\n"
+    }
+    set steps 32
+    if {!$clip} { set delta [expr -1.0/$steps]
+    } else { set delta [expr 1.0/$steps] }
+    set s "\n"
+    foreach varname $clock(varnames,$clock_id) {
+      set varname [format "%splace" $varname]
+      append s "text place backgr move clip $clock($varname,$clock_id) 0 0 $delta 0 0 0 $steps 0\n"
+      append s "text place move clip $clock($varname,$clock_id) 0 0 $delta 0 0 0 $steps 0\n"
+    }
+    if {[info exist clock(label,place_id,$clock_id)]} {
+      append s "text place move clip $clock(label,place_id,$clock_id) 0 0 $delta 0 0 0 $steps 0\n"
+    }
+    return "$s\n"
+  }
+  proc TextClockUpdate {clock_id} {
+    global clock
+#puts stderr "TextClockUpdate $clock_id"
+    if {![info exist clock(name,$clock_id)]} {
+      return
+    }
+    set s "\n"
+    set text_ids ""
+    foreach varname $clock(varnames,$clock_id) {
+    set varname [format "%splace" $varname]
+      append text_ids "$clock($varname,$clock_id) "
+    }
+    if {[info exist clock(label,place_id,$clock_id)]} {
+      append text_ids $clock(label,place_id,$clock_id)
+    }
+    append s "text overlay $text_ids\n"
+    snowmix parse "$s"
+    #puts stderr "text overlay $text_ids\n"
+    #return "$s\n"
+    return
+  }
+
+  proc TextClocksUpdate {} {
+    global clock
+    set s "\n"
+    foreach clock_id $clock(clocks) {
+      set text_ids ""
+      foreach varname $clock(varnames,$clock_id) {
+        set varname [format "%splace" $varname]
+        append text_ids "$clock($varname,$clock_id) "
+      }
+      if {[info exist clock(label,place_id,$clock_id)]} {
+        append text_ids $clock(label,place_id,$clock_id)
+      }
+      append s "text overlay $text_ids\n"
+    }
+    return "$s\n"
+  }
+
+  proc TextClockRate2Second {} {
+    global system clock
+    incr clock(ratecounter)
+    if { $clock(ratecounter) >= $system(framerate) } {
+      set clock(ratecounter) 0
+      set s "\n"
+      foreach clock_id $clock(clocks) {
+        append s [TextClockSecondUpdate $clock_id]
+      }
+      return "$s\n"
+    }
+  }
+command end
+tcl exec libclock.tcl
+
+command pop PreShow
+#command push PreShow ClockRate2Second
+command push PreShow tcl eval TextClockRate2Second
+command push PreShow loop

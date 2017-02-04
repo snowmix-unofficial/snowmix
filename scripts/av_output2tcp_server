@@ -1,0 +1,105 @@
+#!/bin/bash
+# Deliver mixer1 output to screen.
+
+# IMPORTANT >>>>>You need to get port, ip and feed_id right<<<<<
+if [ "X$SNOWMIX_PORT" = X ] ; then export SNOWMIX_PORT=9999 ;fi
+if [ "X$SNOWMIX_IP" = X ] ; then export SNOWMIX_IP=127.0.0.1 ;fi
+if [ "X$SNOWMIX" = X ] ; then echo "You need to set the SNOWMIX environment variable" ; exit 1 ; fi
+
+# Set video feed 
+#feed_id=$1
+#audio_feed_id=$1
+audio_sink_id=1
+
+# Check for SNOWMIX variable and the snowmix and gstreamer settings
+if [ ! -f $SNOWMIX/scripts/gstreamer-settings -o ! -f $SNOWMIX/scripts/snowmix-settings ] ; then
+  echo "You need to se the environment variable SNOWMIX to the base of the Snowmix directory"
+  exit 1
+fi
+
+# Load the Snowmix and GStreamer settings
+. $SNOWMIX/scripts/gstreamer-settings
+. $SNOWMIX/scripts/snowmix-settings
+# This will set
+# a) feed_rate
+# b) feed_channels
+# c) feed_control_pipe
+# d) feed_width
+# e) feed_height
+# f) ctrsocket
+# g) system_width
+# h) system_height
+# i) ratefraction
+# j) snowmix
+# k) channels
+# l) rate
+
+if [ X$ctrsocket = X -o X$system_width = X -o X$system_height = X ] ; then
+  echo Failed to get control pipe or width or height from running snowmix
+  exit 1
+fi
+
+VIDEOFORMAT=$VIDEOBGRA', width=(int)'$system_width', height=(int)'$system_height', framerate=(fraction)'$ratefraction
+OUTPUTFORMAT=$VIDEOBGRA', width=853, height=480'
+OUTPUTFORMAT=$VIDEOBGRA', width=853, height=480'
+
+AUDIOFORMATOUT='audio/mpeg,mpegversion=4, stream-format=raw'
+VIDEOFORMATOUT='video/x-h264, alignment=au, stream-format=byte-stream, profile=(string)main'
+AUDIO_SRC='fdsrc fd=0 do-timestamp=true'
+VIDEO_SRC='shmsrc socket-path='$ctrsocket' do-timestamp=true is-live=true'
+SERVER_PORT=5010
+MUXER='matroskamux name=muxer streamable=true'
+MUXER='mpegtsmux name=muxer'
+
+
+while true ; do
+  snowmix=`ps c |cut -c28-34 | grep snowmix | head -1`
+  if [ X$snowmix != X ] ;then
+    if [ X$rate != X -a X$channels != X ] ; then
+      (echo audio sink ctr isaudio 1 ; sleep 10000000 ) | \
+        nc $SNOWMIX_IP $SNOWMIX_PORT | \
+      ( head -1
+	$gstlaunch -v		\
+	  $AUDIO_SRC		!\
+	  queue			!\
+	  $AUDIOFORMAT		!\
+	  audioparse rate=$rate channels=$channels !\
+	  audioconvert		!\
+	  faac bitrate=128000	!\
+	  $AUDIOFORMATOUT	!\
+	  aacparse		!\
+	  queue			!\
+	  muxer. $VIDEO_SRC	!\
+	  $VIDEOFORMAT		!\
+	  queue			!\
+          $VIDEOCONVERT		! \
+	  x264enc bitrate=3000 tune=zerolatency speed-preset=5 key-int-max=50 bframes=0 !\
+	  $VIDEOFORMATOUT	!\
+	  h264parse		!\
+	  queue			!\
+	  matroskamux name=muxer streamable=true !\
+	  queue			!\
+	  tcpserversink host=0.0.0.0 port=$SERVER_PORT sync-method=2 recover-policy=keyframe
+      )
+    else
+	$gstlaunch -v		\
+	  $VIDEO_SRC		!\
+	  $VIDEOFORMAT		!\
+	  queue			!\
+          $VIDEOCONVERT		! \
+	  x264enc bitrate=3000 tune=zerolatency speed-preset=2 key-int-max=50 bframes=0 !\
+	  $VIDEOFORMATOUT	!\
+	  h264parse		!\
+	  queue			!\
+	  matroskamux name=muxer streamable=true !\
+	  queue			!\
+	  tcpserversink host=0.0.0.0 port=$SERVER_PORT sync-method=2 recover-policy=keyframe
+
+	  #videoscale ! 'video/x-raw, width=(int)1024, height=(int)576' ! \
+    fi
+  else
+    echo Snowmix is not running. Quitting $0
+    exit 1
+  fi
+  sleep 2
+done

@@ -1,0 +1,73 @@
+#!/bin/bash
+#
+# a = (v-v0)/(t-t0)
+# v = v0 + a*t
+# dz = v0*dt + (1/2)*a*dt*dt
+# F = m*a
+# m = m0 - t*dm (until empty. Then it stays the same
+# a = F/m
+#
+tempty=60
+tempty=24
+tstop=300
+mrocket=500000
+mrocket=210000
+mfuel=1500000
+mfuel=90000
+m0=`expr $mrocket + $mfuel`
+dm=`expr $mfuel / $tempty`
+F0=18000000
+F0=10000000
+#a=`echo "scale=3;$F0 / $m" |bc`
+#a=`echo "scale=3;9.82 * 1" |bc`
+#F0=`echo "scale=3;$m0 * $a" | bc`
+v0=0
+t=0
+dt=0.5
+z=0
+sapphire_x=0
+sapphire_y=0
+sapphire_z=0
+echo "START : t=$t m0=$m0 dm=$dm"
+tstop=200
+tstart=5
+sleeptime=0.5
+
+while true ; do
+  sleep $sleeptime
+  t=`echo "scale=2;$t + $dt" |bc`
+  n=`echo "$t < $tstart" | bc`
+  if [ $n -eq 1 ] ; then continue ; fi
+  break
+done
+t=0
+while true ; do
+  sleep $sleeptime
+  t=`echo "scale=2;$t + $dt" |bc`
+  n=`echo "$t >= $tstop" | bc`
+  if [ $n -eq 1 ] ; then break ; fi
+  n=`echo "$t >= $tempty" | bc`
+  if [ $n -eq 1 ] ; then
+    dm=0
+    F0=0
+  else
+    m=`echo "$m0 - $t * $dm" | bc`
+  fi
+  F0=`echo "scale=5 ;$F0*0.975" | bc`
+  
+  F=`echo "scale=3; $F0 - $m *9.82" | bc`
+  a=`echo "scale=3;$F / $m" | bc`
+  v0=`echo "scale=3;$v0 + $a*$dt" | bc`
+  dz=`echo "scale=3;$v0 * $dt + 0.5 * $a * $dt * $dt" | bc`
+  z=`echo "scale=3;$z + $dz" | bc`
+  n=`echo "$z <= 0" | bc`
+  if [ $n -eq 1 ] ; then
+    z=0
+  fi
+  echo "t=$t m=$m v=$v0 z=$z F0=$F0 a=$a"
+  echo "tcl eval UpdateGPS sapphire $t 0 0 $z"
+  echo "tcl eval UpdateGPS sapphire $t 0 0 $z" | nc $SNOWMIX_IP $SNOWMIX_PORT
+done
+exit
+deltah=10 ; z=0 ; t=0.5 ;while true ; do z=`echo "$z + $deltah" |bc` ; echo "tcl eval UpdateGPS sapphire $t 0 0 $z" | nc $SNOWMIX_IP $SNOWMIX_PORT ; t=`echo $t + 0.5 | bc` ; deltah=`echo "$deltah * 1.05" |bc` ; sleep 
+

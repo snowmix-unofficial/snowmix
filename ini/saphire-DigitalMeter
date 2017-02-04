@@ -1,0 +1,590 @@
+# Copyright by Peter Maersk-Moller 2012 - All rights reserved
+require version 0.5.0
+
+command create DigiMeters
+  #text string 21 Velocity
+  #text string 22 m/s
+  #text string 23 Altitude
+  #text string 24 km
+  #text string 25 Accel.
+  #text string 26 m/s2
+  #text string 27 data for
+  #text string 33 Graph Legend X
+  #text string 34 Graph Legend Y
+  #text string 35 Apogee
+
+command end
+command create DigiMeterMoveUp
+  tcl eval MoveCommand 30 34 21 22 0 -192 0 48
+  tcl eval MoveCommand 35 39 22 24 0 -192 0 48
+  tcl eval MoveCommand 40 44 25 26 0 -192 0 48
+  text move coor 27 0 -4 0 48
+  loop
+command end
+command create DigiMeterMoveDown
+  tcl eval MoveCommand 30 34 21 22 0 192 0 48
+  tcl eval MoveCommand 35 39 23 24 0 192 0 48
+  tcl eval MoveCommand 40 44 25 26 0 192 0 48
+  text move coor 27 0 4 0 48
+  loop
+command end
+command create DigiMeterDim
+  DigiMeterDim1
+  DigiMeterDim2
+  DigiMeterDim3
+  text move alpha 27 -0.03125 32
+  loop
+command end
+command create DigiMeterUnDim
+  DigiMeterUnDim1
+  DigiMeterUnDim2
+  DigiMeterUnDim3
+  text move alpha 27 0.025 40
+  loop
+command end
+command create DigiMeterDim1
+  tcl eval DimCommand 30 34 21 22 -32
+  loop
+command end
+command create DigiMeterDim2
+  tcl eval DimCommand 35 39 23 24 -32
+  loop
+command end
+command create DigiMeterDim3
+  tcl eval DimCommand 40 44 25 26 -32
+  loop
+command end
+command create DigiMeterUnDim1
+  tcl eval DimCommand 30 34 21 22 40
+  loop
+command end
+command create DigiMeterUnDim2
+  tcl eval DimCommand 35 39 23 24 40
+  loop
+command end
+command create DigiMeterUnDim3
+  tcl eval DimCommand 40 44 25 26 40
+  loop
+command end
+
+command create DigiMeterLib.tcl
+  proc DimCommand { iid1 iid2 tid1 tid2 steps } {
+    if {$iid1 > $iid2 || $tid1 > $tid2 || $steps == 0} return
+    #set s  "command create $name\n"
+    set delta [expr 1.000000 / $steps]
+    if {$steps < 0} { set steps [expr -$steps] }
+    while {$iid1 <= $iid2} {
+      append s "  image move alpha $iid1 $delta $steps\n"
+      incr iid1
+    }
+    while {$tid1 <= $tid2} {
+      append s "  text move alpha $tid1 $delta $steps\n"
+      incr tid1
+    }
+    #append s "  loop\n"
+    #append s "command end\n"
+    snowmix parse "$s\n"
+  }
+
+  proc MoveCommand { iid1 iid2 tid1 tid2 dx dy stepx stepy } {
+    if {$iid1 > $iid2 || $tid1 > $tid2 || $stepx < 0 || $stepy < 0} return
+    if {$stepx != 0 } { set dx [expr int($dx / $stepx)] }
+    if {$stepy != 0 } { set dy [expr int($dy / $stepy)] }
+    #set s  "command create $name\n"
+    while {$iid1 <= $iid2} {
+      append s "  image move coor $iid1 $dx $dy $stepx $stepy\n"
+      incr iid1
+    }
+    while {$tid1 <= $tid2} {
+      append s "  text move coor $tid1 $dx $dy $stepx $stepy\n"
+      incr tid1
+    }
+    #append s "  loop\n"
+    #append s "command end\n"
+    snowmix parse "$s\n"
+  }
+
+  set graph(red) 0.14509
+  set graph(green) 0.11372
+  set graph(blue) 0.34901
+  set graph(alpha) 0.6
+  set graph(font) 6
+  proc CreateEventList { name x y text_id font_id } {
+    global event_list
+    set s ""
+    set event_list($name,x) $x
+    set event_list($name,y) $y
+    set event_list($name,text_id) $text_id
+    set event_list($name,text) ""
+    append s "text string $text_id event\n"
+    append s "text place $text_id $text_id $font_id $x $y 1 1 1\n"
+    #append s "text string $text_id\n"
+    snowmix parse "$s\n"
+  }
+
+  proc AddEventText { name text } {
+    global event_list
+    set s ""
+    if {![info exist event_list($name,x)]} return
+    lappend event_list($name,text) $text
+    set list ""
+    foreach text $event_list($name,text) {
+      append list "$text\\n"
+    }
+    append s "text string $event_list($name,text_id) $list\n"
+    return "\n$s\n"
+  }
+
+  proc CreateGraph { name x y width height place_id shape_id} {
+    global graph
+    set s ""
+    append s "shape place $place_id\n"
+    append s "shape place $place_id $shape_id $x $y $width $height 0.0 $graph(red) $graph(green) $graph(blue) $graph(alpha)\n"
+    append s "shape place offset $place_id [expr $width / 2] [expr $height / 2]\n"
+    set graph($name,place_id) $place_id
+    set graph($name,shape_id) $shape_id
+    set graph($name,x) $x
+    set graph($name,y) $y
+    set graph($name,width) $width
+    set graph($name,height) $height
+    snowmix parse "\n$s\n"
+  }
+
+  proc CreateGraphLine { graph_name vessel place_id shape_id width height scale_x scale_y legendx_id legendy_id} {
+    global graphline graph
+    set graphline($vessel,graph) $graph_name
+    set graphline($vessel,place_id) $place_id
+    set graphline($vessel,shape_id) $shape_id
+    set graphline($vessel,width) $width
+    set graphline($vessel,height) $height
+    set graphline($vessel,scale_x) $scale_x
+    set graphline($vessel,scale_y) $scale_y
+    set graphline($vessel,x) 0
+    set graphline($vessel,y) 0
+    set graphline($vessel,text_x_id) $legendx_id
+    set graphline($vessel,text_y_id) $legendy_id
+    #set graphline($vessel,text_event_id) $legendy_id
+    set s "shape place scale $place_id $scale_x $scale_y\n"
+    set x [expr $graph($graph_name,x) + 5]
+    set y [expr $graph($graph_name,y) + $graph($graph_name,height) - 180]
+    append s "text string $legendy_id y scale\n"
+    append s "text place $legendy_id $legendy_id $graph(font) $x $y 1.0 1.0 1.0 nw\n"
+    append s "text align $legendy_id left middle\n"
+    set x [expr $graph($graph_name,x) + $graph($graph_name,width) - 20]
+    set y [expr $graph($graph_name,y) + $graph($graph_name,height) - 10]
+    append s "text string $legendx_id x scale\n"
+    append s "text place $legendx_id $legendx_id $graph(font) $x $y 1.0 1.0 1.0 nw\n"
+    append s "text align $legendx_id right bottom\n"
+    append s [GraphLineScale $vessel $scale_x $scale_y]
+    snowmix parse "$s\n"
+  }
+
+  proc GraphLineScale { vessel scale_x scale_y } {
+    global graphline graph
+    set s ""
+    #set graph_name $graphline($vessel,graph)
+    set graphline($vessel,scale_x) $scale_x
+    set graphline($vessel,scale_y) $scale_y
+    set graphline($vessel,xmax) [expr ($graphline($vessel,width) -30) / $graphline($vessel,scale_x)]
+    set graphline($vessel,ymax) [expr ($graphline($vessel,height) -10) / $graphline($vessel,scale_y)]
+
+    set xtext [format "%.0f sec" [expr 300.0 / $scale_x]]
+    set ytext [format "%.1f km" [expr 180.0 / $scale_y]]
+    append s "text string $graphline($vessel,text_x_id) $xtext\n"
+    append s "text string $graphline($vessel,text_y_id) $ytext\n"
+    return "\n$s\n"
+  }
+
+  proc GraphLineText { graph_name vessel textno } {
+    global graphline graph
+    set place_id $graphline($vessel,$textno,place_id)
+    set offx graphline($vessel,text1,offx)
+    set offy graphline($vessel,text1,offy)
+    
+      set x [expr int($offx + $graph($graph_name,x) + $x * $graphline($vessel,scale_x) + 0.5)]
+      set y [expr int($offy + $graph($graph_name,y) + $graph($graph_name,height) - $y * $graphline($vessel,scale_y))]
+  }
+
+  proc GraphEvent { vessel x y etype } {
+    global graphline graph gps
+    if {![info exist graphline($vessel,place_id)]} { return }
+    set s ""
+    append s "shape save $graphline($vessel,shape_id)\n"
+    append s "shape scale $graphline($vessel,shape_id) -1 -1\n"
+    append s "shape moverel $graphline($vessel,shape_id) -10 0\n"
+    append s "shape linerel $graphline($vessel,shape_id) 20 0\n"
+    append s "shape moverel $graphline($vessel,shape_id) -10 -10\n"
+    append s "shape linerel $graphline($vessel,shape_id) 0 20\n"
+    append s "shape moverel $graphline($vessel,shape_id) 0 -10\n"
+    append s "shape restore $graphline($vessel,shape_id)\n"
+    append s "message Event text\n"
+    set graph_name $graphline($vessel,graph)
+    append s "message Event text : $graph_name\n"
+    if {[info exist graph($graph_name,place_id)]} {
+      set alt [format "%.1f km" $y]
+      set vel [format "%.0f km/h" [expr 3.6 * $gps($vessel,v0)]]
+      set tim "[expr int($x)] sec"
+      if {[string match ECO $etype]} {
+        set str "$etype : h=$alt, v=$vel, t=$tim"
+      } elseif {[string match Apogee $etype]} {
+        set str "$etype : h=$alt, v=$vel, t=$tim"
+      } elseif {[string match Splashdown $etype]} {
+        set str "$etype Event : t=$tim"
+      } elseif {[string match Launch $etype]} {
+        set str "$etype Event"
+      } else {
+        set str "Unknown Event : h=$alt, t=$tim"
+      }
+      append s [AddEventText $vessel "$str"]
+      #set graphline($vessel,text1,place_id) $place_id
+      #set graphline($vessel,text1,offx) $offx
+      #set graphline($vessel,text1,offy) $offy
+
+      #append s "text string $string_id $etype\n"
+      #set x [expr int($offx + $graph($graph_name,x) + $x * $graphline($vessel,scale_x) + 0.5)]
+      #set y [expr int($offy + $graph($graph_name,y) + $graph($graph_name,height) - $y * $graphline($vessel,scale_y))]
+      #append s "message Event text ..... $graph($graph_name,x)\n"
+      #append s "text place $place_id $string_id $graph(font) $x $y 1.0 1.0 1.0 nw\n"
+    } else {
+      append s "message Event text not found\n"
+    }
+    return "\n$s\n"
+  }
+  
+  proc AddToGraph { vessel x y } {
+    global graphline
+    if {![info exist graphline($vessel,place_id)]} { return }
+    set s ""
+    set dx [expr $x - $graphline($vessel,x)]
+    set dy [expr $graphline($vessel,y) - $y]
+    while { $y >= $graphline($vessel,ymax) || $x >= $graphline($vessel,xmax)} {
+      set scale_x $graphline($vessel,scale_x)
+      set scale_y $graphline($vessel,scale_y)
+      if { $x >= $graphline($vessel,xmax) } { set scale_x [expr $scale_x / 2] }
+      if { $y >= $graphline($vessel,ymax) } { set scale_y [expr $scale_y / 2] }
+      append s "[GraphLineScale $vessel $scale_x $scale_y]\n"
+      append s "shape place scale $graphline($vessel,place_id) $scale_x $scale_y\n"
+    }
+    #if { $y >= $graphline($vessel,ymax) } {
+    #  set graphline($vessel,scale_y) [expr $graphline($vessel,scale_y) / 2.0]
+    #  set graphline($vessel,ymax) [expr $graphline($vessel,height) / $graphline($vessel,scale_y)]
+    #}
+    set graphline($vessel,x) $x
+    set graphline($vessel,y) $y
+    append s "shape linerel $graphline($vessel,shape_id) $dx $dy\n"
+   
+    return "\n$s\n"
+  }
+
+  proc CreateGPS { vessel fullname t x y z } {
+    global gps
+    set gps($vessel) $fullname
+    foreach n "0 1 2 3 4 5" {
+      set gps($vessel,t$n) $t
+      set gps($vessel,x$n) $x
+      set gps($vessel,y$n) $y
+      set gps($vessel,z$n) $z
+      set gps($vessel,v$n) 0
+      set gps($vessel,a$n) 0
+    }
+  }
+
+  proc UpdateGPS { vessel t x y z } {
+    global gps
+    if {![info exist gps($vessel)]} return
+    set m 5
+    foreach n "4 3 2 1 0" {
+      foreach c "t x y z v a" {
+        set gps($vessel,$c$m) $gps($vessel,$c$n)
+      }
+      set m $n
+    }
+    set gps($vessel,t0) $t
+    set gps($vessel,x0) $x
+    set gps($vessel,y0) $y
+    set gps($vessel,z0) $z
+    set gps($vessel,v0) 0
+    set gps($vessel,a0) 0
+    set s ""
+    if {[string match $vessel $gps(meter)]} {
+      set x [expr $gps($vessel,x0) - $gps($vessel,x1)]
+      set y [expr $gps($vessel,y0) - $gps($vessel,y1)]
+      set z [expr $gps($vessel,z0) - $gps($vessel,z1)]
+      set l [expr sqrt($x*$x + $y*$y + $z*$z)]
+      set t [expr $gps($vessel,t0) - $gps($vessel,t1)]
+  
+      if {$t > 0} {
+        set vel [expr $l / $t]
+        set gps($vessel,v0) $vel
+        set acc [expr ($vel - $gps($vessel,v1))/($t*9.82)]
+        #set acc [expr ($vel - $gps($vessel,v1))/$t]
+        if { $gps($vessel,z0) <= $gps($vessel,z1) && $gps($vessel,z1) >= $gps($vessel,z2) && $gps($vessel,z0) > 100 } {
+          append s [GraphEvent $vessel $gps($vessel,t0) [expr $gps($vessel,z0) / 1000] Apogee]
+        } elseif { $gps($vessel,a1) > 0.0 && $acc < 0.0 && $gps($vessel,z0) > 100 } {
+          append s [GraphEvent $vessel $gps($vessel,t0) [expr $gps($vessel,z0) / 1000] ECO]
+        } elseif { $gps($vessel,v0) < 0.2 && $gps($vessel,v1) >= 0.2 } {
+          append s [GraphEvent $vessel $gps($vessel,t0) [expr $gps($vessel,z0) / 1000] Splashdown]
+        } elseif { $gps($vessel,v0) > 0.1 && $gps($vessel,v1) <= 0.1 } {
+          append s [GraphEvent $vessel $gps($vessel,t0) [expr $gps($vessel,z0) / 1000] Launch]
+#        } elseif { $gps($vessel,v1) < 0.1) && $gps($vessel,v1) >= 0.1 } {
+#          append s [GraphEvent $vessel $gps($vessel,t0) [expr $gps($vessel,z0) / 1000] Launch]
+        }
+
+        set gps($vessel,a0) $acc
+	#if {$acc < 0} { set acc [expr -$acc] }
+	if {$acc > 999.9} { set acc 999.9 }
+        #append s "message l=$l vel=$vel\n"
+        if {$vel > 9999} { set vel 9999 }
+        append s [SetDigiMeter vel [expr 3.6 * $vel]]
+        append s [SetDigiMeter acc $acc]
+      }
+      #set z [expr ($gps($vessel,z0) - $gps($vessel,z1)) / 1000.000000]
+      #set t [expr ($gps($vessel,t0) - $gps($vessel,t1))]
+      #append s [AddToGraph $vessel $t $z]
+      append s [AddToGraph $vessel $gps($vessel,t0) [expr $gps($vessel,z0) / 1000.0]]
+      append s [SetDigiMeter alt [format "%.2f" [expr $gps($vessel,z0) / 1000.000]]]
+    }
+    snowmix parse "$s\n"
+  }
+
+  set digimeter(font) 5
+  set digimeter(scale_x) 0.25
+  set digimeter(scale_y) 0.25
+  set digimeter(0) 20
+  set digimeter(1) 21
+  set digimeter(2) 22
+  set digimeter(3) 23
+  set digimeter(4) 24
+  set digimeter(5) 25
+  set digimeter(6) 26
+  set digimeter(7) 27
+  set digimeter(8) 28
+  set digimeter(9) 29
+  set digimeter(colon) 30
+  set digimeter(decimal) 31
+  set digimeter(minus) 32
+  set digimeter(black) 33
+  set digimeter(digioffset) 100
+  set digimeter(decimaloffset) 68
+
+  proc SetMeter { vessel } {
+    global gps digimeter
+    if {![info exist gps($vessel)]} return
+    set gps(meter) $vessel
+    SetDigiMeter vel 0
+    SetDigiMeter alt [format "%.2f" [expr $gps($vessel,z0) / 1000.00]]
+    SetDigiMeter acc 0
+    if {[info exist digimeter(string_id)]} {
+      set s "text string $digimeter(string_id) Vessel: $gps($vessel)\n"
+      return "\n$s\n"
+    }
+  }
+
+  proc SetDigiMeter {meter value} {
+    global digimeter
+    set s ""
+    if {![info exist digimeter($meter,ints)]} { return }
+    #append s "message set meter $meter $value\n"
+    set ints $digimeter($meter,ints)
+    set fractions $digimeter($meter,fractions)
+    set digits $digimeter($meter,digits)
+    set sign $digimeter($meter,sign)
+    set id $digimeter($meter,image)
+
+    set x $digimeter($meter,x)
+    set y $digimeter($meter,y)
+
+    if {$sign == 1} {
+      if { $value < 0 } {
+        set value [expr -$value]
+        append s "image image $id $digimeter(minus)\n"
+      } else {
+        append s "image image $id $digimeter(black)\n"
+      }
+      incr id
+      set x [expr int($x + $digimeter($meter,digioffset))]
+    } else {
+      if { $value < 0 } { set value 0 }
+    }
+    set changed 0
+    set ints 1
+    if { $value > $digimeter($meter,max) } {
+      set value $digimeter($meter,max)
+      set digimeter($meter,ints) $digimeter($meter,digits)
+      set ints $digimeter($meter,digits)
+      set fractions 0
+      set digimeter($meter,fractions) 0
+      set changed 1
+    } else {
+      set ints $digimeter($meter,digits)
+      set fractions 0
+      set value10 [expr $value * 10]
+      while { $ints > 1 && $value10 <= $digimeter($meter,max) } {
+        set value $value10
+        incr fractions
+        incr ints -1
+        set value10 [expr $value * 10]
+      }
+      if {$ints != $digimeter($meter,ints) || $fractions != $digimeter($meter,fractions)} {
+        set digimeter($meter,ints) $ints
+        set digimeter($meter,fractions) $fractions
+        set changed 1
+      }
+      set value [expr int($value)]
+    }
+    if { $changed == 1 } {
+    }
+    set pow [expr round(pow(10,$digimeter($meter,digits)-1))]
+    #append s "message changed=$changed ints=$ints fracs=$fractions x=$x y=$y value=$value\n"
+    while {$ints > 0} {
+      set val [expr int($value/$pow)]
+      set value [expr round($value - $pow * $val)]
+      if {$val > 9} { set val 9}
+      append s "image image $id $digimeter($val)\n"
+      if  {$changed == 1} {
+        append s "image coor $id $x $y\n"
+        if {$ints > 1 } {
+          set x [expr int($x + $digimeter($meter,digioffset))]
+        }
+      }
+      set pow [expr $pow / 10]
+      incr ints -1
+      incr id
+    }
+    append s "image image $id $digimeter(decimal)\n"
+    if {$changed == 1} {
+      set x [expr int($x + $digimeter($meter,decimaloffset))]
+      append s "image coor $id $x $y\n"
+      set x [expr int($x + $digimeter($meter,decimaloffset))]
+    }
+    incr id
+    while {$fractions > 0} {
+      set val [expr int($value/$pow)]
+      set value [expr round($value - $pow * $val)]
+      if {$val > 9} { set val 9}
+      append s "image image $id $digimeter($val)\n"
+      if  {$changed == 1} {
+        append s "image coor $id $x $y\n"
+        #if {$ints > 0} {
+          set x [expr int($x + $digimeter($meter,digioffset))]
+        #}
+      }
+      set pow [expr $pow / 10]
+      incr fractions -1
+      incr id
+    }
+    snowmix parse "$s\n"
+  }
+
+  proc SetDigiMetersText { place_id string_id x y text } {
+    global digimeter
+    set s ""
+    set x [expr int($x - $digimeter(scale_x) * 24)]
+    set y [expr int($y + $digimeter(scale_y) * 80)]
+    set digimeter(string_id) $string_id
+    set digimeter(place_id) $place_id
+    append s "text string $string_id $text\n"
+    append s "text place $place_id $string_id $digimeter(font) $x $y 1.0 1.0 1.0 nw\n"
+    snowmix parse "\n$s\n"
+  }
+
+  proc DigiMeterCreate { name x y text1 text2 sign image_id text_id ints fractions } {
+    global digimeter
+    set s ""
+    set digimeter($name,sign) $sign
+    if { $ints < 1 } { set ints 1 }
+    set ints [expr round($ints)]
+    set fractions [expr round($fractions)]
+    set digimeter($name,ints) $ints
+    set digimeter($name,fractions) $fractions
+    set digimeter($name,digits) [expr $ints + $fractions]
+    set digimeter($name,image) $image_id
+    set digimeter($name,text) $text_id
+    set digimeter($name,powmax) [expr pow(10,$ints-1)]
+    set digioffset [expr $digimeter(scale_x) * $digimeter(digioffset)]
+    set decimaloffset [expr $digimeter(scale_x) * $digimeter(decimaloffset)]
+    set digimeter($name,digioffset) $digioffset
+    set digimeter($name,decimaloffset) $decimaloffset
+    set digimeter($name,x) $x
+    set digimeter($name,y) $y
+    set text_x [expr int($x - $digimeter(scale_x) * 24)]
+    set text_y [expr int($y - $digimeter(scale_y) * 136)]
+
+    # Set the max number we can display with number of digits
+    set digimeter($name,max) ""
+    set digits $digimeter($name,digits)
+    while { $digits > 0 } {
+      append digimeter($name,max) "9"
+      incr digits -1
+    }
+
+    # Place meter text
+    append s "text string $text_id $text1\n"
+    append s "text place $text_id $text_id $digimeter(font) $text_x $text_y 1.0 1.0 1.0 nw\n"
+    append s "text align $text_id left top\n"
+    incr text_id
+    set text_x [expr int($x + $digimeter(scale_x) * 380)]
+    append s "text string $text_id $text2\n"
+    append s "text place $text_id $text_id $digimeter(font) $text_x $text_y 1.0 1.0 1.0 nw\n"
+    append s "text align $text_id right top\n"
+
+    if { $sign == 1 } {
+      append s "image place $image_id $digimeter(black) [expr round($x)] [expr round($y)] center middle\n"
+      append s "image scale $image_id $digimeter(scale_x) $digimeter(scale_y)\n"
+      set x [expr $x + $digioffset]
+      incr image_id
+    }
+    while { $ints } {
+      append s "image place $image_id $digimeter(0) [expr round($x)] [expr round($y)] center middle\n"
+      append s "image scale $image_id $digimeter(scale_x) $digimeter(scale_y)\n"
+      if { $ints > 1 } {
+        set x [expr $x + $digioffset]
+      }
+      incr image_id
+      incr ints -1
+    }
+    if { $fractions > 0 } {
+      set x [expr $x + $decimaloffset]
+      append s "image place $image_id $digimeter(decimal) [expr round($x)] [expr round($y)] center middle\n"
+      append s "image scale $image_id $digimeter(scale_x) $digimeter(scale_y)\n"
+      incr image_id
+      set x [expr $x + $decimaloffset]
+      while { $fractions > 0 } {
+        append s "image place $image_id $digimeter(0) [expr round($x)] [expr round($y)] center middle\n"
+        append s "image scale $image_id $digimeter(scale_x) $digimeter(scale_y)\n"
+        set x [expr $x + $digioffset]
+        incr image_id
+        incr fractions -1
+      }
+    }
+    snowmix parse "\n$s\n"
+  }
+command end
+
+#DigiMeters
+tcl exec DigiMeterLib.tcl
+tcl eval set digimeter(scale_x) 0.25
+tcl eval set digimeter(scale_y) 0.25
+tcl eval set digimeter(font) 5
+tcl eval DigiMeterCreate vel 921 228 Velocity km/h 0 30 21 1 3
+tcl eval DigiMeterCreate alt 921 284 Altitude km 0 35 23 1 3
+tcl eval DigiMeterCreate acc 921 340 Accel. g 1 40 25 1 2
+tcl eval SetDigiMetersText 27 27 921 340 "Data for :"
+
+tcl eval CreateGPS sapphire Sapphire 0 0 0 0
+tcl eval CreateGPS sputnik Sputnik 0 0 0 0
+tcl eval CreateGPS vostok Vostok 0 0 0 0
+tcl eval SetMeter sapphire
+tcl eval CreateGraph Sapphire 704 384 320 192 10 30
+#  proc CreateGraphLine { graph_name vessel place_id shape_id width height scale_x scale_y legendx_id legendy_id} {
+tcl eval CreateGraphLine Sapphire sapphire 11 31 340 192 4 64.0 30 31
+tcl eval CreateEventList sapphire 720 90 32 6
+image alpha 2 1
+image alpha 3 1
+command pop Show
+command push Show text overlay 30..end
+command push Show loop
+#command pop RunAtFrameRate
+#command push RunAtFrameRate tcl eval UpdateRadar
+#command push RunAtFrameRate loop
+

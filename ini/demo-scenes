@@ -1,0 +1,90 @@
+# Specify that Snowmix version major number must be 4 and and least minor number 4
+require version 0.4.4
+
+# Listen on port 9999 for command control connections
+system control port 9999
+
+# Set system Geometry to WIDTH HEIGHT
+system geometry 1280 720 ARGB
+
+# Set system frame rate to N or NN.NN
+system frame rate 24
+
+# Set output control socket
+system socket /tmp/mixer1
+
+# Change default settings for maxplaces BEFORE any of the shape, text etc. commands
+maxplaces shapes 170
+maxplaces shapeplaces 128
+maxplaces strings 180
+maxplaces texts 180
+# PreShow and Show must end with a loop statement
+command create PreShow
+  loop
+command end
+overlay pre PreShow
+command create Show
+  loop
+command end
+overlay finish Show
+# Load libraries
+include slib/system.slib
+include slib/basic-shapes.slib
+message SYSTEM LOADED
+include slib/scenes.slib
+message SCENES LOADED
+include slib/feeds.slib
+message FEEDS LOADED
+include slib/images.slib
+message IMAGES LOADED
+include slib/clocks2.slib
+include slib/texts.slib
+message Snowmix Libraries Loaded
+tcl eval FeedCreate "Feed #1" 1 1280 720 /tmp/feed1-control-pipe
+tcl eval FeedCreate "Feed #2" 2 1280 720 /tmp/feed2-control-pipe
+tcl eval FeedCreate "Feed #3" 3  704 576 /tmp/feed3-control-pipe
+tcl eval FeedPAR 3 12 11
+tcl eval FeedDeadImage 1 100 frames/dead-1280x720.bgra
+tcl eval FeedDeadImage 2 100 frames/dead-1280x720.bgra
+tcl eval FeedDeadImage 3 100 frames/dead-704x576.bgra
+image load 1 images/CS/CS_TV_720p_3screen-up_background.png
+image name 1 CS Background Logo Right
+image load 2 images/CS/CS_TV_720p_2screen-up_background.png
+image name 2 CS Background Logo Left
+tcl eval ImageUpdateList
+
+text string 1 This is an example of a rolling text placed in the bottom of one of the Scenes. The text can be turned on and off using either snowcub.tcl or a command from the Scenes library.
+text font 5 Eurostile Normal 19
+text place 1 1 5 0 -10 1 1 1 1 se
+text align 1 left bottom
+text backgr 1 2000 2000 10 10 0 0 0 0.75
+text repeat move 1 -2 0 -3500 0
+
+text string 2 Snowmix Video Mixer
+text font 6 Eurostile Bold 19
+text place 2 2 6 15 -57 1 1 1 1 sw
+text align 2 left bottom
+text backgr 2 15 80 10 10 0 0 0 0.27
+text clipabs 2 0 500 334 200
+
+tcl eval set scene(setactivesilent) 1
+tcl eval SceneCreate "Fullscreen with PiP" 2
+tcl eval SceneAddFrame 2 1 0 0 1280 720
+tcl eval SceneAddFrame 2 2 940 20 320 180
+tcl eval SceneSetFrameSource 2 1 feed 1 1 1
+tcl eval SceneSetFrameSource 2 1 feed 2 0 1
+tcl eval SceneSetFrameSource 2 2 feed 3 1 1
+tcl eval SceneSetFrameSource 2 2 feed 2 0 1
+tcl eval SceneCreate "1 Large 2 Smaller" 3
+tcl eval SceneSetBackground 3 1
+tcl eval SceneAddFrame 3 1 408 40 832 468
+tcl eval SceneAddFrame 3 2 40 98 346 194
+tcl eval SceneAddFrame 3 3 40 314 346 194
+tcl eval SceneAddOverlayText 3 1 2
+tcl eval SceneSetFrameSource 3 1 feed 1 1 1
+tcl eval SceneSetFrameSource 3 1 feed 2 0 1
+tcl eval SceneSetFrameSource 3 2 feed 3 1 1
+tcl eval SceneSetFrameSource 3 2 feed 2 0 1
+tcl eval SceneSetFrameSource 3 3 feed 2 1 1
+tcl eval SceneSetFrameSource 3 3 feed 1 0 1
+tcl eval SceneSetState 1 1

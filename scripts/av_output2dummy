@@ -1,0 +1,77 @@
+#!/bin/bash
+# Deliver mixer1 output and audio output to dummy (fakesink)
+
+# IMPORTANT >>>>>You need to get port, ip and feed_id right<<<<<
+if [ "X$SNOWMIX_PORT" = X ] ; then export SNOWMIX_PORT=9999 ;fi
+if [ "X$SNOWMIX_IP" = X ] ; then export SNOWMIX_IP=127.0.0.1 ;fi
+if [ "X$SNOWMIX" = X ] ; then echo "You need to set the SNOWMIX environment variable" ; exit 1 ; fi
+
+# Set video feed 
+#feed_id=$1
+#audio_feed_id=$1
+audio_sink_id=1
+
+# Check for SNOWMIX variable and the snowmix and gstreamer settings
+if [ ! -f $SNOWMIX/scripts/gstreamer-settings -o ! -f $SNOWMIX/scripts/snowmix-settings ] ; then
+  echo "You need to se the environment variable SNOWMIX to the base of the Snowmix directory"
+  exit 1
+fi
+
+# Load the Snowmix and GStreamer settings
+. $SNOWMIX/scripts/gstreamer-settings
+. $SNOWMIX/scripts/snowmix-settings
+# This will set
+# a) feed_rate
+# b) feed_channels
+# c) feed_control_pipe
+# d) feed_width
+# e) feed_height
+# f) ctrsocket
+# g) system_width
+# h) system_height
+# i) ratefraction
+# j) snowmix
+# k) channels
+# l) rate
+
+if [ X$ctrsocket = X -o X$system_width = X -o X$system_height = X ] ; then
+  echo Failed to get control pipe or width or height from running snowmix
+  exit 1
+fi
+
+VIDEOFORMAT=$VIDEOBGRA', width=(int)'$system_width', height=(int)'$system_height', framerate=(fraction)'$ratefraction
+OUTPUTFORMAT=$VIDEOBGRA', width=853, height=480'
+OUTPUTFORMAT=$VIDEOBGRA', width=853, height=480'
+
+while true ; do
+  snowmix=`ps c |cut -c28-34 | grep snowmix | head -1`
+  if [ X$snowmix != X ] ;then
+    if [ X$rate != X -a X$channels != X ] ; then
+      (echo audio sink ctr isaudio 1 ; sleep 10000000 ) | \
+        nc $SNOWMIX_IP $SNOWMIX_PORT | \
+      ( head -1
+        $gstlaunch -v shmsrc socket-path=$ctrsocket do-timestamp=true is-live=true ! \
+          $VIDEOFORMAT		! \
+	  queue			! \
+          $VIDEOCONVERT		! \
+          fakesink		  \
+          fdsrc fd=0		! \
+          $AUDIOFORMAT		! \
+	  queue			! \
+          audioconvert		! \
+          audioresample		! \
+          fakesink
+      )
+    else
+        $gstlaunch -q shmsrc socket-path=$ctrsocket do-timestamp=true is-live=true ! \
+          $VIDEOFORMAT		! \
+          $VIDEOCONVERT		! \
+	  queue			! \
+          fakesink
+    fi
+  else
+    echo Snowmix is not running. Quitting $0
+    exit 1
+  fi
+  sleep 2
+done
